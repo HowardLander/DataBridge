@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package xmltest;
+package xmlsim;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -11,7 +11,7 @@ import java.util.Objects;
  *
  * @author Nerketur
  */
-class Find {
+public class Find {
     private final ArrayList<Find> find = new ArrayList<Find>();
     private final String curr;
     
