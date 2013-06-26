@@ -35,8 +35,8 @@ public class XMLSim {
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
         Parser p = new Parser();
         //parseWithSax("harris.xml", p);
-        parseWithSax("odum.xml", p);
-        //parseWithSax("OAI_Odum_Harris.xml", p);
+        //parseWithSax("odum.xml", p);
+        parseWithSax("OAI_Odum_Harris.xml", p);
         System.out.println(p.getParsed());
         System.out.println("****************************");
         final HashMap<String, HashMap> keywords = new HashMap();
