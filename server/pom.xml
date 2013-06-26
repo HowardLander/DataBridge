@@ -1,0 +1,125 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.renci</groupId>
+  <artifactId>databridge</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-BETA</version>
+  <name>DataBridge</name>
+  <url>http://maven.apache.org</url>
+  <repositories>
+    <repository>
+      <id>prime-repo</id>
+      <name>PrimeFaces Maven Repository</name>
+      <url>http://repository.primefaces.org</url>
+      <layout>default</layout>
+    </repository>
+  </repositories>
+  <dependencies>
+    <dependency>
+      <groupId>com.googlecode.matrix-toolkits-java</groupId>
+      <artifactId>mtj</artifactId>
+      <version>0.9.14</version>
+    </dependency>
+    <dependency>
+      <groupId>com.rabbitmq</groupId>
+      <artifactId>amqp-client</artifactId>
+      <version>3.0.4</version>
+    </dependency>
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.7</version>
+    </dependency>
+    <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.16</version>
+    </dependency>
+    <dependency>
+        <groupId>colt</groupId>
+        <artifactId>colt</artifactId>
+        <version>1.0.3</version>
+    </dependency>
+    <dependency>
+        <groupId>org.msgpack</groupId>
+        <artifactId>msgpack</artifactId>
+        <version>0.6.7</version>
+    </dependency>
+    <dependency>
+        <groupId>com.esotericsoftware.kryo</groupId>
+        <artifactId>kryo</artifactId>
+        <version>2.16</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <finalName>DataBridgeServer</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9</version>
+        <configuration>
+            <links>
+                <link>http://download.oracle.com/javase/6/docs/api/</link>
+                <link>http://commons.apache.org/logging/apidocs/</link>
+                <link>http://commons.apache.org/io/apidocs/</link>
+                <link>http://commons.apache.org/lang/apidocs/</link>
+                <link>http://www.junit.org/junit/javadoc/</link>
+                <link>http://logging.apache.org/log4j/docs/api/</link>
+                <link>http://velocity.apache.org/engine/devel/apidocs/</link>
+                <link>http://acs.lbl.gov/software/colt/api</link>
+            </links>
+            <show>private</show>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.3</version>
+        <configuration>
+          <properties>
+            <timestamp>${maven.build.timestamp}</timestamp>
+            <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+          </properties>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <tasks>
+                <tstamp>
+                  <format property="buildtime" pattern="yyyy-MM-dd hh:mm"/>
+                </tstamp>
+                <property name="src.dir" value="${project.build.sourceDirectory}" />
+                <property name="package.dir" value="org/renci/databridge" />
+                <property name="package.name" value="org.irods.databridge" />
+                <property name="databridgeversion" value=".1-SNAPSHOT" />
+
+                <echo file="${src.dir}/${package.dir}/Version.java" message="package ${package.name};${line.separator}" />
+                <echo file="${src.dir}/${package.dir}/Version.java" append="true" message="public final class Version {${line.separator}" />
+                <echo file="${src.dir}/${package.dir}/Version.java" append="true" message=" public static String VERSION=&quot;${project.version}&quot;;${line.separator}" />
+                <echo file="${src.dir}/${package.dir}/Version.java" append="true" message=" public static String DATABRIDGE_VERSION=&quot;${databridgeversion}&quot;;${line.separator}" />
+                <echo file="${src.dir}/${package.dir}/Version.java" append="true" message=" public static String BUILD_TIME=&quot;${buildtime}&quot;;${line.separator}" />
+                <echo file="${src.dir}/${package.dir}/Version.java" append="true" message="}${line.separator}" />
+                <echo message="BUILD ${buildtime}" />
+              </tasks>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
