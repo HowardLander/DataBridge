@@ -51,6 +51,18 @@ public class NetworkData {
      private int size;
 
      /**
+      * NetworkData constructor with no parameter. Note that this does not allocate the matrix
+      * since there is not a zero argument constructor for the RCDoubleMatrix2D type.
+      *
+      */
+     public NetworkData() {
+        properties = new HashMap<String, String>();
+        datasets = new  ArrayList<Dataset>();
+        similarityMatrix = null;
+        this.size = size;
+     }
+
+     /**
       * NetworkData constructor which takes a single parameter that is the size of each
       * dimension of the similarity matrix.
       *
@@ -94,7 +106,7 @@ public class NetworkData {
       * @param fileName The file from which the network data should be read.
       *                
       */
-     public NetworkData(String fileName) throws Exception {
+     public void populateFromDisk(String fileName) throws Exception {
          properties = new HashMap<String, String>();
          datasets = new  ArrayList<Dataset>();
 
@@ -144,7 +156,7 @@ public class NetworkData {
              MapSerializer theSerializer = new MapSerializer();
              this.properties = kryo.readObject(input, HashMap.class, theSerializer);
 
-             // Write the datasets
+             // Read the datasets
              // Declare a DatasetSerializer
              DatasetSerializer theDatasetSerializer = new DatasetSerializer();
              CollectionSerializer theCollectionSerializer = 

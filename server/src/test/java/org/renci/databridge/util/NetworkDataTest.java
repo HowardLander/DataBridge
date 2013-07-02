@@ -103,7 +103,8 @@ public class NetworkDataTest {
         TestCase.assertTrue("size is wrong:" + theSize, theSize == 3);
         try {
            theData.writeToDisk("testWriteToDisk");
-           NetworkData retrievedData = new NetworkData("testWriteToDisk");
+           NetworkData retrievedData = new NetworkData();
+           retrievedData.populateFromDisk("testWriteToDisk");
            System.out.println(retrievedData.getSimilarityMatrix().toString());
            String theProp = retrievedData.getAProperty("NetworkCreationMethod");
            TestCase.assertTrue("could not retrieve property", theProp != null);
