@@ -34,9 +34,9 @@ public class Dataset {
      /**
       * Dataset constructor with URI, handle and name
       *
-      *  @param The URI for the dataset.
-      *  @param The unique handle for the dataset.
-      *  @param The name for the dataset.
+      *  @param  URI The URI for the dataset.
+      *  @param  handle The unique handle for the dataset.
+      *  @param  name The name for the dataset.
       */
      public Dataset(String URI, String handle, String name) {
          this.URI = URI;
@@ -104,4 +104,15 @@ public class Dataset {
      {
          this.name = name;
      }
+     
+     /**
+      * Return a string representing the object
+      *
+      * @return object as String.
+      */
+     public String toString()
+     {
+         return ("URL: " + this.URI + " handle: " + this.handle + " name: " + this.name);
+     }
+     
 }
