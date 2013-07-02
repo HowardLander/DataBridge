@@ -114,6 +114,11 @@ public class NetworkDataTest {
            System.out.println(retrievedDataset.toString());
            TestCase.assertTrue("incorrect dateset name: " + retrievedDataset.getName(),
                              retrievedDataset.getName().compareTo("maple-2") == 0);
+
+           NetworkData retrievedFromURL = new NetworkData();
+           retrievedFromURL.populateFromURL("http://www.renci.org/~howard/DataBridge/testSet/testWriteToDisk");
+           System.out.println("Printing matrix retrieved from URL");
+           System.out.println(retrievedFromURL.getSimilarityMatrix().toString());
         } catch (Exception e) {
           System.out.println(e.toString());
         }

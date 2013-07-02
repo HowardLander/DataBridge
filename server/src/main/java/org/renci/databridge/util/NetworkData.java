@@ -8,6 +8,7 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.net.*;
 import java.util.*;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.RCDoubleMatrix2D;
@@ -101,32 +102,68 @@ public class NetworkData {
      }
 
      /**
-      * NetworkData constructor which reads the given file.
+      * This method populates this NetworkData object from the data stored in the
+      * specified local file. The filePath must be accessible from where the code is called.
       *
-      * @param fileName The file from which the network data should be read.
+      * @param filePath The file from which the network data should be read.
       *                
       */
-     public void populateFromDisk(String fileName) throws Exception {
-         properties = new HashMap<String, String>();
-         datasets = new  ArrayList<Dataset>();
+     public void populateFromDisk(String filePath) throws Exception {
+         // read from the requested file
+         try {
+             FileInputStream fos = new FileInputStream(new File(filePath));
+             BufferedInputStream theStream = new BufferedInputStream(fos);
+             Input input = new Input(theStream);
+             readTheNetworkFromInputObject(input);
 
-         // NOTE: the cardinality of the rows, cols and vals arrays are all the same.
-         // This is because what is being stored in the RCDoubleMatrix2D is a set of
-         // (row, column, value) tuples using 3 "companion" arrays.
+          } catch (Exception e) {
+              throw e;
+          }
+     }
 
-         IntArrayList rows = new IntArrayList(); 
-         IntArrayList cols = new IntArrayList(); 
-         DoubleArrayList vals = new DoubleArrayList(); 
+     /**
+      * This method populates this NetworkData object from the data stored in the
+      * specified file URL . The file URL must be accessible from where the code is called.
+      *
+      * @param userURL The file URL from which the data should be read.
+      *                
+      */
+     public void populateFromURL(String userURL) throws Exception {
+         // read from the requested file
+         try {
+             URL theURL = new URL(userURL);
+             URLConnection theConnection = theURL.openConnection();
+             BufferedInputStream theStream = 
+                new BufferedInputStream(theConnection.getInputStream());
+             Input input = new Input(theStream);
+             readTheNetworkFromInputObject(input);
+
+          } catch (Exception e) {
+              throw e;
+          }
+     }
+
+     /**
+      * This is the lower level method that actually does the work of reading
+      * the network data from the input object and storing it in the NetworkData
+      * structure.  Because the input object just requires a stream, this same
+      * function can read data from both a file and a URL.
+      *
+      * @param input The Kryo Input object from which the data is read.
+      *                
+      */
+     private void readTheNetworkFromInputObject(Input input) throws Exception {
 
          // Setup the kryo
          Kryo kryo = new Kryo();
 
-         // read from the requested file
+         // NOTE: the cardinality of the rows, cols and vals arrays are all the same.
+         // This is because what is being stored in the RCDoubleMatrix2D is a set of
+         // (row, column, value) tuples using 3 "companion" arrays.
+         IntArrayList rows = new IntArrayList(); 
+         IntArrayList cols = new IntArrayList(); 
+         DoubleArrayList vals = new DoubleArrayList(); 
          try {
-             FileInputStream fos = new FileInputStream(new File(fileName));
-             BufferedInputStream theStream = new BufferedInputStream(fos);
-             Input input = new Input(theStream);
-
              this.size = input.readInt();
              similarityMatrix = new RCDoubleMatrix2D(this.size, this.size);
              System.out.println("arraySize: " + size);
@@ -174,10 +211,10 @@ public class NetworkData {
       * esoteric software to do the packing.
       * 
       *
-      * @param fileName The file to which the network data should be written.
+      * @param filePath The file to which the network data should be written.
       *                
       */
-     public void writeToDisk(String fileName) throws Exception {
+     public void writeToDisk(String filePath) throws Exception {
          // Get the rows, cols and vals from the matrix so we can serialize them
 
          // NOTE: the cardinality of the rows, cols and vals arrays are all the same.
@@ -195,7 +232,7 @@ public class NetworkData {
          // Set up a buffered output stream for the kryo output object.
          BufferedOutputStream theStream = null;
          try {
-            FileOutputStream fos = new FileOutputStream(new File(fileName));
+            FileOutputStream fos = new FileOutputStream(new File(filePath));
             theStream = new BufferedOutputStream(fos);
          } catch (Exception e) {
              throw e;
