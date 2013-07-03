@@ -49,7 +49,7 @@ public class NetworkData {
 
      /** The size of the matrix.  Note that we only need one dimension, because
          the x and y dimensions of original matrix have to be equal */
-     private int size;
+     private int arraySize;
 
      /**
       * NetworkData constructor with no parameter. Note that this does not allocate the matrix
@@ -60,20 +60,20 @@ public class NetworkData {
         properties = new HashMap<String, String>();
         datasets = new  ArrayList<Dataset>();
         similarityMatrix = null;
-        this.size = size;
+        this.arraySize = 0;
      }
 
      /**
       * NetworkData constructor which takes a single parameter that is the size of each
       * dimension of the similarity matrix.
       *
-      * @param size The dimension of one side of the similarity matrix
+      * @param arraySize The dimension of one side of the similarity matrix
       */
-     public NetworkData(int size) {
+     public NetworkData(int arraySize) {
         properties = new HashMap<String, String>();
         datasets = new  ArrayList<Dataset>();
-        similarityMatrix = new RCDoubleMatrix2D(size, size);
-        this.size = size;
+        similarityMatrix = new RCDoubleMatrix2D(arraySize, arraySize);
+        this.arraySize = arraySize;
      }
 
      /**
@@ -98,7 +98,7 @@ public class NetworkData {
         }
         properties = new HashMap<String, String>();
         datasets = new  ArrayList<Dataset>();
-        size = values.length;
+        arraySize = values.length;
      }
 
      /**
@@ -164,25 +164,20 @@ public class NetworkData {
          IntArrayList cols = new IntArrayList(); 
          DoubleArrayList vals = new DoubleArrayList(); 
          try {
-             this.size = input.readInt();
-             similarityMatrix = new RCDoubleMatrix2D(this.size, this.size);
-             System.out.println("arraySize: " + size);
+             this.arraySize = input.readInt();
+             similarityMatrix = new RCDoubleMatrix2D(this.arraySize, this.arraySize);
 
              int nTuples = input.readInt();
-             System.out.println("nTuples: " + nTuples);
              for (int i = 0; i < nTuples; i++) {
                 rows.add(input.readInt());
-                System.out.println(rows.get(i));
              }
 
              for (int i = 0; i < nTuples; i++) {
                 cols.add(input.readInt());
-                System.out.println(cols.get(i));
              }
 
              for (int i = 0; i < nTuples; i++) {
                 vals.add(input.readDouble());
-                System.out.println(vals.get(i));
              }
 
              for (int i = 0; i < nTuples; i++) {
@@ -242,7 +237,7 @@ public class NetworkData {
          // Write the size of the array, Note that this could be, in theory, different from
          // the cardinality of the array. In practice, I don't think it ever will be
          // but I can't convince myself, so I am storing it separately.
-         output.writeInt(this.getSize());
+         output.writeInt(this.getArraySize());
 
          // Write the rows: Start with the number of rows.
          int nTuples = rows.size();
@@ -391,22 +386,22 @@ public class NetworkData {
     }
      
      /**
-      * Get size.
+      * Get arraySize.
       *
-      * @return size as int.
+      * @return arraySize as int.
       */
-     public int getSize()
+     public int getArraySize()
      {
-         return size;
+         return arraySize;
      }
      
      /**
-      * Set size.
+      * Set arraySize.
       *
-      * @param size the value to set.
+      * @param arraySize the value to set.
       */
-     public void setSize(int size)
+     public void setSize(int arraySize)
      {
-         this.size = size;
+         this.arraySize = arraySize;
      }
 }
