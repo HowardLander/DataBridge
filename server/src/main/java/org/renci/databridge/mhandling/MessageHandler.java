@@ -6,21 +6,40 @@ import com.rabbitmq.client.*;
 import org.renci.databridge.database.*;
 import org.msgpack.MessagePack;
 
+/**
+ * This class recieves messages from the RMQListener and uses a DBWriter
+ * to store the information contained in the messages into a database
+ *
+ * @author Ren Bauer -RENCI (www.renci.org)
+ */
+
 public class MessageHandler {
 
+  /**
+   * Dummy class because I don't know what the real one looks like yet
+   */
   public static class PackFile {
     public static final int NETWORK = 1;
     public int fileType;
     public byte[] file;
   }
 
+  /**
+   * Dummy class because I don't know what the real one looks like yet
+   */
   public static class PackNetwork {
     public DBNode[] nodes;
     public DBEdge[] edges;
   }
 
+  /** Queue from which to recieve incoming message */
   private final static String QUEUE_NAME = "update";
 
+  /**
+   * Main class recieves 1 message from queue QUEUE_NAME and processes it
+   * A new MessageHandler must be created for each message pushed onto
+   * queue QUEUE_NAME, as each processes exactly 1 message
+   */
   public static void main(String[] args) throws Exception{
 
     ConnectionFactory factory = new ConnectionFactory();

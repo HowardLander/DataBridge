@@ -4,6 +4,13 @@ import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.*;
 import java.util.*;
 
+/**
+ * DBWriter specific for a neo4j database:
+ * Uses 'label' value in nodes and edges as labels and types
+ * for nodes and edges, respectively
+ *
+ * @author Ren Bauer -RENCI (www.renci.org)
+ */
 public class DBWriterNeo4j extends DBWriter{
 
   GraphDatabaseService graphDb;

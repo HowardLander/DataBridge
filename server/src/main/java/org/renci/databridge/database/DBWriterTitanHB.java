@@ -7,6 +7,15 @@ import com.tinkerpop.blueprints.util.*;
 import org.apache.commons.configuration.*;
 import java.util.*;
 
+/**
+ * DBWriter speicific to an HBase-based Titan database:
+ * Creates key indexes for 'lbl' and 'dbID' for fast querying
+ * label is stored in 'lbl' property and in nodes, specifies edge
+ * type in edges
+ *
+ * @author Ren Bauer -RENCI (www.renci.org)
+ */
+
 public class DBWriterTitanHB extends DBWriter {
 
   TitanGraph graph;
