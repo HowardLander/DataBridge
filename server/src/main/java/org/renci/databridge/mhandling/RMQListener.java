@@ -14,10 +14,12 @@ import java.io.File;
 public class RMQListener{
 
   /** The queue on which to listen for incoming messages */
-  private final static String QUEUE_NAME="hello";
+  private final static String QUEUE_NAME = "hello";
 
   /** The queue on which to forward messages */
-  private final static String OUT_QUEUE="update";
+  private final static String OUT_QUEUE = "update";
+
+  private final static String LOG_QUEUE = "log";
 
   /**
    * Main function starts listening on QUEUE_NAME, and loops indefinitely
@@ -29,8 +31,8 @@ public class RMQListener{
     factory.setHost("localhost");
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
+    channel.confirmSelect();
 
-    //channel.queueDeclare(QUEUE_NAME, false, false, false, null);
     System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
     QueueingConsumer consumer = new QueueingConsumer(channel);
@@ -40,8 +42,11 @@ public class RMQListener{
       QueueingConsumer.Delivery delivery = consumer.nextDelivery();
       String message = new String(delivery.getBody());
       System.out.println("recieved " + message);
-      Runtime.getRuntime().exec("mvn -e exec:java -Dexec.mainClass='org.renci.databridge.mhandling.MessageHandler'");
+      channel.basicPublish("", LOG_QUEUE, null, new String("Listener: msg recieved").getBytes());
+      //Runtime.getRuntime().exec("mvn exec:java -Dexec.mainClass='org.renci.databridge.mhandling.MessageHandler'");
+      Runtime.getRuntime().exec("./runHandler");
       channel.basicPublish("", OUT_QUEUE, null, message.getBytes());
+      channel.basicPublish("", LOG_QUEUE, null, new String("Listener: msg forwarded").getBytes());
       System.out.println("forwarded " + message);
     }
   }
