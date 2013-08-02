@@ -66,11 +66,12 @@ public class DBWriterNeo4j extends DBWriter{
     try{
       Iterable<Relationship> candidates = node1.getRelationships(relType);
       for(Relationship rel : candidates){
-        if(rel.hasProperty("dbID") && rel.getProperty("dbID") == e.dbID && rel.getOtherNode(node1).getId() == node2.getId())
+        if(rel.hasProperty("dbID") && rel.getProperty("dbID").equals(e.dbID) && rel.getOtherNode(node1).getId() == node2.getId())
           relationship = rel;
       }
       if(relationship == null){
         relationship = node1.createRelationshipTo(node2, relType);
+	relationship.setProperty("dbID", e.dbID);
       }
 
       for(String[] prop : e.properties)
@@ -92,7 +93,6 @@ public class DBWriterNeo4j extends DBWriter{
   public static void main(String[] args){
     DBWriterNeo4j writer = new DBWriterNeo4j();
     writer.writeNode(new DBNode(0, "Message", "Whatup", new String[][]{new String[]{"prop1", "awesome"}}));
-
 
   }
 

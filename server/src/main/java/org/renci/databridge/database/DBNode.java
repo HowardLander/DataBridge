@@ -5,24 +5,20 @@ package org.renci.databridge.database;
  *
  * @author Ren Bauer
  */
-public class DBNode{
+public class DBNode extends DBObject{
 
   /** instance-specific index for later referencing */
   public int index;
 
-  /** Type of node */
-  public String label;
- 
-  /** Database-external databridge-specific identifier */
-  public String dbID;
-  
-  /** Additional properties associated with node */
-  public String[][] properties;
+  public DBEdge[] edges;
 
-  /** Default constructor so msgpack (I think) is happy */
-  public DBNode(){}
+  /** Default constructor */
+  public DBNode(){
+    this.type = DBObject.NODE;
+  }
 
   public DBNode(int index, String label, String dbID, String[][] properties){
+    this();
     this.index = index;
     this.label = label;
     this.dbID = dbID;

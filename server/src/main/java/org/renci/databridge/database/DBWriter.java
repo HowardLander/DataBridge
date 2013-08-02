@@ -16,6 +16,16 @@ public abstract class DBWriter{
    * (Very useful when adding edges between new nodes)
    */
   List nodes;
+
+  public int write(DBObject o){
+    if(o.type == DBObject.NODE){
+      return writeNode((DBNode) o);
+    }
+    else if(o.type == DBObject.EDGE){
+      return writeEdge((DBEdge) o);
+    }
+    return -1;
+  }
   
   /**
    * Write a node to the database: If a node with the same label and dbID
