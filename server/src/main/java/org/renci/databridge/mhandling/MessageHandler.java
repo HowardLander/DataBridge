@@ -1,12 +1,8 @@
 package org.renci.databridge.mhandling;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
 import com.rabbitmq.client.*;
-import org.renci.databridge.database.*;
+import java.lang.Exception;
 import org.renci.databridge.util.*;
-import cern.colt.matrix.impl.RCDoubleMatrix2D;
 
 /**
  * This class recieves messages from the RMQListener and uses a DBWriter
@@ -43,74 +39,55 @@ public class MessageHandler {
     //Consume message and store file information
     QueueingConsumer consumer = new QueueingConsumer(channel);
     channel.basicConsume(QUEUE_NAME, false, consumer);
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: msg recieved").getBytes());
     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: msg recieved").getBytes());
     channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-    String fileLoc = new String(delivery.getBody());
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: file location determined").getBytes());
-    
-    NetworkData retriever = new NetworkData();
+ 
+    String msg = new String(delivery.getBody());
+    String[] msgParts = msg.split(":", 2);
+    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: message split - size: " + msgParts.length).getBytes());
+    int msgType;
+    if(msgParts.length < 2){
+      msgType = MessageTypes.NONE;
+      msg = msgParts[0];
+    }
+    else{
+      msgType = new Integer(msgParts[0]);
+      msg = msgParts[1];
+    }
+
+    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: message type determined - " + msgType).getBytes());
+
+    BaseHandler handler;
+    switch(msgType){
+      case MessageTypes.NONE:
+        channel.basicPublish("", LOG_QUEUE, null, new String("Handler: No message type found: Ensure message type is defined for all messages in the form '{type}:{message}'").getBytes());
+        return;
+      case MessageTypes.NETWORK:
+        handler = new NetworkHandler();
+      break;
+      case MessageTypes.JSONREQUEST:
+        handler = new JSONHandler();
+      break;
+      case MessageTypes.ERROR:
+        handler = new ErrorHandler();
+      break;
+      default:
+        channel.basicPublish("", LOG_QUEUE, null, new String("Handler: Unknown message type : " + msgType).getBytes());
+        return;
+    }
+
+    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: BaseHandler initiated").getBytes());
+
     try{
-      retriever.populateFromURL(fileLoc);
+      handler.handle(msg, channel, LOG_QUEUE);
     }
-    catch (IOException e){
-      channel.basicPublish("", LOG_QUEUE, null, new String("Handler: ERROR - Invalid filename").getBytes());
-      System.exit(0);
+    catch(Exception e){
+      e.printStackTrace();
     }
-
-    ArrayList<Dataset> datasets = retriever.getDatasets();
-    for(Dataset d : datasets){
-      System.out.println("dataset named : " + d.getName());
-    }
-    Map<String, String> properties = retriever.getProperties();
-    for(Map.Entry<String, String> e : properties.entrySet()){
-      System.out.println("property: " + e.getKey() + ", " + e.getValue());
-    }
-    RCDoubleMatrix2D similMx = retriever.getSimilarityMatrix();
-    for(int y = 0; y < similMx.columns(); y++){
-      for(int x = 0; x < similMx.rows(); x++){
-        System.out.print(similMx.getQuick(x, y) + "   ");
-      }
-      System.out.println();
-    }
-
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: complete").getBytes());
-
+   
     channel.close();
     connection.close();
 
-    //URL fileURL = new URL(fileLoc);
-    /*
-    byte[] bytes = new byte[2048];
-    ByteArrayOutputStream buf = new ByteArrayOutputStream();
-    InputStream in = fileURL.openStream();
-    int i = 0;
-    while(in.read(bytes) != -1){
-      buf.write(bytes, i * 2048, 2048);
-      bytes = new byte[2048];
-    }
-    */
-    /*
-    MessagePack msgpack = new MessagePack();
-    msgpack.register(DBNode.class);
-    msgpack.register(DBEdge.class);
-    msgpack.register(PackFile.class);
-    msgpack.register(PackNetwork.class);
-    PackFile pf = msgpack.read(buf.toByteArray(), PackFile.class);
-
-    switch(pf.fileType){
-      case PackFile.NETWORK:
-        PackNetwork pn = msgpack.read(pf.file, PackNetwork.class);
-	DBWriter dbw = new DBWriterNeo4j();
-        int index = 0;
-        for(DBNode n : pn.nodes){
-	  dbw.writeNode(n);
-	}
-	for(DBEdge e : pn.edges){
-	  dbw.writeEdge(e);
-        }
-      break;
-    }
-    */
   }
 }

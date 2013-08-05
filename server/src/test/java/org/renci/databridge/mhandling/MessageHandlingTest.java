@@ -4,6 +4,7 @@ import com.rabbitmq.client.*;
 import java.io.*;
 
 import org.renci.databridge.mhandling.*;
+import org.renci.databridge.util.*;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -39,11 +40,14 @@ public class MessageHandlingTest{
 	"Listener: msg forwarded",
 	"Handler: initiated",
 	"Handler: msg recieved",
+	"Handler: message split",
+	"Handler: message type determined",
+        "Handler: BaseHandler initiated",
 	"Handler: file location determined",
 	"Handler: complete"};
     
     String path = System.getProperty("user.dir") + "/testWriteToDisk";
-    String message = "file://localhost" + path;
+    String message = MessageTypes.NETWORK + ":file://localhost" + path;
     File file = new File(path);
     TestCase.assertTrue("Cannot read file: " + path + ", ensure NetworkDataTest has run", file.canRead());
 
@@ -64,11 +68,11 @@ public class MessageHandlingTest{
       message = new String(delivery.getBody());
       boolean found = false;
       for(String m : expectedMessages){
-	if(message.equals(m)){
-	  System.out.println(message + " successful");
+	if(message.contains(m)){
 	  found = true;
 	}
       }
+      System.out.println(message);
       TestCase.assertTrue("unexpected log message: " + message, found);
     }
 
@@ -84,7 +88,7 @@ public class MessageHandlingTest{
     String expectedError = "Handler: ERROR - Invalid filename";
     String finishedMessage = "Handler: complete";
 
-    String message = "file://localhost"+System.getProperty("user.dir")+"/__NOT_REAL";
+    String message = MessageTypes.NETWORK + ":file://localhost"+System.getProperty("user.dir")+"/__NOT_REAL";
     File file = new File(message);
     TestCase.assertTrue("Please delete file: " + message, !file.canRead());
 
