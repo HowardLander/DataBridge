@@ -58,7 +58,8 @@ public class NetworkData {
      /**
       * NetworkData constructor with no parameter. Note that this does not allocate the matrix
       * since there is not a zero argument constructor for the RCDoubleMatrix2D type.
-      *
+      * This constructor should only be used when reading a network from disk, else a dbID should
+      * always be provided.
       */
      public NetworkData() {
         properties = new HashMap<String, String>();
@@ -68,26 +69,44 @@ public class NetworkData {
      }
 
      /**
-      * NetworkData constructor which takes a single parameter that is the size of each
-      * dimension of the similarity matrix.
+      * NetworkData constructor with a single parameter: the dbID for the network.
+      * Note that this does not allocate the matrix
+      * since there is not a zero argument constructor for the RCDoubleMatrix2D type.
+      *
+      */
+     public NetworkData(String dbID) {
+        properties = new HashMap<String, String>();
+        datasets = new  ArrayList<Dataset>();
+        similarityMatrix = null;
+        this.arraySize = 0;
+	this.dbID = dbID;
+     }
+
+     /**
+      * NetworkData constructor which takes a two parameters: the size of each
+      * dimension of the similarity matrix and the dbID for the edges that make 
+      * up the network
       *
       * @param arraySize The dimension of one side of the similarity matrix
+      * @param dbID The dbID for the network
       */
-     public NetworkData(int arraySize) {
+     public NetworkData(int arraySize, String dbID) {
         properties = new HashMap<String, String>();
         datasets = new  ArrayList<Dataset>();
         similarityMatrix = new RCDoubleMatrix2D(arraySize, arraySize);
         this.arraySize = arraySize;
+	this.dbID = dbID;
      }
 
      /**
-      * NetworkData constructor which takes a single parameter that is a 2 dimensional
-      * array of doubles containing the similarity matrix.
+      * NetworkData constructor which takes two parameters: a 2 dimensional
+      * array of doubles containing the similarity matrix, and the dbID for 
+      * the edges that make up the network.
       *
       * @param values A 2 dimensional array of doubles.  Note that the dimensions of the array
       *                must be equal or an IllegalArgumentException is thrown.
       */
-     public NetworkData(double[][] values) throws IllegalArgumentException {
+     public NetworkData(double[][] values, String dbID) throws IllegalArgumentException {
         similarityMatrix = new RCDoubleMatrix2D(values);
 
         /* Remember that this is a similarity matrix, meaning that, in the non-sparse, form
@@ -103,6 +122,7 @@ public class NetworkData {
         properties = new HashMap<String, String>();
         datasets = new  ArrayList<Dataset>();
         arraySize = values.length;
+	this.dbID = dbID;
      }
 
      /**
