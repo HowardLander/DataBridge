@@ -25,24 +25,35 @@ public class NetworkHandler implements BaseHandler {
       System.exit(0);
     }
 
+    DBWriter dbw = new DBWriterNeo4j();
     ArrayList<Dataset> datasets = retriever.getDatasets();
+    int i = 0;
     for(Dataset d : datasets){
-      System.out.println("dataset named : " + d.getName());
+      dbw.writeNode(DBNode n = new DBNode(i++, "dataset", d.getDbID(), makeProps(d.getProperties())));
     }
-    Map<String, String> properties = retriever.getProperties();
-    for(Map.Entry<String, String> e : properties.entrySet()){
-      System.out.println("property: " + e.getKey() + ", " + e.getValue());
-    }
+    String[][] edgeProps = makeProps(retriever.getProperties());
+    String edgeID = retriever.getDbID();
     RCDoubleMatrix2D similMx = retriever.getSimilarityMatrix();
     for(int y = 0; y < similMx.columns(); y++){
       for(int x = 0; x < similMx.rows(); x++){
-        System.out.print(similMx.getQuick(x, y) + "   ");
+	dbw.writeEdge(dbEdge e = new DBEdge(x, y, "distance", edgeID, edgeProps));
       }
-      System.out.println();
     }
+
+    
 
     channel.basicPublish("", LOG_QUEUE, null, new String("Handler: complete").getBytes());
 
+  }
+
+  private String[][] makeProps(HashMap<String, String> propMap){
+    String[][] propArray = new String[propMap.keySet().size()][2];
+    int i = 0;
+    for(Map.Entry<String, String> e : propMap.entrySet()){
+      propArray[i][0] = e.getKey();
+      propArray[i++][1] = e.getValue();
+    }
+    return propArray;
   }
 
 }

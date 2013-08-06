@@ -24,6 +24,14 @@ public class Dataset {
          Also note that the x and y dimensions of original matrix have to be equal */
      private String name;
 
+     /** The databridge-specific identifier, unique within the databridge space  */
+     private String dbID;
+
+     /** A map to store properties such as the name of the dataset.
+         Automatically includes URI, handle, and name - additional properties
+	 added via addProperty(String, String) */
+     private HashMap<String, String> properties;
+
 
      /**
       * Dataset constructor with no arguments.
@@ -36,12 +44,42 @@ public class Dataset {
       *
       *  @param  URI The URI for the dataset.
       *  @param  handle The unique handle for the dataset.
+      *                  (duplicated as dbID)
       *  @param  name The name for the dataset.
       */
-     public Dataset(String URI, String handle, String name) {
+     public Dataset(String URI, String handle, String name, String dbID) {
+	 this(URI, handle, name, handle);
+     }
+
+     /**
+      * Dataset constructor with URI, handle and name
+      *
+      *  @param  URI The URI for the dataset.
+      *  @param  handle The unique handle for the dataset.
+      *  @param  name The name for the dataset.
+      *  @param  dbID The unique databridge ID for the dataset.
+      */
+     public Dataset(String URI, String handle, String name, String dbID) {
          this.URI = URI;
          this.handle = handle;
          this.name = name;
+	 this.dbID = dbID;
+	 properties = new HashMap<String, String>();
+	 properties.put("URI", URI);
+	 properties.put("handle", handle);
+	 properties.put("name", name);
+     }
+
+
+     /**
+      * Add Property: additional properties not provided for in the constructor
+      *   are added via this method
+      *
+      * @return URI as String.
+      */
+     public void addProperty(String key, String val)
+     {
+         properties.put(key, val);
      }
 
      
@@ -103,6 +141,36 @@ public class Dataset {
      public void setName(String name)
      {
          this.name = name;
+     }
+
+     /**
+      * Get dbID.
+      *
+      * @return dbID as String.
+      */
+     public String getDbID()
+     {
+         return dbID;
+     }
+
+     /**
+      * Set dbID.
+      *
+      * @param dbID the value to set.
+      */
+     public void setDbID(String dbID)
+     {
+         this.dbID = dbID;
+     }
+
+     /**
+      * Get properties.
+      *
+      * @return name as HashMap<String, String>.
+      */
+     public HashMap<String, String> getName()
+     {
+         return properties;
      }
      
      /**

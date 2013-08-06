@@ -36,6 +36,10 @@ public class NetworkData {
          to produce the network */
      private HashMap<String, String> properties; 
 
+     /** A string to store the dbID for the network - this becomes the databridge identifier
+	 for all edges in the network. This dbID is unique amongst edges sharing the same nodes. */
+     private String dbID;
+
      /** A list of Hashmaps for the individual nodes.We may want this to
          eventually be a list of structs so we can have more info, such
          as a display name or a URL. At the moment we are going to use
@@ -321,6 +325,26 @@ public class NetworkData {
      public void setProperties(HashMap properties)
      {
          this.properties = properties;
+     }
+
+     /**
+      * Get dbID.
+      *
+      * @return dbID as String.
+      */
+     public String getDbID()
+     {
+	 return dbID();
+     }
+
+     /**
+      * Set dbID.
+      *
+      * @param dbID the value to set.
+      */
+     public void setDbID(String dbID)
+     {
+	 this.dbID = dbID;
      }
 
      /**
