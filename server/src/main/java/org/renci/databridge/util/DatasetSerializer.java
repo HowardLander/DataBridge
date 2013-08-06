@@ -38,6 +38,7 @@ public class DatasetSerializer extends Serializer<Dataset> {
          output.writeString(theDataset.getURI());
          output.writeString(theDataset.getHandle());
          output.writeString(theDataset.getName());
+	 output.writeString(theDataset.getDbID());
      }
      
 
@@ -58,6 +59,7 @@ public class DatasetSerializer extends Serializer<Dataset> {
          theNewDataset.setURI(input.readString());
          theNewDataset.setHandle(input.readString());
          theNewDataset.setName(input.readString());
+	 theNewDataset.setDbID(input.readString());
 
          return theNewDataset;
      }
