@@ -29,14 +29,14 @@ public class NetworkHandler implements BaseHandler {
     ArrayList<Dataset> datasets = retriever.getDatasets();
     int i = 0;
     for(Dataset d : datasets){
-      dbw.writeNode(DBNode n = new DBNode(i++, "dataset", d.getDbID(), makeProps(d.getProperties())));
+      dbw.writeNode(new DBNode(i++, "dataset", d.getDbID(), makeProps(d.getProperties())));
     }
     String[][] edgeProps = makeProps(retriever.getProperties());
     String edgeID = retriever.getDbID();
     RCDoubleMatrix2D similMx = retriever.getSimilarityMatrix();
     for(int y = 0; y < similMx.columns(); y++){
       for(int x = 0; x < similMx.rows(); x++){
-	dbw.writeEdge(dbEdge e = new DBEdge(x, y, "distance", edgeID, edgeProps));
+	dbw.writeEdge(new DBEdge(x, y, "distance", edgeID, edgeProps));
       }
     }
 
@@ -46,7 +46,7 @@ public class NetworkHandler implements BaseHandler {
 
   }
 
-  private String[][] makeProps(HashMap<String, String> propMap){
+  private String[][] makeProps(Map<String, String> propMap){
     String[][] propArray = new String[propMap.keySet().size()][2];
     int i = 0;
     for(Map.Entry<String, String> e : propMap.entrySet()){

@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.BufferedOutputStream;
+import java.util.*;
 
 /**
  * This class holds the data for a dataset in
@@ -47,7 +48,7 @@ public class Dataset {
       *                  (duplicated as dbID)
       *  @param  name The name for the dataset.
       */
-     public Dataset(String URI, String handle, String name, String dbID) {
+     public Dataset(String URI, String handle, String name) {
 	 this(URI, handle, name, handle);
      }
 
@@ -168,7 +169,7 @@ public class Dataset {
       *
       * @return name as HashMap<String, String>.
       */
-     public HashMap<String, String> getName()
+     public HashMap<String, String> getProperties()
      {
          return properties;
      }

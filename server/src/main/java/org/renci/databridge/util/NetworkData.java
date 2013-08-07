@@ -354,7 +354,7 @@ public class NetworkData {
       */
      public String getDbID()
      {
-	 return dbID();
+	 return dbID;
      }
 
      /**
