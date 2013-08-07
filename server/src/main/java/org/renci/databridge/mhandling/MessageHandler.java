@@ -84,6 +84,11 @@ public class MessageHandler {
     }
     catch(Exception e){
       e.printStackTrace();
+      String trace = e.toString();
+      for(int i = 0; i < e.getStackTrace().length; i++){
+        trace += "\n" + e.getStackTrace()[i].toString();
+      }
+      channel.basicPublish("", LOG_QUEUE, null, new String("Handler: ERROR " + trace).getBytes());
     }
    
     channel.close();

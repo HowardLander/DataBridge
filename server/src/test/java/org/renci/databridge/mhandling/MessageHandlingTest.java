@@ -44,6 +44,8 @@ public class MessageHandlingTest{
 	"Handler: message type determined",
         "Handler: BaseHandler initiated",
 	"Handler: file location determined",
+        "Handler: edge ID",
+        "Handler: Populated from URL",
 	"Handler: complete"};
     
     String path = System.getProperty("user.dir") + "/testWriteToDisk";
@@ -63,21 +65,26 @@ public class MessageHandlingTest{
     QueueingConsumer consumer = new QueueingConsumer(channel);
     channel.basicConsume(LOG_QUEUE, true, consumer);
     
+    boolean found = false;
     while(!message.equals(expectedMessages[expectedMessages.length - 1])){
       QueueingConsumer.Delivery delivery = consumer.nextDelivery();
       message = new String(delivery.getBody());
-      boolean found = false;
+      found = false;
       for(String m : expectedMessages){
 	if(message.contains(m)){
 	  found = true;
 	}
       }
-      System.out.println(message);
-      TestCase.assertTrue("unexpected log message: " + message, found);
+      //System.out.println(message);
+      if(!found){
+        break;
+      }
     }
 
     channel.close();
     connection.close();
+
+    TestCase.assertTrue("unexpected log message: " + message, found);
   }
 
   @Test
@@ -107,6 +114,7 @@ public class MessageHandlingTest{
     while(!message.contains("ERROR")){
       QueueingConsumer.Delivery delivery = consumer.nextDelivery();
       message = new String(delivery.getBody());
+      //System.out.println(message);
       boolean notFound = true;
       if(message.equals(finishedMessage)){
 	System.out.println("Error message found");

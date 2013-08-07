@@ -38,7 +38,7 @@ public class NetworkDataTest {
     @Test
     public void testNetworkData() {
         System.out.println("Basic testing");
-        NetworkData theData = new NetworkData(10);
+        NetworkData theData = new NetworkData(10, "test");
         TestCase.assertTrue("could not create data", theData != null);
         int theSize = theData.getArraySize();
         TestCase.assertTrue("arraySize is wrong:" + theSize, theSize == 10);
@@ -66,7 +66,7 @@ public class NetworkDataTest {
         double[][] testArray = new double[2][3];
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(JUnitMatchers.containsString("number of rows (2) != number of columns (3)"));
-        NetworkData theData = new NetworkData(testArray);
+        NetworkData theData = new NetworkData(testArray, "test");
     }
 
     @Test
@@ -74,7 +74,7 @@ public class NetworkDataTest {
 
         System.out.println("Testing 2d array constructor ");
         double[][] testArray = new double[10][10];
-        NetworkData theData = new NetworkData(testArray);
+        NetworkData theData = new NetworkData(testArray, "test");
         TestCase.assertTrue("could not create data", theData != null);
         int theSize = theData.getArraySize();
         TestCase.assertTrue("arraySize is wrong:" + theSize, theSize == 10);
@@ -89,7 +89,7 @@ public class NetworkDataTest {
         RCDoubleMatrix2D comparisonMatrix = new RCDoubleMatrix2D(testMatrix);
   
         // Create the network using the testMatrix as a basis
-        NetworkData theData = new NetworkData(testMatrix);
+        NetworkData theData = new NetworkData(testMatrix, "test");
         TestCase.assertTrue("could not create data", theData != null);
 
         // Make sure that the size matches the size of the test matrix
@@ -113,6 +113,8 @@ public class NetworkDataTest {
         theData.addADataset(theDataset);
         Dataset theDataset2 = new Dataset("slate-2", "granite-2", "maple-2");
         theData.addADataset(theDataset2);
+        Dataset theDataset3 = new Dataset("slate-3", "granite-3", "maple-3");
+        theData.addADataset(theDataset3);
 
         try {
            System.out.println("Testing local disk version of serialization");

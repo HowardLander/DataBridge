@@ -44,6 +44,7 @@ public class DataBaseTest{
 
     write(node, node2, edge);
 
+    testDataBaseQueries();
   }
 
   public void write(DBNode node, DBNode node2, DBEdge edge){
@@ -70,41 +71,22 @@ public class DataBaseTest{
 
   }
 
-  @Test
   public void testDataBaseQueries(){
 
     System.out.println("Testing Queries");
 
     DBQuery neoq = new DBQueryNeo4j("data/test/neo4j");
 
-    System.out.println("DBQ initialized");
+    //System.out.println("DBQ initialized");
   try{
 
-    System.out.println("Searching for node");
+    //System.out.println("Searching for node");
     DBNode node = neoq.findNode("test", "test-1");
-    System.out.println("Found node with DBid " + node.dbID);
+    //System.out.println("Found node with DBid " + node.dbID);
     neoq.popNetwork(node, 3);
-    System.out.println("Traversing network:");
-    printNetwork(node, 3, 0);
-    /*
-    System.out.println("Node " + node.dbID + " (Index " + node.index + ")");
-    for(DBEdge e : node.edges){
-      System.out.println("  Edge " + e.dbID);
-      if(e.nodes != null)
-      for(DBNode n : e.nodes){
-        System.out.println("    Node " + n.dbID + " (Index " + n.index + ")");
-	if(n.edges != null)
-        for(DBEdge e2 : n.edges){
-          System.out.println("      Edge " + e2.dbID);
-	  if(e2.nodes != null)
-          for(DBNode n2 : e2.nodes){
-            System.out.println("        Node " + n2.dbID + " (Index " + n2.index + ")");
-          }
-        }
-      }
-    }
-    */
-    System.out.println("Done traversing");
+    //System.out.println("Traversing network:");
+    //printNetwork(node, 3, 0);
+    //System.out.println("Done traversing");
     neoq.shutDown();
   } catch(Exception e){
     neoq.shutDown();

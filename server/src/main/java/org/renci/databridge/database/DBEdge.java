@@ -53,6 +53,7 @@ public class DBEdge extends DBObject{
     this.index1 = index1;
     this.index2 = index2;
     this.label = label;
+    this.dbID = dbID;
     this.properties = properties;
   }
 

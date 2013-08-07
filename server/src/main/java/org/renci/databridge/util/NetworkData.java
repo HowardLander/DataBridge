@@ -19,6 +19,7 @@ import cern.colt.list.DoubleArrayList;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.serializers.DefaultSerializers.StringSerializer;
 import com.esotericsoftware.kryo.serializers.MapSerializer;
 import com.esotericsoftware.kryo.serializers.CollectionSerializer;
 
@@ -32,13 +33,13 @@ import com.esotericsoftware.kryo.serializers.CollectionSerializer;
  */
 public class NetworkData {
 
-     /** A map to store properties such as the name of the network and the technique used
-         to produce the network */
-     private HashMap<String, String> properties; 
-
      /** A string to store the dbID for the network - this becomes the databridge identifier
 	 for all edges in the network. This dbID is unique amongst edges sharing the same nodes. */
      private String dbID;
+
+     /** A map to store properties such as the name of the network and the technique used
+         to produce the network */
+     private HashMap<String, String> properties; 
 
      /** A list of Hashmaps for the individual nodes.We may want this to
          eventually be a list of structs so we can have more info, such
@@ -208,6 +209,10 @@ public class NetworkData {
                  this.similarityMatrix.setQuick(rows.get(i), cols.get(i), vals.get(i));
              }
 
+             // Read the dbID using the Kryo StringSerializer class
+	     StringSerializer theStringSerializer = new StringSerializer();
+	     this.dbID = kryo.readObject(input, String.class, theStringSerializer);
+
              // Read the properties using the Kryo MapSerializer class
              MapSerializer theSerializer = new MapSerializer();
              this.properties = kryo.readObject(input, HashMap.class, theSerializer);
@@ -279,6 +284,10 @@ public class NetworkData {
          for (int i = 0; i < nTuples; i++) {
             output.writeDouble(vals.get(i));
          }
+
+         // Write the dbID using the Kryo StringSerializer class
+         StringSerializer theStringSerializer = new StringSerializer();
+         kryo.writeObject(output, dbID, theStringSerializer);
 
          // Write the properties using the Kryo MapSerializer class
          MapSerializer theSerializer = new MapSerializer();

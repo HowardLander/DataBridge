@@ -158,7 +158,6 @@ public class DBQueryNeo4j implements DBQuery{
    */
   public boolean popNetwork(DBNode dbn, int depth){
     if(depth <= 0)return true;
-    System.out.println("Populating network of node " + dbn.dbID + " to depth " + depth);
     popEdges(dbn);
     for(DBEdge e: dbn.edges){
       popNetwork(e.nodes[0], depth - 1);
