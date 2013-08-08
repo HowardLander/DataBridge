@@ -3,7 +3,7 @@ package org.renci.databridge.database;
 /**
  * Basic class for passing node edge information to DBWriters
  *
- * @author Ren Bauer
+ * @author Ren Bauer - RENCI (www.renci.org)
  */
  
 public class DBEdge extends DBObject{
