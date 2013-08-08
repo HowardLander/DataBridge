@@ -9,8 +9,23 @@ import java.util.*;
 import org.json.*;
 import cern.colt.matrix.impl.RCDoubleMatrix2D;
 
+/**
+ * Bottom level message handler for messages of type Network. These are messages
+ * containing network information which must be stored in the database.
+ *
+ * @author Ren Bauer - RENCI (www.renci.org)
+ */
+
 public class NetworkHandler implements BaseHandler {
 
+  /**
+   * Handle the message appropriately. For network messages, the network is read
+   * from the URL contained in the message, parsed, and entered into the database.
+   *
+   * @param msg The original message minus the filetype and delimiting colon
+   * @param channel The output rabbitMQ channel for sending messages
+   * @param LOG_QUEUE The queue on which to send log messages
+   */
   public void handle(String msg, Channel channel, String LOG_QUEUE) throws Exception{
 
     String fileLoc = msg;
@@ -70,6 +85,14 @@ public class NetworkHandler implements BaseHandler {
 
   }
 
+  /**
+   * Convert a Map of properties to a 2D String array of properties, so they
+   * can be stored in the DB database classes.
+   *
+   * @param propMap the Map of the properties.
+   *
+   * @return a 2D String Array representation of the properties.
+   */ 
   private String[][] makeProps(Map<String, String> propMap){
     if(propMap == null || propMap.keySet() == null) return new String[0][0];
     String[][] propArray = new String[propMap.keySet().size()][2];
