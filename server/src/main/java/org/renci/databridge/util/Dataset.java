@@ -38,6 +38,7 @@ public class Dataset {
       * Dataset constructor with no arguments.
       */
      public Dataset() {
+	properties = new HashMap<String, String>();
      }
 
      /**

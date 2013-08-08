@@ -56,7 +56,7 @@ public class DBEdge extends DBObject{
     this.dbID = dbID;
     this.properties = properties;
   }
-
+ 
  /**
   * Convenience method to find the other node of a given edge. Note this method
   * will return a node with label "ERROR" if the nodes array is of an improper state
