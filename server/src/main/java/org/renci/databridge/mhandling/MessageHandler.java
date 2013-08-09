@@ -13,9 +13,10 @@ import org.renci.databridge.util.*;
 
 public class MessageHandler {
 
-  /** Queue from which to recieve incoming message */
+  /** Queue from which to recieve incoming messages */
   private final static String QUEUE_NAME = "update";
 
+  /** Queue on which to send log messages */
   private final static String LOG_QUEUE = "log";
 
   /**

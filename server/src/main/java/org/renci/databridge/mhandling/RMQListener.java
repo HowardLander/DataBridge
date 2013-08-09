@@ -44,7 +44,10 @@ public class RMQListener{
       System.out.println("recieved " + message);
       channel.basicPublish("", LOG_QUEUE, null, new String("Listener: msg recieved").getBytes());
       //Runtime.getRuntime().exec("mvn exec:java -Dexec.mainClass='org.renci.databridge.mhandling.MessageHandler'");
-      Runtime.getRuntime().exec("./runHandler");
+      //Runtime.getRuntime().exec("./runHandler");
+      ProcessBuilder pb = new ProcessBuilder("./runHandler");
+      pb.redirectErrorStream(true);
+      pb.start();
       channel.basicPublish("", OUT_QUEUE, null, message.getBytes());
       channel.basicPublish("", LOG_QUEUE, null, new String("Listener: msg forwarded").getBytes());
       System.out.println("forwarded " + message);

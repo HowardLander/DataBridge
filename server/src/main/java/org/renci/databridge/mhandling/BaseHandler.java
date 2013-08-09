@@ -15,7 +15,9 @@ public interface BaseHandler{
    * @param msg The original message minus the filetype and delimiting colon
    * @param channel The output rabbitMQ channel for sending messages
    * @param LOG_QUEUE The queue on which to send log messages
+   *
+   * @return The message to return to original sender. Null for no response.
    */
-  public void handle(String msg, Channel channel, String LOG_QUEUE) throws Exception;
+  public String handle(String msg, Channel channel, String LOG_QUEUE) throws Exception;
 
 }

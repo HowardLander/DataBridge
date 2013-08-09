@@ -25,8 +25,10 @@ public class NetworkHandler implements BaseHandler {
    * @param msg The original message minus the filetype and delimiting colon
    * @param channel The output rabbitMQ channel for sending messages
    * @param LOG_QUEUE The queue on which to send log messages
+   *
+   * @return The message to return to sender. Null for no response.
    */
-  public void handle(String msg, Channel channel, String LOG_QUEUE) throws Exception{
+  public String handle(String msg, Channel channel, String LOG_QUEUE) throws Exception{
 
     String fileLoc = msg;
 
@@ -82,6 +84,8 @@ public class NetworkHandler implements BaseHandler {
    //End temporary JSON code
 
     channel.basicPublish("", LOG_QUEUE, null, new String("Handler: complete").getBytes());
+
+    return null;
 
   }
 
