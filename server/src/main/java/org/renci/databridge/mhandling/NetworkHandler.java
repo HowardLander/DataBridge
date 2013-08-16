@@ -123,6 +123,9 @@ public class NetworkHandler implements BaseHandler {
       JSONObject JSONd = new JSONObject();
       JSONd.put("label", "dataset");
       JSONd.put("dbID", d.getDbID());
+      JSONd.put("name", d.getName());
+      JSONd.put("URI", d.getURI());
+      JSONd.put("handle", d.getHandle());
       JSONd.put("index", i);
       for(String[] prop : makeProps(d.getProperties())){
         JSONd.put(prop[0], prop[1]);
