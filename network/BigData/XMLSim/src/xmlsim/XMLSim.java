@@ -18,6 +18,8 @@ import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
 import sax.Parser;
 import similarity.*;
+import org.renci.databridge.util.*;
+import com.rabbitmq.client.*;
 
 /**
  *
@@ -29,6 +31,10 @@ public class XMLSim {
     //private static double threshold = 0.5;
     private static String[] arr;
     private static double[][] data;
+    
+    //Ren Bauer - queue name to send message to listener after file is written
+    private static String QUEUE_NAME = "hello";
+    
     /**
      * @param args the command line arguments
      */
@@ -66,11 +72,46 @@ public class XMLSim {
 //        //1, OF
 //        //x, Lin
 //        //2, comprehensive
+        
+        //Ren Bauer - test dataset creation
+        for(Dataset d : p.getDatasets()){
+        	System.out.println("Dataset: " + d.getDbID());
+        	System.out.println("  Handle: " + d.getHandle());
+        	System.out.println("  Name: " + d.getName());
+        	System.out.println("  URI: " + d.getURI());
+        	System.out.println("  Attributes:");
+        	for(Map.Entry<String, String> prop : d.getProperties().entrySet()){
+        		System.out.println("    " + prop.getKey() + ": " + prop.getValue());
+        	}
+        }
+        
         arr = p.getParsed().keySet().toArray(new String[] {});
+        for(String key : p.getParsed().keySet()){
+        	System.out.println("Key: " + key);
+        	for(Object key2 : p.getParsed().get(key).keySet()){
+        		System.out.println("  " + key2 + ":" + p.getParsed().get(key).get(key2));
+        	}
+        }
         StringBuilder sbFull = new StringBuilder();
         ArrayList result = shrink(arr, data);
         arr = (String[]) result.get(0);
         data = (double[][]) result.get(1);
+        
+        //Code by Ren Bauer to utilize util package
+        
+        NetworkData netData = new NetworkData(data, "Xing-Similarity");
+        
+        for(Dataset d : p.getDatasets()){
+        	netData.addADataset(d);
+        }
+        
+        try {
+            netData.writeToDisk("sims.txt");
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+          
+        /* Deprecated writing to file code
         int maxLen = 0;
         for (String x : arr) {
             try {
@@ -100,6 +141,30 @@ public class XMLSim {
         PrintWriter writer = new PrintWriter("sims.txt", "UTF-8");
         writer.append(sbFull);
         writer.close();
+        */
+        //End Ren's Editions
+        
+        //Code by Ren Bauer to send message to messagehandler (via RabbitMQ)
+        
+        String path = System.getProperty("user.dir") + "/sims.txt";
+        String message = MessageTypes.NETWORK + ":file://localhost" + path;
+
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        try {
+	        Connection connection = factory.newConnection();
+	        Channel channel = connection.createChannel();
+	
+	        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+
+	        channel.close();
+	        connection.close();
+        } catch(IOException e){
+        	System.out.println("Message sending failure");
+        	e.printStackTrace();
+        }
+        
+        //End message code
     }
     
     private static void parseWithSax(String filename, DefaultHandler handler) {
