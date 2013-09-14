@@ -3,6 +3,8 @@ DataBridge
 
 NSF Sponsored DataBridge Project
 
+For more information see https://databridge.web.unc.edu
+
 To Clone:
 
 From a command line, run:
@@ -58,8 +60,8 @@ Xing's code can be tested using the following command from the XMLSim directory:
 
 mvn test -Dtest=similarity.MeasureTest
 
-Howard's network classes can be tested using the following command from the server directory:
+Howard's network classes and Ren's code can be tested using the following command from the server directory:
 
-mvn test -Dtest=org.renci.databridge.util.NetworkDataTests.NetworkDataTest
+mvn test
 
-Ren's code doesn't have a junit test in github yet
+for more information on tests please see 'test_readme.txt' in the server directory
