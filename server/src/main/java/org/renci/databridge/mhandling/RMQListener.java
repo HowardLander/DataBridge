@@ -45,6 +45,8 @@ public class RMQListener{
       channel.basicPublish("", LOG_QUEUE, null, new String("Listener: msg recieved").getBytes());
       //Runtime.getRuntime().exec("mvn exec:java -Dexec.mainClass='org.renci.databridge.mhandling.MessageHandler'");
       //Runtime.getRuntime().exec("./runHandler");
+      //TODO: Implement runnable in message handler and maintain a single instance of graphDBService
+        //(might need a neo4j and titan Listener)
       ProcessBuilder pb = new ProcessBuilder("./runHandler");
       pb.redirectErrorStream(true);
       pb.start();
