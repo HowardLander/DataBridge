@@ -20,6 +20,7 @@ public class DBWriterTitanHB extends DBWriter {
 
   TitanGraph graph;
 
+/* DEPRECATED
   public DBWriterTitanHB(){
     this("data/titanHB");
   }
@@ -28,6 +29,12 @@ public class DBWriterTitanHB extends DBWriter {
     graph = TitanFactory.open(path);
     graph.createKeyIndex("lbl", Vertex.class);
     graph.createKeyIndex("dbID", Element.class);
+    nodes = new ArrayList<Vertex>();
+  }
+*/
+
+  public DBWriterTitanHB(TitanGraph graph){
+    this.graph = graph;
     nodes = new ArrayList<Vertex>();
   }
 

@@ -15,6 +15,7 @@ public class DBWriterNeo4j extends DBWriter{
 
   GraphDatabaseService graphDb;
 
+/* DEPRECATED
   public DBWriterNeo4j(){
     this("data/neo4j");
   }
@@ -22,6 +23,11 @@ public class DBWriterNeo4j extends DBWriter{
   public DBWriterNeo4j(String path){
     nodes = new ArrayList<Node>();
     graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(path);
+  }
+*/
+
+  public DBWriterNeo4j(GraphDatabaseService graphDb){
+    this.graphDb = graphDb;
   }
 
   public int writeNode(DBNode n){

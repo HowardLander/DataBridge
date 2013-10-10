@@ -11,7 +11,7 @@ import org.renci.databridge.util.*;
  * @author Ren Bauer -RENCI (www.renci.org)
  */
 
-public class MessageHandler {
+public class MessageHandler<T> implements Runnable{
 
   /** Queue from which to recieve incoming messages */
   private final static String QUEUE_NAME = "update";
@@ -19,14 +19,24 @@ public class MessageHandler {
   /** Queue on which to send log messages */
   private final static String LOG_QUEUE = "log";
 
+  private T dbService;
+
+  public void setB(T graphDB){
+    dbService = graphDB;
+  }
+
+  public MessageHandler(T dbService){
+    setB(dbService);
+  }
+ 
   /**
-   * Main class recieves 1 message from queue QUEUE_NAME and processes it
+   * Main class receives 1 message from queue QUEUE_NAME and processes it
    * A new MessageHandler must be created for each message pushed onto
    * queue QUEUE_NAME, as each processes exactly 1 message
    */
-  public static void main(String[] args) throws Exception{
+  //public static void main(String[] args) throws Exception{
 
-
+  public void run(){
     //Set up connaction to rabbitMQ server
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost("localhost");
@@ -65,7 +75,7 @@ public class MessageHandler {
         channel.basicPublish("", LOG_QUEUE, null, new String("Handler: No message type found: Ensure message type is defined for all messages in the form '{type}:{message}'").getBytes());
         return;
       case MessageTypes.NETWORK:
-        handler = new NetworkHandler();
+        handler = new NetworkHandler<T>(dbService);
       break;
       case MessageTypes.JSONREQUEST:
         handler = new JSONHandler();
