@@ -5,6 +5,10 @@ import org.renci.databridge.database.*;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import com.thinkaurelius.titan.core.TitanGraph;
+import com.thinkaurelius.titan.core.TitanFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -49,8 +53,11 @@ public class DataBaseTest{
 
   public void write(DBNode node, DBNode node2, DBEdge edge){
 
-    DBWriter neo = new DBWriterNeo4j("data/test/neo4j");
-    DBWriter titan = new DBWriterNeo4j("data/test/titanHB");
+    GraphDatabaseService neoDB = new GraphDatabaseFactory().newEmbeddedDatabase("data/test/neo4j");
+    TitanGraph titanDB = TitanFactory.open("data/test/titanHB");
+
+    DBWriter neo = new DBWriterNeo4j(neoDB);
+    DBWriter titan = new DBWriterTitanHB(titanDB);
 
     int ret = -1;
     ret = neo.writeNode(node);

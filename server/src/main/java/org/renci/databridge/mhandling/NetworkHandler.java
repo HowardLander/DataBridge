@@ -3,6 +3,8 @@ package org.renci.databridge.mhandling;
 import com.rabbitmq.client.*;
 import org.renci.databridge.database.*;
 import org.renci.databridge.util.*;
+import org.neo4j.graphdb.GraphDatabaseService;
+import com.thinkaurelius.titan.core.TitanGraph;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -52,9 +54,9 @@ public class NetworkHandler<T> implements BaseHandler {
 
     DBWriter dbw = null;
     if(dbService instanceof GraphDatabaseService)
-      dbw = new DBWriterNeo4j(dbService);
+      dbw = new DBWriterNeo4j((GraphDatabaseService) dbService);
     else if(dbService instanceof TitanGraph)
-      dbw = new DBWriterTitanHB(dbService);
+      dbw = new DBWriterTitanHB((TitanGraph) dbService);
     try{
       ArrayList<Dataset> datasets = retriever.getDatasets();
       int i = 0;

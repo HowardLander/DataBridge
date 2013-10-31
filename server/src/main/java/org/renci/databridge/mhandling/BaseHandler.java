@@ -7,7 +7,7 @@ import com.rabbitmq.client.*;
  *
  * @author Ren Bauer - RENCI (www.renci.org)
  */
-public abstract BaseHandler{
+public interface BaseHandler{
 
   /**
    * Handle the message appropriately as per its file type

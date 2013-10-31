@@ -27,6 +27,7 @@ public class DBWriterNeo4j extends DBWriter{
 */
 
   public DBWriterNeo4j(GraphDatabaseService graphDb){
+    nodes = new ArrayList<Node>();
     this.graphDb = graphDb;
   }
 
@@ -94,12 +95,6 @@ public class DBWriterNeo4j extends DBWriter{
 
   public void shutDown(){
     graphDb.shutdown();
-  }
-
-  public static void main(String[] args){
-    DBWriterNeo4j writer = new DBWriterNeo4j();
-    writer.writeNode(new DBNode(0, "Message", "Whatup", new String[][]{new String[]{"prop1", "awesome"}}));
-
   }
 
 }

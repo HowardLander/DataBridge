@@ -94,9 +94,4 @@ public class DBWriterTitanHB extends DBWriter {
     graph.shutdown();
   }
 
-  public static void main(String[] args){
-    DBWriterTitanHB writer = new DBWriterTitanHB();
-    writer.writeNode(new DBNode(0, "Message", "Hello", new String[][]{new String[]{"prop1", "test"}}));
-  }
-
 }

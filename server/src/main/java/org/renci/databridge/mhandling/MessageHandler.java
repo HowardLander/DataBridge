@@ -1,7 +1,10 @@
 package org.renci.databridge.mhandling;
 
 import com.rabbitmq.client.*;
+import java.lang.Thread;
 import java.lang.Exception;
+import java.lang.InterruptedException;
+import java.io.IOException;
 import org.renci.databridge.util.*;
 
 /**
@@ -11,7 +14,7 @@ import org.renci.databridge.util.*;
  * @author Ren Bauer -RENCI (www.renci.org)
  */
 
-public class MessageHandler<T> implements Runnable{
+public class MessageHandler<T> extends Thread{
 
   /** Queue from which to recieve incoming messages */
   private final static String QUEUE_NAME = "update";
@@ -37,6 +40,18 @@ public class MessageHandler<T> implements Runnable{
   //public static void main(String[] args) throws Exception{
 
   public void run(){
+    try{
+      exceptionThrowingRun();
+    } catch (IOException e){
+      //TODO: send message of type error
+      e.printStackTrace();
+    } catch(InterruptedException e){
+      //TODO: send message of type error
+      e.printStackTrace();
+    }
+  }
+ 
+  private void exceptionThrowingRun() throws IOException, InterruptedException {
     //Set up connaction to rabbitMQ server
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost("localhost");
@@ -104,6 +119,5 @@ public class MessageHandler<T> implements Runnable{
    
     channel.close();
     connection.close();
-
   }
 }
