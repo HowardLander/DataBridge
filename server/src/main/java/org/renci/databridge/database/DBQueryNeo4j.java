@@ -21,20 +21,27 @@ public class DBQueryNeo4j implements DBQuery{
   /** The Neo4j database service to provide reponses to queries */
   GraphDatabaseService graphDB;
 
-  /**
+  /** DEPRECATED
    * Default constructor that sets path to 'data/neo4j'.
    */
   public DBQueryNeo4j(){
     this("data/neo4j");
   }
 
-  /**
+  /** DEPRECATED
    * Constructor taking the path of the database we want to query.
    *
    * @param path The path of the database of interest.
    */
   public DBQueryNeo4j(String path){
     graphDB = new GraphDatabaseFactory().newEmbeddedDatabase(path);
+    DBNodes = new ArrayList<DBNode>();
+    IDs = new ArrayList<Long>();
+    nodes = new ArrayList<Node>();
+  }
+
+  public DBQueryNeo4j(GraphDatabaseService graphDB){
+    this.graphDB = graphDB;
     DBNodes = new ArrayList<DBNode>();
     IDs = new ArrayList<Long>();
     nodes = new ArrayList<Node>();

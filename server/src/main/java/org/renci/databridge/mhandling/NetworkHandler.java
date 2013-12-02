@@ -3,6 +3,8 @@ package org.renci.databridge.mhandling;
 import com.rabbitmq.client.*;
 import org.renci.databridge.database.*;
 import org.renci.databridge.util.*;
+import org.neo4j.graphdb.GraphDatabaseService;
+import com.thinkaurelius.titan.core.TitanGraph;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -16,7 +18,13 @@ import cern.colt.matrix.impl.RCDoubleMatrix2D;
  * @author Ren Bauer - RENCI (www.renci.org)
  */
 
-public class NetworkHandler implements BaseHandler {
+public class NetworkHandler<T> implements BaseHandler {
+
+  T dbService = null;
+
+  public NetworkHandler(T dbService){
+    this.dbService = dbService;
+  }
 
   /**
    * Handle the message appropriately. For network messages, the network is read
@@ -44,7 +52,11 @@ public class NetworkHandler implements BaseHandler {
       System.exit(0);
     }
 
-    DBWriter dbw = new DBWriterNeo4j();
+    DBWriter dbw = null;
+    if(dbService instanceof GraphDatabaseService)
+      dbw = new DBWriterNeo4j((GraphDatabaseService) dbService);
+    else if(dbService instanceof TitanGraph)
+      dbw = new DBWriterTitanHB((TitanGraph) dbService);
     try{
       ArrayList<Dataset> datasets = retriever.getDatasets();
       int i = 0;
@@ -64,11 +76,12 @@ public class NetworkHandler implements BaseHandler {
           }
         }
       }
-      dbw.shutDown();
     }
     catch(Exception e){
-      dbw.shutDown();
       throw e;
+    }
+    finally {
+      dbw.shutDown();
     }
 
    // Temporary code generating JSON output for visualization bit
