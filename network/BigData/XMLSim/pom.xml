@@ -9,10 +9,14 @@
   </properties>
   <repositories>
     <repository>
-      <id>databridge-util</id>
-      <name>DataBridge util library</name>
-      <url>file://${project.basedir}/lib</url>
-      <layout>default</layout>
+<!--        <id>DataBridge-mvn-repo</id> -->
+<!--        <url>https://raw.github.com/HowardLander/DataBridge/mvn-repo</url> -->
+        <id>github</id>
+        <url>https://github.com/HowardLander/DataBridge/blob/mvn-repo</url>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
     </repository>
   </repositories>
   <dependencies>
@@ -42,9 +46,9 @@
       <version>3.0.4</version>
     </dependency>
     <dependency>
-      <groupId>org.renci.databridge</groupId>
+      <groupId>org.renci</groupId>
       <artifactId>databridge-util</artifactId>
-      <version>0.2</version>
+      <version>1.0-BETA</version>
     </dependency>
   </dependencies>
   <build>
