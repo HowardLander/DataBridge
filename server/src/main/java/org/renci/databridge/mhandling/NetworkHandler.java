@@ -32,23 +32,23 @@ public class NetworkHandler<T> implements BaseHandler {
    *
    * @param msg The original message minus the filetype and delimiting colon
    * @param channel The output rabbitMQ channel for sending messages
-   * @param LOG_QUEUE The queue on which to send log messages
+   * @param logger THE AMQPLogger to which messages go.
    *
    * @return The message to return to sender. Null for no response.
    */
-  public String handle(String msg, Channel channel, String LOG_QUEUE) throws Exception{
+  public String handle(String msg, Channel channel, AMQPLogger logger) throws Exception{
 
     String fileLoc = msg;
 
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: file location determined: " + msg).getBytes());
+    logger.publish("Handler: file location determined: " + msg);
 
     NetworkData retriever = new NetworkData();
     try{
       retriever.populateFromURL(fileLoc);
-      channel.basicPublish("", LOG_QUEUE, null, new String("Handler: Populated from URL").getBytes());
+      logger.publish("Handler: Populated from URL");
     }
     catch (IOException e){
-      channel.basicPublish("", LOG_QUEUE, null, new String("Handler: ERROR - Invalid filename").getBytes());
+      logger.publish("Handler: ERROR - Invalid filename");
       System.exit(0);
     }
 
@@ -65,7 +65,7 @@ public class NetworkHandler<T> implements BaseHandler {
       }
       String[][] edgeProps = makeProps(retriever.getProperties());
       String edgeID = retriever.getDbID();
-      channel.basicPublish("", LOG_QUEUE, null, new String("Handler: edge ID = " + edgeID).getBytes());
+      logger.publish("Handler: edge ID = " + edgeID);
       RCDoubleMatrix2D similMx = retriever.getSimilarityMatrix();
       for(int y = 0; y < similMx.columns(); y++){
         for(int x = 0; x < similMx.rows(); x++){
@@ -89,14 +89,14 @@ public class NetworkHandler<T> implements BaseHandler {
       makeJSON(retriever);
     }
     catch (JSONException e){
-      channel.basicPublish("", LOG_QUEUE, null, new String("Handler: JSON creation failed - JSONException").getBytes());
+      logger.publish("Handler: JSON creation failed - JSONException");
     }
     catch (IOException e){
-      channel.basicPublish("", LOG_QUEUE, null, new String("Handler: JSON creation failed - IOException").getBytes());
+      logger.publish("Handler: JSON creation failed - IOException");
     }
    //End temporary JSON code
 
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: complete").getBytes());
+    logger.publish("Handler: complete");
 
     return null;
 

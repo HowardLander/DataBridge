@@ -7,6 +7,9 @@
   <version>1.0-BETA</version>
   <name>DataBridge</name>
   <url>http://maven.apache.org</url>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
   <repositories>
     <repository>
       <id>prime-repo</id>
@@ -20,6 +23,11 @@
       <groupId>com.googlecode.matrix-toolkits-java</groupId>
       <artifactId>mtj</artifactId>
       <version>0.9.14</version>
+    </dependency>
+    <dependency>
+      <groupId>org.renci</groupId>
+      <artifactId>databridge-util</artifactId>
+      <version>1.0-BETA</version>
     </dependency>
     <dependency>
       <groupId>com.rabbitmq</groupId>
@@ -108,6 +116,7 @@
         <version>1.3</version>
         <configuration>
           <properties>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
             <timestamp>${maven.build.timestamp}</timestamp>
             <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
           </properties>

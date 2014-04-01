@@ -51,7 +51,7 @@ http://www.rabbitmq.com/download.html
 
 next, use the following command from the server directory
 
-mvn -e exec -D mainClass=org.renci.databridge.mhandling.RMQListener
+mvn -e exec:java -D exec.mainClass=org.renci.databridge.mhandling.RMQListener
 
 
 To Test:

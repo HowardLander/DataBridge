@@ -8,7 +8,7 @@ import java.io.IOException;
 import org.renci.databridge.util.*;
 
 /**
- * This class recieves messages from the RMQListener and uses a DBWriter
+ * This class receives messages from the RMQListener and uses a DBWriter
  * to store the information contained in the messages into a database
  *
  * @author Ren Bauer -RENCI (www.renci.org)
@@ -16,7 +16,7 @@ import org.renci.databridge.util.*;
 
 public class MessageHandler<T> extends Thread{
 
-  /** Queue from which to recieve incoming messages */
+  /** Queue from which to receive incoming messages */
   private final static String QUEUE_NAME = "update";
 
   /** Queue on which to send log messages */
@@ -57,7 +57,13 @@ public class MessageHandler<T> extends Thread{
     factory.setHost("localhost");
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: initiated").getBytes());
+ 
+    AMQPLogger logger = new AMQPLogger();
+    logger.setTheExchange("");
+    logger.setTheChannel(channel);
+    logger.setTheQueue(LOG_QUEUE);
+    
+    logger.publish("Handler: initiated");
 
     //Set to retrieve only one message from queue
     channel.basicQos(1);
@@ -66,12 +72,12 @@ public class MessageHandler<T> extends Thread{
     QueueingConsumer consumer = new QueueingConsumer(channel);
     channel.basicConsume(QUEUE_NAME, false, consumer);
     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: msg recieved").getBytes());
+    logger.publish("Handler: msg received");
     channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
  
     String msg = new String(delivery.getBody());
     String[] msgParts = msg.split(":", 2);
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: message split - size: " + msgParts.length).getBytes());
+    logger.publish("Handler: message split - size: " + msgParts.length);
     int msgType;
     if(msgParts.length < 2){
       msgType = MessageTypes.NONE;
@@ -82,12 +88,12 @@ public class MessageHandler<T> extends Thread{
       msg = msgParts[1];
     }
 
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: message type determined - " + msgType).getBytes());
+    logger.publish("Handler: message type determined - " + msgType);
 
     BaseHandler handler;
     switch(msgType){
       case MessageTypes.NONE:
-        channel.basicPublish("", LOG_QUEUE, null, new String("Handler: No message type found: Ensure message type is defined for all messages in the form '{type}:{message}'").getBytes());
+        logger.publish("Handler: No message type found: Ensure message type is defined for all messages in the form '{type}:{message}'");
         return;
       case MessageTypes.NETWORK:
         handler = new NetworkHandler<T>(dbService);
@@ -99,14 +105,14 @@ public class MessageHandler<T> extends Thread{
         handler = new ErrorHandler();
       break;
       default:
-        channel.basicPublish("", LOG_QUEUE, null, new String("Handler: Unknown message type : " + msgType).getBytes());
+        logger.publish("Handler: Unknown message type : " + msgType);
         return;
     }
 
-    channel.basicPublish("", LOG_QUEUE, null, new String("Handler: BaseHandler initiated").getBytes());
+    logger.publish("Handler: BaseHandler initiated");
 
     try{
-      handler.handle(msg, channel, LOG_QUEUE);
+      handler.handle(msg, channel, logger);
     }
     catch(Exception e){
       e.printStackTrace();
@@ -114,7 +120,7 @@ public class MessageHandler<T> extends Thread{
       for(int i = 0; i < e.getStackTrace().length; i++){
         trace += "\n" + e.getStackTrace()[i].toString();
       }
-      channel.basicPublish("", LOG_QUEUE, null, new String("Handler: ERROR " + trace).getBytes());
+      logger.publish("Handler: ERROR " + trace);
     }
    
     channel.close();

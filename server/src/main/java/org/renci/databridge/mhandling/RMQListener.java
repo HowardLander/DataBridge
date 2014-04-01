@@ -46,6 +46,9 @@ public class RMQListener{
        path = prop.getProperty("path");
     } catch (IOException ex){ }
 
+    System.out.println(" database: " + DB);
+    System.out.println(" path: " + path);
+
     DBs type;
     Object dbService;
     if(DB.equals("Titan")){
@@ -89,6 +92,8 @@ public class RMQListener{
       //ProcessBuilder pb = new ProcessBuilder("./runHandler");
       //pb.redirectErrorStream(true);
       //pb.start();
+      // Declaration is idempotent, so no need to worry about whether or not it is already there.
+      channel.queueDeclare(OUT_QUEUE, false, false, false, null);
       channel.basicPublish("", OUT_QUEUE, null, message.getBytes());
       channel.basicPublish("", LOG_QUEUE, null, new String("Listener: msg forwarded").getBytes());
       System.out.println("forwarded " + message);

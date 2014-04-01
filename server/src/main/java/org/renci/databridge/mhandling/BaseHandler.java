@@ -1,6 +1,7 @@
 package org.renci.databridge.mhandling;
 
 import com.rabbitmq.client.*;
+import org.renci.databridge.util.AMQPLogger;
 
 /**
  * Interface for bottom level message handlers dealing with specific message types.
@@ -14,10 +15,10 @@ public interface BaseHandler{
    *
    * @param msg The original message minus the filetype and delimiting colon
    * @param channel The output rabbitMQ channel for sending messages
-   * @param LOG_QUEUE The queue on which to send log messages
+   * @param logger The AMQPLogger for log messages
    *
    * @return The message to return to original sender. Null for no response.
    */
-  public String handle(String msg, Channel channel, String LOG_QUEUE) throws Exception;
+  public String handle(String msg, Channel channel, AMQPLogger logger) throws Exception;
 
 }
