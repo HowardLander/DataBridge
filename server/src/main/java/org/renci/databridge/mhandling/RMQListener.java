@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
+import org.renci.databridge.util.*;
 
 /**
  * Server class listening for incoming messages on rabbitMQ queue QUEUE_NAME
@@ -42,8 +43,8 @@ public class RMQListener{
     try{
        Properties prop = new Properties();
        prop.load(new FileInputStream("db.conf"));
-       DB = prop.getProperty("database");
-       path = prop.getProperty("path");
+       DB = prop.getProperty("org.renci.databridge.databaseType");
+       path = prop.getProperty("org.renci.databridge.databasePath");
     } catch (IOException ex){ }
 
     System.out.println(" database: " + DB);
@@ -52,13 +53,13 @@ public class RMQListener{
     DBs type;
     Object dbService;
     if(DB.equals("Titan")){
-	type = DBs.Titan;
-	path += "titanHB/";
+        type = DBs.Titan;
+        path += "titanHB/";
         dbService = TitanFactory.open(path);
         Runtime.getRuntime().addShutdownHook(new RMQShutdownHook<TitanGraph>((TitanGraph) dbService));
     } else if(DB.equals("Neo4j")){
-	type = DBs.Neo4j;
-	path += "neo4j/";
+        type = DBs.Neo4j;
+        //path += "neo4j/";
         dbService = new GraphDatabaseFactory().newEmbeddedDatabase(path);
         Runtime.getRuntime().addShutdownHook(new RMQShutdownHook<GraphDatabaseService>((GraphDatabaseService) dbService));
     } else throw new Exception("Invalid database specified in properties");
@@ -68,6 +69,14 @@ public class RMQListener{
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
     channel.confirmSelect();
+ 
+    AMQPLogger logger = new AMQPLogger();
+    logger.setTheExchange("");
+    logger.setTheChannel(channel);
+    logger.setTheQueue(LOG_QUEUE);
+    logger.publish("DataBridge listener initiated");
+    logger.publish("database type: " + DB);
+    logger.publish("database path: " + path);
 
     System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
@@ -77,8 +86,8 @@ public class RMQListener{
     while (true) {
       QueueingConsumer.Delivery delivery = consumer.nextDelivery();
       String message = new String(delivery.getBody());
-      System.out.println("recieved " + message);
-      channel.basicPublish("", LOG_QUEUE, null, new String("Listener: msg recieved").getBytes());
+      System.out.println("received " + message);
+      logger.publish("Listener: msg received");
       //Runtime.getRuntime().exec("mvn exec:java -Dexec.mainClass='org.renci.databridge.mhandling.MessageHandler'");
       //Runtime.getRuntime().exec("./runHandler");
       switch(type){
@@ -95,7 +104,7 @@ public class RMQListener{
       // Declaration is idempotent, so no need to worry about whether or not it is already there.
       channel.queueDeclare(OUT_QUEUE, false, false, false, null);
       channel.basicPublish("", OUT_QUEUE, null, message.getBytes());
-      channel.basicPublish("", LOG_QUEUE, null, new String("Listener: msg forwarded").getBytes());
+      logger.publish("Listener: msg forwarded");
       System.out.println("forwarded " + message);
     }
   }

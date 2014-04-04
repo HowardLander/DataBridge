@@ -3,6 +3,7 @@ package org.renci.databridge.database;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.*;
 import java.util.*;
+import org.renci.databridge.util.AMQPLogger;
 
 /**
  * DBWriter specific for a neo4j database:
@@ -31,7 +32,7 @@ public class DBWriterNeo4j extends DBWriter{
     this.graphDb = graphDb;
   }
 
-  public int writeNode(DBNode n){
+  public int writeNode(DBNode n, AMQPLogger logger){
     int status = -1;
     Node node;
     Label label = DynamicLabel.label(n.label);
@@ -39,11 +40,13 @@ public class DBWriterNeo4j extends DBWriter{
     try{
       Iterator<Node> candidates = graphDb.findNodesByLabelAndProperty(label, "dbID", n.dbID).iterator();
       if(candidates.hasNext()){
+        logger.publish("Found node for dbID " + n.dbID);
         node = candidates.next();
       }
       else{
-	node = graphDb.createNode();
-	node.addLabel(label);
+        logger.publish("no node found, will create using label " + n.label);
+        node = graphDb.createNode();
+        node.addLabel(label);
         node.setProperty("dbID", n.dbID);
       }
         

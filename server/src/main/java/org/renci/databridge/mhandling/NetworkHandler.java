@@ -45,7 +45,7 @@ public class NetworkHandler<T> implements BaseHandler {
     NetworkData retriever = new NetworkData();
     try{
       retriever.populateFromURL(fileLoc);
-      logger.publish("Handler: Populated from URL");
+      logger.publish("Handler: Populated from URL: id is " + retriever.getDbID());
     }
     catch (IOException e){
       logger.publish("Handler: ERROR - Invalid filename");
@@ -53,35 +53,37 @@ public class NetworkHandler<T> implements BaseHandler {
     }
 
     DBWriter dbw = null;
-    if(dbService instanceof GraphDatabaseService)
+    if(dbService instanceof GraphDatabaseService) {
+      logger.publish("Handler: using Neo4j");
       dbw = new DBWriterNeo4j((GraphDatabaseService) dbService);
-    else if(dbService instanceof TitanGraph)
+    } else if(dbService instanceof TitanGraph) {
+      logger.publish("Handler: using Titan");
       dbw = new DBWriterTitanHB((TitanGraph) dbService);
+    }
     try{
       ArrayList<Dataset> datasets = retriever.getDatasets();
       int i = 0;
       for(Dataset d : datasets){
-        dbw.writeNode(new DBNode(i++, "dataset", d.getDbID(), makeProps(d.getProperties())));
+        dbw.writeNode(new DBNode(i++, "dataset", d.getDbID(), makeProps(d.getProperties())), logger);
       }
       String[][] edgeProps = makeProps(retriever.getProperties());
       String edgeID = retriever.getDbID();
       logger.publish("Handler: edge ID = " + edgeID);
       RCDoubleMatrix2D similMx = retriever.getSimilarityMatrix();
+      logger.publish("Handler: Dimension of similarity matrix is  " + similMx.columns());
       for(int y = 0; y < similMx.columns(); y++){
         for(int x = 0; x < similMx.rows(); x++){
           if(x != y){
             DBEdge e = new DBEdge(x, y, "similarity", edgeID, edgeProps);
             e.addProperty("value", similMx.getQuick(x, y) + "");
-  	    dbw.writeEdge(e);
+            dbw.writeEdge(e);
           }
         }
       }
     }
     catch(Exception e){
+      // Need to think about when we will shutdown the database.
       throw e;
-    }
-    finally {
-      dbw.shutDown();
     }
 
    // Temporary code generating JSON output for visualization bit
@@ -92,7 +94,12 @@ public class NetworkHandler<T> implements BaseHandler {
       logger.publish("Handler: JSON creation failed - JSONException");
     }
     catch (IOException e){
-      logger.publish("Handler: JSON creation failed - IOException");
+      String trace = e.toString();
+      for(int i = 0; i < e.getStackTrace().length; i++){
+        trace += "\n" + e.getStackTrace()[i].toString();
+      }
+
+      logger.publish("Handler: JSON creation failed - IOException " + trace);
     }
    //End temporary JSON code
 
@@ -157,7 +164,7 @@ public class NetworkHandler<T> implements BaseHandler {
         JSONl.put("dbID", edgeID);
         JSONl.put("source", x);
         JSONl.put("target", y);
-	JSONl.put("value", similMx.getQuick(x, y));
+        JSONl.put("value", similMx.getQuick(x, y));
         for(String[] prop : edgeProps){
           JSONl.put(prop[0], prop[1]);
         }
@@ -168,6 +175,9 @@ public class NetworkHandler<T> implements BaseHandler {
     out.put("nodes", nodes);
     out.put("links", links);
    
+    // Added this to make sure the intervening sub dirs exist.
+    File dirs = new File("data/JSON/");
+    dirs.mkdir();
     File f = new File("data/JSON/" + edgeID + ".json");
     OutputStream os = new FileOutputStream(f);
     os.write(out.toString().getBytes());

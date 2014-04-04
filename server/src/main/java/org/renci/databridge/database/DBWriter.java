@@ -1,6 +1,7 @@
 package org.renci.databridge.database;
 
 import java.util.*;
+import org.renci.databridge.util.AMQPLogger;
 
 /**
  * Abstract class to provide interface for database to provide easy
@@ -16,7 +17,7 @@ public abstract class DBWriter{
    * (Very useful when adding edges between new nodes)
    */
   List nodes;
-
+/*
   public int write(DBObject o){
     if(o.type == DBObject.NODE){
       return writeNode((DBNode) o);
@@ -26,6 +27,7 @@ public abstract class DBWriter{
     }
     return -1;
   }
+*/
   
   /**
    * Write a node to the database: If a node with the same label and dbID
@@ -33,10 +35,11 @@ public abstract class DBWriter{
    * overwritten to the values provided in the parameter
    *
    * @param DBNode The Node to be written (inserted and/or updated)
+   * @param logger An instance of the AMQPLogger class
    *
    * @return The completion status of the operation (-1 failure, 0 success)
    */
-  public abstract int writeNode(DBNode n);
+  public abstract int writeNode(DBNode n, AMQPLogger logger);
 
   /**
    * Write an edge to the database: If a edge with the same label and dbID
