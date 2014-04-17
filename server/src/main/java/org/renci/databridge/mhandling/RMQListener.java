@@ -12,39 +12,37 @@ import java.util.Properties;
 import org.renci.databridge.util.*;
 
 /**
- * Server class listening for incoming messages on rabbitMQ queue QUEUE_NAME
+ * Server class listening for incoming messages on rabbitMQ queue 
  * on receipt: creates a new instance of the MessageHandler to handle the message
- * and forwards the message to it along the OUT_QUEUE channel
+ * and forwards the message to it along the org.renci.databridge.updateQueue channel
  *
  * @author Ren Bauer -RENCI (www.renci.org)
  */
 
 public class RMQListener{
 
-  /** The queue on which to listen for incoming messages */
-  private final static String QUEUE_NAME = "hello";
-
-  /** The queue on which to forward messages */
-  private final static String OUT_QUEUE = "update";
-
   private final static String LOG_QUEUE = "log";
 
   private enum DBs {Neo4j, Titan};
   
   /**
-   * Main function starts listening on QUEUE_NAME, and loops indefinitely
+   * Main function starts listening on org.renci.databridge.primaryQueue , and loops indefinitely
    * waiting for anh messeges, forwarding them without modification
    */
   public static void main(String[] args) throws Exception{
 
     String DB = "Neo4j";
     String path = "data/";
+    String primaryQueue = "primary";
+    String updateQueue = "update";
 
     try{
        Properties prop = new Properties();
        prop.load(new FileInputStream("db.conf"));
        DB = prop.getProperty("org.renci.databridge.databaseType");
        path = prop.getProperty("org.renci.databridge.databasePath");
+       primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue");
+       updateQueue = prop.getProperty("org.renci.databridge.updateQueue");
     } catch (IOException ex){ }
 
     System.out.println(" database: " + DB);
@@ -81,7 +79,8 @@ public class RMQListener{
     System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
     QueueingConsumer consumer = new QueueingConsumer(channel);
-    channel.basicConsume(QUEUE_NAME, true, consumer);
+    channel.queueDeclare(primaryQueue, true, false, false, null);
+    channel.basicConsume(primaryQueue, true, consumer);
 
     while (true) {
       QueueingConsumer.Delivery delivery = consumer.nextDelivery();
@@ -92,18 +91,18 @@ public class RMQListener{
       //Runtime.getRuntime().exec("./runHandler");
       switch(type){
       case Titan:
-        new MessageHandler<TitanGraph>((TitanGraph) dbService).start();
+        new MessageHandler<TitanGraph>((TitanGraph) dbService, updateQueue).start();
       break;
       case Neo4j:
-        new MessageHandler<GraphDatabaseService>((GraphDatabaseService) dbService).start();
+        new MessageHandler<GraphDatabaseService>((GraphDatabaseService) dbService, updateQueue).start();
       break;
       }
       //ProcessBuilder pb = new ProcessBuilder("./runHandler");
       //pb.redirectErrorStream(true);
       //pb.start();
       // Declaration is idempotent, so no need to worry about whether or not it is already there.
-      channel.queueDeclare(OUT_QUEUE, false, false, false, null);
-      channel.basicPublish("", OUT_QUEUE, null, message.getBytes());
+      channel.queueDeclare(updateQueue, true, false, false, null);
+      channel.basicPublish("", updateQueue, null, message.getBytes());
       logger.publish("Listener: msg forwarded");
       System.out.println("forwarded " + message);
     }

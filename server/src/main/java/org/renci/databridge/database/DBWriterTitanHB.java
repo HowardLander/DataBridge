@@ -5,6 +5,7 @@ import com.thinkaurelius.titan.graphdb.configuration.*;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.*;
 import org.apache.commons.configuration.*;
+import org.renci.databridge.util.AMQPLogger;
 import java.util.*;
 
 /**
@@ -38,7 +39,7 @@ public class DBWriterTitanHB extends DBWriter {
     nodes = new ArrayList<Vertex>();
   }
 
-  public int writeNode(DBNode n){
+  public int writeNode(DBNode n, AMQPLogger logger){
     int status = -1;
     Vertex v;
 

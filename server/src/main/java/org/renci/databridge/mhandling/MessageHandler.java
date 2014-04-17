@@ -23,13 +23,15 @@ public class MessageHandler<T> extends Thread{
   private final static String LOG_QUEUE = "log";
 
   private T dbService;
+  private String updateQueue;
 
   public void setB(T graphDB){
     dbService = graphDB;
   }
 
-  public MessageHandler(T dbService){
+  public MessageHandler(T dbService, String _updateQueue){
     setB(dbService);
+    updateQueue = _updateQueue;
   }
  
   /**
@@ -70,7 +72,7 @@ public class MessageHandler<T> extends Thread{
 
     //Consume message and store file information
     QueueingConsumer consumer = new QueueingConsumer(channel);
-    channel.basicConsume(QUEUE_NAME, false, consumer);
+    channel.basicConsume(updateQueue, false, consumer);
     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
     logger.publish("Handler: msg received");
     channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
