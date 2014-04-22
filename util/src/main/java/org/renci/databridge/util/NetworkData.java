@@ -80,7 +80,7 @@ public class NetworkData {
         datasets = new  ArrayList<Dataset>();
         similarityMatrix = null;
         this.arraySize = 0;
-	this.dbID = dbID;
+        this.dbID = dbID;
      }
 
      /**
@@ -123,7 +123,7 @@ public class NetworkData {
         properties = new HashMap<String, String>();
         datasets = new  ArrayList<Dataset>();
         arraySize = values.length;
-	this.dbID = dbID;
+        this.dbID = dbID;
      }
 
      /**
@@ -210,8 +210,8 @@ public class NetworkData {
              }
 
              // Read the dbID using the Kryo StringSerializer class
-	     StringSerializer theStringSerializer = new StringSerializer();
-	     this.dbID = kryo.readObject(input, String.class, theStringSerializer);
+             StringSerializer theStringSerializer = new StringSerializer();
+             this.dbID = kryo.readObject(input, String.class, theStringSerializer);
 
              // Read the properties using the Kryo MapSerializer class
              MapSerializer theSerializer = new MapSerializer();
@@ -363,7 +363,7 @@ public class NetworkData {
       */
      public String getDbID()
      {
-	 return dbID;
+         return dbID;
      }
 
      /**
@@ -373,7 +373,7 @@ public class NetworkData {
       */
      public void setDbID(String dbID)
      {
-	 this.dbID = dbID;
+         this.dbID = dbID;
      }
 
      /**
@@ -381,7 +381,7 @@ public class NetworkData {
       *
       * @return datasets as ArrayList.
       */
-     public ArrayList getDatasets()
+     public ArrayList<Dataset> getDatasets()
      {
          return datasets;
      }

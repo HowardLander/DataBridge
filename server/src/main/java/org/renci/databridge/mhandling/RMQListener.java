@@ -24,6 +24,11 @@ public class RMQListener{
   private final static String LOG_QUEUE = "log";
 
   private enum DBs {Neo4j, Titan};
+
+  private static String DB;
+  private static String path;
+  private static String primaryQueue;
+  private static String updateQueue;
   
   /**
    * Main function starts listening on org.renci.databridge.primaryQueue , and loops indefinitely
@@ -31,18 +36,14 @@ public class RMQListener{
    */
   public static void main(String[] args) throws Exception{
 
-    String DB = "Neo4j";
-    String path = "data/";
-    String primaryQueue = "primary";
-    String updateQueue = "update";
 
-    try{
+    try {
        Properties prop = new Properties();
        prop.load(new FileInputStream("db.conf"));
-       DB = prop.getProperty("org.renci.databridge.databaseType");
-       path = prop.getProperty("org.renci.databridge.databasePath");
-       primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue");
-       updateQueue = prop.getProperty("org.renci.databridge.updateQueue");
+       DB = prop.getProperty("org.renci.databridge.databaseType", "Neo4j");
+       path = prop.getProperty("org.renci.databridge.databasePath", "data/");
+       primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
+       updateQueue = prop.getProperty("org.renci.databridge.updateQueue", "update");
     } catch (IOException ex){ }
 
     System.out.println(" database: " + DB);
@@ -87,8 +88,7 @@ public class RMQListener{
       String message = new String(delivery.getBody());
       System.out.println("received " + message);
       logger.publish("Listener: msg received");
-      //Runtime.getRuntime().exec("mvn exec:java -Dexec.mainClass='org.renci.databridge.mhandling.MessageHandler'");
-      //Runtime.getRuntime().exec("./runHandler");
+
       switch(type){
       case Titan:
         new MessageHandler<TitanGraph>((TitanGraph) dbService, updateQueue).start();

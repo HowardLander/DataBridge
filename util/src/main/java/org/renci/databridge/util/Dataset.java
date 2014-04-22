@@ -30,7 +30,7 @@ public class Dataset {
 
      /** A map to store properties such as the name of the dataset.
          Automatically includes URI, handle, and name - additional properties
-	 added via addProperty(String, String) */
+         added via addProperty(String, String) */
      private HashMap<String, String> properties;
 
 
@@ -38,7 +38,7 @@ public class Dataset {
       * Dataset constructor with no arguments.
       */
      public Dataset() {
-	properties = new HashMap<String, String>();
+        properties = new HashMap<String, String>();
      }
 
      /**
@@ -50,7 +50,7 @@ public class Dataset {
       *  @param  name The name for the dataset.
       */
      public Dataset(String URI, String handle, String name) {
-	 this(URI, handle, name, handle);
+         this(URI, handle, name, handle);
      }
 
      /**
@@ -65,11 +65,11 @@ public class Dataset {
          this.URI = URI;
          this.handle = handle;
          this.name = name;
-	 this.dbID = dbID;
-	 properties = new HashMap<String, String>();
-	 properties.put("URI", URI);
-	 properties.put("handle", handle);
-	 properties.put("name", name);
+         this.dbID = dbID;
+         properties = new HashMap<String, String>();
+         properties.put("URI", URI);
+         properties.put("handle", handle);
+         properties.put("name", name);
      }
 
 
