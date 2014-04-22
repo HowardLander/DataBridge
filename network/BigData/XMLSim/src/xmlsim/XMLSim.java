@@ -5,6 +5,7 @@
 package xmlsim;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -32,16 +33,20 @@ public class XMLSim {
     private static String[] arr;
     private static double[][] data;
     
-    //Ren Bauer - queue name to send message to listener after file is written
-    private static String QUEUE_NAME = "hello";
+    private static String primaryQueue;
     
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
+
+       try {
+           Properties prop = new Properties();
+           prop.load(new FileInputStream("xmlsim.conf"));
+           primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
+        } catch (IOException ex){ }
+
         Parser p = new Parser();
-        //parseWithSax("harris.xml", p);
-        //parseWithSax("odum.xml", p);
         parseWithSax("OAI_Odum_Harris.xml", p);
         System.out.println(p.getParsed());
         System.out.println("****************************");
@@ -111,41 +116,8 @@ public class XMLSim {
             e.printStackTrace();
         }
           
-        /* Deprecated writing to file code
-        int maxLen = 0;
-        for (String x : arr) {
-            try {
-                maxLen = Math.max(maxLen, x.length());
-            } catch (Exception e) {
-                //ignore
-            }
-        }
-        sbFull.append("[");
-       
-        for (int i = 0; i < data.length; i++) {
-            if (arr[i] == null)
-                continue;
-            StringBuilder sbLine = new StringBuilder();
-            sbLine.append("[").append(arr[i]);
-            for (int n = 0; n < maxLen - arr[i].length(); n++) {
-                sbLine.append(" ");
-            }
-            sbLine.append(":");
-            for (int j = 0; j < data[i].length; j++) {
-                sbLine.append(" ").append(String.format("%.6f", data[i][j]));
-            }
-            sbLine.append("]");
-            sbFull.append(sbLine).append("\r\n");
-        }
-        sbFull.append("]");
-        PrintWriter writer = new PrintWriter("sims.txt", "UTF-8");
-        writer.append(sbFull);
-        writer.close();
-        */
-        //End Ren's Editions
         
-        //Code by Ren Bauer to send message to messagehandler (via RabbitMQ)
-        
+        //Code by send message to messagehandler (via RabbitMQ)
         String path = System.getProperty("user.dir") + "/sims.txt";
         String message = MessageTypes.NETWORK + ":file://localhost" + path;
 
@@ -155,7 +127,7 @@ public class XMLSim {
 	        Connection connection = factory.newConnection();
 	        Channel channel = connection.createChannel();
 	
-	        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+	        channel.basicPublish("", primaryQueue, null, message.getBytes());
 
 	        channel.close();
 	        connection.close();
