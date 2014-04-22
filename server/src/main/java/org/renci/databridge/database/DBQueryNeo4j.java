@@ -74,7 +74,7 @@ public class DBQueryNeo4j implements DBQuery{
       }
       tx.success();
     } finally {
-      tx.finish();
+      tx.close();
     }
 
     switch(status){
