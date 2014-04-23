@@ -341,7 +341,7 @@ public class NetworkData {
       *
       * @return properties as Map.
       */
-     public Map getProperties()
+     public Map<String,String>  getProperties()
      {
          return properties;
      }
