@@ -16,18 +16,7 @@ public abstract class DBWriter{
    * Maintain a list of nodes added by this writer for easy reference
    * (Very useful when adding edges between new nodes)
    */
-  List nodes;
-/*
-  public int write(DBObject o){
-    if(o.type == DBObject.NODE){
-      return writeNode((DBNode) o);
-    }
-    else if(o.type == DBObject.EDGE){
-      return writeEdge((DBEdge) o);
-    }
-    return -1;
-  }
-*/
+  ArrayList nodes;
   
   /**
    * Write a node to the database: If a node with the same label and dbID
@@ -56,15 +45,5 @@ public abstract class DBWriter{
    * Shut down the database transaction instance
    */
   public abstract void shutDown();
-
-  /**
-   * Ensure the nodes list is long enough to include the current node: 
-   * nodes are provided with an index, so appending to the end of the list
-   * may cause issues if nodes are provided out of order
-   */
-  public void ensureRoom(int index){
-    while(nodes.size() < index)
-      nodes.add(null);
-  }
 
 }

@@ -21,7 +21,6 @@ import org.renci.databridge.util.*;
 
 public class RMQListener{
 
-  private final static String LOG_QUEUE = "log";
 
   private enum DBs {Neo4j, Titan};
 
@@ -29,6 +28,7 @@ public class RMQListener{
   private static String path;
   private static String primaryQueue;
   private static String updateQueue;
+  private static String logQueue;
   
   /**
    * Main function starts listening on org.renci.databridge.primaryQueue , and loops indefinitely
@@ -44,6 +44,7 @@ public class RMQListener{
        path = prop.getProperty("org.renci.databridge.databasePath", "data/");
        primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
        updateQueue = prop.getProperty("org.renci.databridge.updateQueue", "update");
+       logQueue = prop.getProperty("org.renci.databridge.logQueue", "log");
     } catch (IOException ex){ }
 
     System.out.println(" database: " + DB);
@@ -58,10 +59,11 @@ public class RMQListener{
         Runtime.getRuntime().addShutdownHook(new RMQShutdownHook<TitanGraph>((TitanGraph) dbService));
     } else if(DB.equals("Neo4j")){
         type = DBs.Neo4j;
-        //path += "neo4j/";
         dbService = new GraphDatabaseFactory().newEmbeddedDatabase(path);
         Runtime.getRuntime().addShutdownHook(new RMQShutdownHook<GraphDatabaseService>((GraphDatabaseService) dbService));
-    } else throw new Exception("Invalid database specified in properties");
+    } else {
+       throw new Exception("Invalid database specified in properties");
+    }
   
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost("localhost");
@@ -72,7 +74,7 @@ public class RMQListener{
     AMQPLogger logger = new AMQPLogger();
     logger.setTheExchange("");
     logger.setTheChannel(channel);
-    logger.setTheQueue(LOG_QUEUE);
+    logger.setTheQueue(logQueue);
     logger.publish("DataBridge listener initiated");
     logger.publish("database type: " + DB);
     logger.publish("database path: " + path);
@@ -91,20 +93,12 @@ public class RMQListener{
 
       switch(type){
       case Titan:
-        new MessageHandler<TitanGraph>((TitanGraph) dbService, updateQueue).start();
+        new MessageHandler<TitanGraph>((TitanGraph) dbService, message, channel, logQueue).start();
       break;
       case Neo4j:
-        new MessageHandler<GraphDatabaseService>((GraphDatabaseService) dbService, updateQueue).start();
+        new MessageHandler<GraphDatabaseService>((GraphDatabaseService) dbService, message, channel, logQueue).start();
       break;
       }
-      //ProcessBuilder pb = new ProcessBuilder("./runHandler");
-      //pb.redirectErrorStream(true);
-      //pb.start();
-      // Declaration is idempotent, so no need to worry about whether or not it is already there.
-      channel.queueDeclare(updateQueue, true, false, false, null);
-      channel.basicPublish("", updateQueue, null, message.getBytes());
-      logger.publish("Listener: msg forwarded");
-      System.out.println("forwarded " + message);
     }
   }
 }

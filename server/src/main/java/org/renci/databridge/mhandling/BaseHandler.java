@@ -14,11 +14,10 @@ public interface BaseHandler{
    * Handle the message appropriately as per its file type
    *
    * @param msg The original message minus the filetype and delimiting colon
-   * @param channel The output rabbitMQ channel for sending messages
    * @param logger The AMQPLogger for log messages
    *
    * @return The message to return to original sender. Null for no response.
    */
-  public String handle(String msg, Channel channel, AMQPLogger logger) throws Exception;
+  public String handle(String msg, AMQPLogger logger) throws Exception;
 
 }

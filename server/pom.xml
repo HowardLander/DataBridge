@@ -105,6 +105,7 @@
           <target>1.5</target>
           <compilerArgs>
              <arg>-Xlint:deprecation</arg>
+             <arg>-Xlint:unchecked</arg>
           </compilerArgs>
         </configuration>
       </plugin>

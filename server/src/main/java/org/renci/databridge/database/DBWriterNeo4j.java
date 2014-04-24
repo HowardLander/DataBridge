@@ -44,7 +44,7 @@ public class DBWriterNeo4j extends DBWriter{
           node.setProperty(prop[0], prop[1]);
       }
 
-      ensureRoom(n.index);
+      nodes.ensureCapacity(n.index);
       nodes.add(n.index, node);
       tx.success();
       status = 0;

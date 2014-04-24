@@ -31,12 +31,11 @@ public class NetworkHandler<T> implements BaseHandler {
    * from the URL contained in the message, parsed, and entered into the database.
    *
    * @param msg The original message minus the filetype and delimiting colon
-   * @param channel The output rabbitMQ channel for sending messages
    * @param logger THE AMQPLogger to which messages go.
    *
    * @return The message to return to sender. Null for no response.
    */
-  public String handle(String msg, Channel channel, AMQPLogger logger) throws Exception{
+  public String handle(String msg, AMQPLogger logger) throws Exception{
 
     String fileLoc = msg;
 
@@ -66,7 +65,8 @@ public class NetworkHandler<T> implements BaseHandler {
       for(Dataset d : datasets){
         dbw.writeNode(new DBNode(i++, "dataset", d.getDbID(), makeProps(d.getProperties())), logger);
       }
-      String[][] edgeProps = makeProps(retriever.getProperties());
+      Map<String,String> retrievedProps = (Map<String,String>) retriever.getProperties();
+      String[][] edgeProps = makeProps(retrievedProps);
       String edgeID = retriever.getDbID();
       logger.publish("Handler: edge ID = " + edgeID);
       RCDoubleMatrix2D similMx = retriever.getSimilarityMatrix();

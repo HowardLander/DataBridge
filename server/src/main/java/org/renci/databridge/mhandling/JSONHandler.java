@@ -19,16 +19,13 @@ public class JSONHandler implements BaseHandler{
    * sent with the information requested.
    *
    * @param msg The original message minus the filetype and delimiting colon
-   * @param channel The output rabbitMQ channel for sending messages
    * @param logger The AMQPLogger on which to send log messages
    *
    * @return The message to return to original sender.
    */
-  public String handle(String msg, Channel channel, AMQPLogger logger) throws Exception{
+  public String handle(String msg, AMQPLogger logger) throws Exception{
     JSONParser parser = new JSONParser();
     Object obj = parser.parse(msg);
-    //JSONObject req = (JSONObject) obj;
-    //JSONArray 
     return null;
   }
  

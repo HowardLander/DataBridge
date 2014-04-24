@@ -202,7 +202,7 @@ public class DBQueryNeo4j implements DBQuery{
    * @return The number of elements in the iterable.
    */
   private int iterableSize(Iterable i){
-    Iterator<Object> ir = i.iterator();
+    Iterator ir = i.iterator();
     int o = 0;
     while(ir.hasNext()){
       ir.next();
