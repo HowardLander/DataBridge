@@ -29,6 +29,7 @@ public class RMQListener{
   private static String primaryQueue;
   private static String updateQueue;
   private static String logQueue;
+  private static int    logLevel;
   
   /**
    * Main function starts listening on org.renci.databridge.primaryQueue , and loops indefinitely
@@ -45,6 +46,7 @@ public class RMQListener{
        primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
        updateQueue = prop.getProperty("org.renci.databridge.updateQueue", "update");
        logQueue = prop.getProperty("org.renci.databridge.logQueue", "log");
+       logLevel = Integer.parseInt(prop.getProperty("org.renci.databridge.logLevel", "4"));
     } catch (IOException ex){ }
 
     System.out.println(" database: " + DB);
@@ -75,9 +77,10 @@ public class RMQListener{
     logger.setTheExchange("");
     logger.setTheChannel(channel);
     logger.setTheQueue(logQueue);
-    logger.publish("DataBridge listener initiated");
-    logger.publish("database type: " + DB);
-    logger.publish("database path: " + path);
+    logger.setTheLevel(logLevel);
+    logger.publish(AMQPLogger.LOG_INFO,"DataBridge listener initiated");
+    logger.publish(AMQPLogger.LOG_INFO,"database type: " + DB);
+    logger.publish(AMQPLogger.LOG_INFO,"database path: " + path);
 
     System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
@@ -89,14 +92,14 @@ public class RMQListener{
       QueueingConsumer.Delivery delivery = consumer.nextDelivery();
       String message = new String(delivery.getBody());
       System.out.println("received " + message);
-      logger.publish("Listener: msg received");
+      logger.publish(AMQPLogger.LOG_INFO,"Listener: msg received");
 
       switch(type){
       case Titan:
-        new MessageHandler<TitanGraph>((TitanGraph) dbService, message, channel, logQueue).start();
+        new MessageHandler<TitanGraph>((TitanGraph) dbService, message, channel, logQueue, logLevel).start();
       break;
       case Neo4j:
-        new MessageHandler<GraphDatabaseService>((GraphDatabaseService) dbService, message, channel, logQueue).start();
+        new MessageHandler<GraphDatabaseService>((GraphDatabaseService) dbService, message, channel, logQueue, logLevel).start();
       break;
       }
     }

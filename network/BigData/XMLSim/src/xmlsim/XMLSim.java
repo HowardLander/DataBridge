@@ -34,6 +34,8 @@ public class XMLSim {
     private static double[][] data;
     
     private static String primaryQueue;
+    private static String logQueue;
+    private static int    logLevel;
     
     /**
      * @param args the command line arguments
@@ -44,6 +46,8 @@ public class XMLSim {
            Properties prop = new Properties();
            prop.load(new FileInputStream("xmlsim.conf"));
            primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
+           logQueue = prop.getProperty("org.renci.databridge.logQueue", "log");
+           logLevel = Integer.parseInt(prop.getProperty("org.renci.databridge.logLevel", "4"));
         } catch (IOException ex){ }
 
         Parser p = new Parser();

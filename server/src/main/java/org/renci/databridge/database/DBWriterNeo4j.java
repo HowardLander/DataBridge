@@ -29,11 +29,11 @@ public class DBWriterNeo4j extends DBWriter{
     try{
       Iterator<Node> candidates = graphDb.findNodesByLabelAndProperty(label, "dbID", n.dbID).iterator();
       if(candidates.hasNext()){
-        logger.publish("Found node for dbID " + n.dbID);
+        logger.publish(AMQPLogger.LOG_DEBUG, "Found node for dbID " + n.dbID);
         node = candidates.next();
       }
       else{
-        logger.publish("no node found, will create using label " + n.label);
+        logger.publish(AMQPLogger.LOG_DEBUG, "no node found, will create using label " + n.label);
         node = graphDb.createNode();
         node.addLabel(label);
         node.setProperty("dbID", n.dbID);

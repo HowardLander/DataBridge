@@ -39,24 +39,24 @@ public class NetworkHandler<T> implements BaseHandler {
 
     String fileLoc = msg;
 
-    logger.publish("Handler: file location determined: " + msg);
+    logger.publish(AMQPLogger.LOG_INFO, "Handler: file location determined: " + msg);
 
     NetworkData retriever = new NetworkData();
     try{
       retriever.populateFromURL(fileLoc);
-      logger.publish("Handler: Populated from URL: id is " + retriever.getDbID());
+      logger.publish(AMQPLogger.LOG_INFO, "Handler: Populated from URL: id is " + retriever.getDbID());
     }
     catch (IOException e){
-      logger.publish("Handler: ERROR - Invalid filename");
+      logger.publish(AMQPLogger.LOG_ERR, "Handler: ERROR - Invalid filename");
       System.exit(0);
     }
 
     DBWriter dbw = null;
     if(dbService instanceof GraphDatabaseService) {
-      logger.publish("Handler: using Neo4j");
+      logger.publish(AMQPLogger.LOG_INFO, "Handler: using Neo4j");
       dbw = new DBWriterNeo4j((GraphDatabaseService) dbService);
     } else if(dbService instanceof TitanGraph) {
-      logger.publish("Handler: using Titan");
+      logger.publish(AMQPLogger.LOG_INFO, "Handler: using Titan");
       dbw = new DBWriterTitanHB((TitanGraph) dbService);
     }
     try{
@@ -68,9 +68,9 @@ public class NetworkHandler<T> implements BaseHandler {
       Map<String,String> retrievedProps = (Map<String,String>) retriever.getProperties();
       String[][] edgeProps = makeProps(retrievedProps);
       String edgeID = retriever.getDbID();
-      logger.publish("Handler: edge ID = " + edgeID);
+      logger.publish(AMQPLogger.LOG_INFO, "Handler: edge ID = " + edgeID);
       RCDoubleMatrix2D similMx = retriever.getSimilarityMatrix();
-      logger.publish("Handler: Dimension of similarity matrix is  " + similMx.columns());
+      logger.publish(AMQPLogger.LOG_INFO, "Handler: Dimension of similarity matrix is  " + similMx.columns());
       for(int y = 0; y < similMx.columns(); y++){
         for(int x = 0; x < similMx.rows(); x++){
           if(x != y){
@@ -91,7 +91,7 @@ public class NetworkHandler<T> implements BaseHandler {
       makeJSON(retriever);
     }
     catch (JSONException e){
-      logger.publish("Handler: JSON creation failed - JSONException");
+      logger.publish(AMQPLogger.LOG_ERR, "Handler: JSON creation failed - JSONException");
     }
     catch (IOException e){
       String trace = e.toString();
@@ -99,11 +99,11 @@ public class NetworkHandler<T> implements BaseHandler {
         trace += "\n" + e.getStackTrace()[i].toString();
       }
 
-      logger.publish("Handler: JSON creation failed - IOException " + trace);
+      logger.publish(AMQPLogger.LOG_ERR, "Handler: JSON creation failed - IOException " + trace);
     }
    //End temporary JSON code
 
-    logger.publish("Handler: complete");
+    logger.publish(AMQPLogger.LOG_INFO, "Handler: complete");
 
     return null;
 

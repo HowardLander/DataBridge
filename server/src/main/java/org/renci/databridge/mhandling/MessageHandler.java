@@ -23,16 +23,18 @@ public class MessageHandler<T> extends Thread{
   private String  logQueue;
   private Channel logChannel;
   private String  message;
+  private int     logLevel;
 
   public void setB(T graphDB){
     dbService = graphDB;
   }
 
-  public MessageHandler(T dbService, String _message, Channel _channel, String _logQueue){
+  public MessageHandler(T dbService, String _message, Channel _channel, String _logQueue, int _logLevel){
     setB(dbService);
     message = _message;
     logChannel = _channel;
     logQueue = _logQueue;
+    logLevel = _logLevel;
   }
  
   /**
@@ -59,11 +61,12 @@ public class MessageHandler<T> extends Thread{
     logger.setTheExchange("");
     logger.setTheChannel(logChannel);
     logger.setTheQueue(logQueue);
+    logger.setTheLevel(logLevel);
     
-    logger.publish("Handler: initiated");
+    logger.publish(AMQPLogger.LOG_INFO, "Handler: initiated");
 
     String[] msgParts = message.split(":", 2);
-    logger.publish("Handler: message split - size: " + msgParts.length);
+    logger.publish(AMQPLogger.LOG_DEBUG, "Handler: message split - size: " + msgParts.length);
     int msgType;
     if(msgParts.length < 2){
       msgType = MessageTypes.NONE;
@@ -74,12 +77,12 @@ public class MessageHandler<T> extends Thread{
       message = msgParts[1];
     }
 
-    logger.publish("Handler: message type determined - " + msgType);
+    logger.publish(AMQPLogger.LOG_DEBUG, "Handler: message type determined - " + msgType);
 
     BaseHandler handler;
     switch(msgType){
       case MessageTypes.NONE:
-        logger.publish("Handler: No message type found: Ensure message type is defined for all messages in the form '{type}:{message}'");
+        logger.publish(AMQPLogger.LOG_ERR, "Handler: No message type found: Ensure message type is defined for all messages in the form '{type}:{message}'");
         return;
       case MessageTypes.NETWORK:
         handler = new NetworkHandler<T>(dbService);
@@ -91,11 +94,11 @@ public class MessageHandler<T> extends Thread{
         handler = new ErrorHandler();
       break;
       default:
-        logger.publish("Handler: Unknown message type : " + msgType);
+        logger.publish(AMQPLogger.LOG_ERR, "Handler: Unknown message type : " + msgType);
         return;
     }
 
-    logger.publish("Handler: BaseHandler initiated");
+    logger.publish(AMQPLogger.LOG_INFO, "Handler: BaseHandler initiated");
 
     try{
       handler.handle(message, logger);
@@ -106,7 +109,7 @@ public class MessageHandler<T> extends Thread{
       for(int i = 0; i < e.getStackTrace().length; i++){
         trace += "\n" + e.getStackTrace()[i].toString();
       }
-      logger.publish("Handler: ERROR " + trace);
+      logger.publish(AMQPLogger.LOG_ERR, "Handler: ERROR " + trace);
     }
   }
 }

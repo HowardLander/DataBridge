@@ -28,6 +28,20 @@ public class AMQPLogger {
      /** The AMQP exchange for this logger */
      private String theExchange;
 
+     /** The logging level for this logger.  Any message
+         <= this level will be queued*/
+     private int theLevel = 4;
+
+     /** The static logging levels */
+     public static final int LOG_EMERG =   0;
+     public static final int LOG_ALERT =   1;
+     public static final int LOG_CRIT  =   2;
+     public static final int LOG_ERR   =   3;
+     public static final int LOG_WARNING = 4;
+     public static final int LOG_NOTICE =  5;
+     public static final int LOG_INFO =    6;
+     public static final int LOG_DEBUG =   7;
+
      /**
       * AMQPLogger constructor with no arguments.
       */
@@ -40,11 +54,13 @@ public class AMQPLogger {
       *  @param  _theQueue The queue for this logger
       *  @param  _theHost  The host for this logger
       *  @param  _theExchange  The exchange for this logger, often set to ""
+      *  @param  _theLevel  The level for the logger
       */
-     public AMQPLogger(String _theQueue, String _theHost, String _theExchange) {
+     public AMQPLogger(String _theQueue, String _theHost, String _theExchange, int _theLevel) {
          theHost = _theHost;
          theQueue = _theQueue;
          theExchange = _theExchange;
+         theLevel = _theLevel;
 
          try {
              ConnectionFactory theFactory = new ConnectionFactory();
@@ -59,26 +75,29 @@ public class AMQPLogger {
      /**
       *  Code to publish a message to the log queue.
       *
-      *  @param  _theMessage The user provided message.
+      *  @param  thisLevel The level for this message provided message.
+      *  @param  theMessage The user provided message.
       */
-     public void publish(String theMessage) {
-         try {
-            // Let's format a date and time
-            Formatter myFormatter = new Formatter();
-            String myDate = myFormatter.format("%tc", new Date()).toString();
-
-            // We also want some stack info
-            String stackInfo = new Throwable().getStackTrace()[1].getFileName() + ":" + 
-                               new Throwable().getStackTrace()[1].getLineNumber();
+     public void publish(int thisLevel, String theMessage) {
+         if (thisLevel <= theLevel) {
+            try {
+               // Let's format a date and time
+               Formatter myFormatter = new Formatter();
+               String myDate = myFormatter.format("%tc", new Date()).toString();
+   
+               // We also want some stack info
+               String stackInfo = new Throwable().getStackTrace()[1].getFileName() + ":" + 
+                                  new Throwable().getStackTrace()[1].getLineNumber();
        
-            String formattedMessage = new String("    " + theMessage);
-            String logMessage = myDate + " " + stackInfo;
-            theChannel.basicPublish(theExchange, theQueue, null, logMessage.getBytes());
-            theChannel.basicPublish(theExchange, theQueue, null, formattedMessage.getBytes());
-
-         } catch (Exception e){
-            // Not much we can do with the exception ...
-            e.printStackTrace();
+               String formattedMessage = new String("    " + theMessage);
+               String logMessage = myDate + " " + stackInfo;
+               theChannel.basicPublish(theExchange, theQueue, null, logMessage.getBytes());
+               theChannel.basicPublish(theExchange, theQueue, null, formattedMessage.getBytes());
+   
+            } catch (Exception e){
+               // Not much we can do with the exception ...
+               e.printStackTrace();
+            }
          }
      }
 
@@ -181,5 +200,25 @@ public class AMQPLogger {
      public void setTheExchange(String theExchange)
      {
          this.theExchange = theExchange;
+     }
+     
+     /**
+      * Get level.
+      *
+      * @return level as int.
+      */
+     public int getTheLevel()
+     {
+         return theLevel;
+     }
+     
+     /**
+      * Set level.
+      *
+      * @param level the value to set.
+      */
+     public void setTheLevel(int theLevel)
+     {
+         this.theLevel = theLevel;
      }
 }
