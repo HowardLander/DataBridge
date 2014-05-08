@@ -18,6 +18,12 @@ http://windows.github.com/
 
 search for repository HowardLander/DataBridge and clone from there
 
+To Setup
+
+Customize the config files as follows:
+
+Edit DataBridge/network/BigData/XMLSim/xmlsim.conf
+Edit DataBridge/server/db.conf
 
 To Install (requires maven):
 
@@ -44,19 +50,29 @@ mvn -e exec:java -D exec.mainClass=xmlsim.XMLSim
 
 This class currently operates on an XML file, the location of which is hardcoded
 
-To run Ren's rabbitMQ listening server:
+To run the rabbitMQ listening server:
 
-First, a rabbitMQ server must be running, for information on how to set up a rabbitMQ server go to
-http://www.rabbitmq.com/download.html
+First, a rabbitMQ server must be running, there's an init script in /etc/init.d
 
-next, use the following command from the server directory
+Examples:
+
+# status
+sudo /etc/init.d/rabbitmq-server status
+
+# start 
+sudo /etc/init.d/rabbitmq-server start
+
+# stop 
+sudo /etc/init.d/rabbitmq-server stop
+
+next, use the following command from the server directory to run the listener
 
 mvn -e exec:java -D exec.mainClass=org.renci.databridge.mhandling.RMQListener
 
 
-To Test:
+To run the producer (written by Xing Fang at NCAT and altered to use the queues by us)
 
-Xing's code can be tested using the following command from the XMLSim directory:
+from the XMLSim directory:
 
 mvn test -Dtest=similarity.MeasureTest
 
@@ -65,3 +81,13 @@ Howard's network classes and Ren's code can be tested using the following comman
 mvn test
 
 for more information on tests please see 'test_readme.txt' in the server directory
+
+to see the logs, we have a simple low queue reader.  It's in DataBridge/tools/python
+
+example usage:
+
+./logs.py -s localhost -q log
+
+The last argument is whatever you set the value of org.renci.databridge.logQueue 
+
+Note that, as of this writing the XMLSim program doesn't write to the log...
