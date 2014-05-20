@@ -1,0 +1,158 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.renci.databridge</groupId>
+  <artifactId>databridge</artifactId>
+  <packaging>pom</packaging>
+  <name>DataBridge</name>
+  <version>1.0-BETA</version>
+
+  <modules>
+    <module>util</module>
+    <module>network</module>
+    <module>server</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>prime-repo</id>
+      <name>PrimeFaces Maven Repository</name>
+      <url>http://repository.primefaces.org</url>
+      <layout>default</layout>
+    </repository>
+    <repository>
+<!--        <id>DataBridge-mvn-repo</id> -->
+<!--        <url>https://raw.github.com/HowardLander/DataBridge/mvn-repo</url> -->
+        <id>github</id>
+        <url>https://github.com/HowardLander/DataBridge/blob/mvn-repo</url>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
+    </repository>
+  </repositories>
+
+  <!-- distributionManagement>
+    <repository>
+        <id>internal.repo</id>
+        <name>Temporary Staging Repository</name>
+        <url>file://${project.build.directory}/mvn-repo</url>
+    </repository>
+  </distributionManagement -->
+
+  <dependencies>
+    <dependency>
+      <groupId>com.googlecode.matrix-toolkits-java</groupId>
+      <artifactId>mtj</artifactId>
+      <version>0.9.14</version>
+    </dependency>
+    <dependency>
+      <groupId>com.rabbitmq</groupId>
+      <artifactId>amqp-client</artifactId>
+      <version>3.0.4</version>
+    </dependency>
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.7</version>
+    </dependency>
+    <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.16</version>
+    </dependency>
+    <dependency>
+        <groupId>colt</groupId>
+        <artifactId>colt</artifactId>
+        <version>1.0.3</version>
+    </dependency>
+    <dependency>
+        <groupId>com.esotericsoftware.kryo</groupId>
+        <artifactId>kryo</artifactId>
+        <version>2.16</version>
+    </dependency>
+    <dependency>
+      <groupId>com.thinkaurelius.titan</groupId>
+      <artifactId>titan-all</artifactId>
+      <version>0.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.neo4j</groupId>
+      <artifactId>neo4j</artifactId>
+      <version>2.0.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.neo4j</groupId>
+      <artifactId>neo4j-utils</artifactId>
+      <version>1.3-1.3.M01</version>
+    </dependency>
+    <dependency>
+      <groupId>org.neo4j</groupId>
+      <artifactId>neo4j-kernel</artifactId>
+      <version>2.0.1</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>DataBridgeServer</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9</version>
+        <configuration>
+            <links>
+                <link>http://download.oracle.com/javase/6/docs/api/</link>
+                <link>http://commons.apache.org/logging/apidocs/</link>
+                <link>http://commons.apache.org/io/apidocs/</link>
+                <link>http://commons.apache.org/lang/apidocs/</link>
+                <link>http://www.junit.org/junit/javadoc/</link>
+                <link>http://logging.apache.org/log4j/docs/api/</link>
+                <link>http://velocity.apache.org/engine/devel/apidocs/</link>
+                <link>http://acs.lbl.gov/software/colt/api</link>
+            </links>
+            <show>private</show>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+          <compilerArgs>
+             <arg>-Xlint:deprecation</arg>
+             <arg>-Xlint:unchecked</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <configuration>
+          <properties>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            <timestamp>${maven.build.timestamp}</timestamp>
+            <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+          </properties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8.1</version>
+        <configuration>
+            <altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

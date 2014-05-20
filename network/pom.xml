@@ -1,62 +1,43 @@
 <project>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.RENCI.app</groupId>
-  <artifactId>XMLTest</artifactId>
-  <version>1</version>
-  <properties>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
-  </properties>
-  <repositories>
-    <repository>
-<!--        <id>DataBridge-mvn-repo</id> -->
-<!--        <url>https://raw.github.com/HowardLander/DataBridge/mvn-repo</url> -->
-        <id>github</id>
-        <url>https://github.com/HowardLander/DataBridge/blob/mvn-repo</url>
-        <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>always</updatePolicy>
-        </snapshots>
-    </repository>
-  </repositories>
-  <dependencies>
-    <dependency>
-      <groupId>net.sf.jung</groupId>
-      <artifactId>jung-visualization</artifactId>
-      <version>2.0.1</version>
-    </dependency>
-    <dependency>
-      <groupId>net.sf.jung</groupId>
-      <artifactId>jung-graph-impl</artifactId>
-      <version>2.0.1</version>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-    </dependency>
-    <dependency>
-        <groupId>com.esotericsoftware.kryo</groupId>
-        <artifactId>kryo</artifactId>
-        <version>2.16</version>
-    </dependency>
-    <dependency>
-      <groupId>com.rabbitmq</groupId>
-      <artifactId>amqp-client</artifactId>
-      <version>3.0.4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.renci</groupId>
-      <artifactId>databridge-util</artifactId>
-      <version>1.0-BETA</version>
-    </dependency>
-  </dependencies>
-  <build>
-    <sourceDirectory>src</sourceDirectory>
-    <testResources>
-      <testResource>
-        <directory>test</directory>
-      </testResource>
-    </testResources>
-  </build>
+
+    <parent>
+       <groupId>org.renci.databridge</groupId>
+       <artifactId>databridge</artifactId>
+       <version>1.0-BETA</version>
+       <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.renci.databridge.network</groupId>
+    <artifactId>databridge-network</artifactId>
+    <name>DataBridge Network</name>
+    <version>1.0-BETA</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>net.sf.jung</groupId>
+            <artifactId>jung-visualization</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.jung</groupId>
+            <artifactId>jung-graph-impl</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.renci.databridge.util</groupId>
+            <artifactId>databridge-util</artifactId>
+            <version>1.0-BETA</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>test</directory>
+            </testResource>
+        </testResources>
+     </build>
+
 </project>
