@@ -18,11 +18,11 @@ http://windows.github.com/
 
 search for repository HowardLander/DataBridge and clone from there
 
-To Setup
+To Set Up
 
 Customize the config files as follows:
 
-Edit DataBridge/network/BigData/XMLSim/xmlsim.conf
+Edit DataBridge/network/xmlsim.conf
 Edit DataBridge/server/db.conf
 
 To Install (requires maven):
@@ -31,20 +31,14 @@ run the command:
 
 mvn compile
 
-in each of the following directories:
-
-DataBridge/server/
-DataBridge/network/BigData/XMLSim/
-
-(you should see a pom.xml in each of these directories)
+in the DataBridge/ directory
 
 information for setting up maven on windows can be found here:
 http://maven.apache.org/guides/getting-started/windows-prerequisites.html
 
+To Run
 
-To Run:
-
-To run Xing's distance generation code, use the following command from the XMLSim directory:
+To run Xing's distance generation code, use the following command from the network/ directory:
 
 mvn -e exec:java -D exec.mainClass=xmlsim.XMLSim
 
@@ -65,10 +59,9 @@ sudo /etc/init.d/rabbitmq-server start
 # stop 
 sudo /etc/init.d/rabbitmq-server stop
 
-next, use the following command from the server directory to run the listener
+next, use the following command from the DataBridge/ directory to run the listener:
 
-mvn -e exec:java -D exec.mainClass=org.renci.databridge.mhandling.RMQListener
-
+mvn -e exec:java -D exec.mainClass=org.renci.databridge.mhandling.MessageHandlingTest
 
 To run the producer (written by Xing Fang at NCAT and altered to use the queues by us)
 
@@ -86,7 +79,7 @@ to see the logs, we have a simple low queue reader.  It's in DataBridge/tools/py
 
 example usage:
 
-./logs.py -s localhost -q log
+./log.py -s localhost -q log
 
 The last argument is whatever you set the value of org.renci.databridge.logQueue 
 

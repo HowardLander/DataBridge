@@ -1,5 +1,6 @@
-
 package org.renci.databridge.database.tests;
+
+import org.renci.databridge.util.AMQPLogger;
 
 import org.renci.databridge.database.*;
 
@@ -53,6 +54,16 @@ public class DataBaseTest{
 
   public void write(DBNode node, DBNode node2, DBEdge edge){
 
+    // String _theQueue =
+    //     // String _theHost =
+    //         // String _theExchange =
+    //             // int _theLevel = AMQPLogger.LOG_DEBUG;
+    //
+    //                 // this.amqpLogger = new AMQPLogger (_theQueue, _theHost, _theExchange, _theLevel);
+    //
+
+    AMQPLogger amqpLogger = new AMQPLogger ();
+
     GraphDatabaseService neoDB = new GraphDatabaseFactory().newEmbeddedDatabase("data/test/neo4j");
     TitanGraph titanDB = TitanFactory.open("data/test/titanHB");
 
@@ -60,15 +71,15 @@ public class DataBaseTest{
     DBWriter titan = new DBWriterTitanHB(titanDB);
 
     int ret = -1;
-    ret = neo.writeNode(node);
+    ret = neo.writeNode(node, amqpLogger);
     TestCase.assertTrue("Neo4j write node 1 failed", ret == 0);
-    ret = neo.writeNode(node2);
+    ret = neo.writeNode(node2, amqpLogger);
     TestCase.assertTrue("Neo4j write node 2 failed", ret == 0);
     ret = neo.writeEdge(edge);
     TestCase.assertTrue("Neo4j write edge failed", ret == 0);
-    ret = titan.writeNode(node);
+    ret = titan.writeNode(node, amqpLogger);
     TestCase.assertTrue("TitanHB write node 1 failed", ret == 0);
-    ret = titan.writeNode(node2);
+    ret = titan.writeNode(node2, amqpLogger);
     TestCase.assertTrue("TitanHB write node 2 failed", ret == 0);
     ret = titan.writeEdge(edge);
     TestCase.assertTrue("TitanHB write edge failed", ret == 0);

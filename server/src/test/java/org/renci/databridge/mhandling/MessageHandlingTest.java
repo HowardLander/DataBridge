@@ -1,4 +1,4 @@
-package org.renci.databridge.mhandling.tests;
+package org.renci.databridge.mhandling;
 
 import com.rabbitmq.client.*;
 import java.io.*;
