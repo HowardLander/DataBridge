@@ -14,8 +14,8 @@ import java.util.HashMap;
  */
 public class AMQPMessage {
 
-     /** The message topic */
-     private String topic;
+     /** The routing key */
+     private String routingKey;
 
      /** The message properties */
      private BasicProperties properties;
@@ -40,26 +40,6 @@ public class AMQPMessage {
          bytes = theBytes;
      }
 
-     
-     /**
-      * Get topic.
-      *
-      * @return topic as String.
-      */
-     public String getTopic()
-     {
-         return topic;
-     }
-     
-     /**
-      * Set topic.
-      *
-      * @param topic the value to set.
-      */
-     public void setTopic(String topic)
-     {
-         this.topic = topic;
-     }
      
      /**
       * Get bytes for the message.
@@ -157,5 +137,25 @@ public class AMQPMessage {
               stringHeaders.put(entry.getKey(), entry.getValue().toString());
          }
          return stringHeaders;
+     }
+     
+     /**
+      * Get routingKey.
+      *
+      * @return routingKey as String.
+      */
+     public String getRoutingKey()
+     {
+         return routingKey;
+     }
+     
+     /**
+      * Set routingKey.
+      *
+      * @param routingKey the value to set.
+      */
+     public void setRoutingKey(String routingKey)
+     {
+         this.routingKey = routingKey;
      }
 }

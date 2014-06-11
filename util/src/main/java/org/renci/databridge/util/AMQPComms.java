@@ -59,7 +59,7 @@ public class AMQPComms {
      // The API requires a routing key, but in fact if you are using a header exchange the
      // value of the routing key is not used in the routing. So we define a dummy key
      // Note that the applications can still pass information between publishers and 
-     // recievers in the routing key.
+     // receivers in the routing key.
      String routingKey = "unused";
 
      /** The tag for this consumer */
@@ -138,9 +138,9 @@ public class AMQPComms {
              // if they were queued before the app was started.
              theChannel.queueDeclare(primaryQueue, queueDurability, false, false, null);
 
-             // Declare a topic exchange.  Note that the declaration of the exchange is idempotent,
+             // Declare a headers exchange.  Note that the declaration of the exchange is idempotent,
              // so at execution time this will primarily makes sure the exchange is of the expected
-             // type.  If the exchange exists and is not a topic exchange, an error will be thrown.
+             // type.  If the exchange exists and is not a headers exchange, an error will be thrown.
              // Note also that we are declaring the exchange as durable, without checking for a 
              // property.  We don't want various apps to declare this differently, but we do (I think)
              // want the exchange to be durable.
@@ -195,8 +195,8 @@ public class AMQPComms {
 
      /**
       *  This method publishs a message using the DATABRIDGE_LOG_TOPIC. This task could be handled with
-      *  the normal publish message code, but because we want formatting, some of the stack trace
-      *  and a defined log topic, we provide a dedicated method.
+      *  the normal publish message code, but because we want formatting and some of the stack trace
+      *  we provide a dedicated method.
       *
       *  @param  thisLevel The level for this message provided message.
       *  @param  theMessage The user provided message.
@@ -275,7 +275,7 @@ public class AMQPComms {
              QueueingConsumer.Delivery delivery = consumer.nextDelivery();
 
              // Build the AMQPMessage to return
-             thisMessage.setTopic(delivery.getEnvelope().getRoutingKey());
+             thisMessage.setRoutingKey(delivery.getEnvelope().getRoutingKey());
              thisMessage.setBytes(delivery.getBody());
              thisMessage.setProperties(delivery.getProperties());
 
@@ -315,7 +315,7 @@ public class AMQPComms {
              if (null != delivery) {
                 // Build the AMQPMessage to return
                 thisMessage = new AMQPMessage();
-                thisMessage.setTopic(delivery.getEnvelope().getRoutingKey());
+                thisMessage.setRoutingKey(delivery.getEnvelope().getRoutingKey());
                 thisMessage.setBytes(delivery.getBody());
                 thisMessage.setProperties(delivery.getProperties());
              } else 
@@ -604,5 +604,28 @@ public class AMQPComms {
      public void setReceiveHeaders(String receiveHeaders)
      {
          this.receiveHeaders = receiveHeaders;
+     }
+     
+     /**
+      * Get routingKey.
+      *
+      * @return routingKey as String.
+      */
+     public String getRoutingKey()
+     {
+         return routingKey;
+     }
+     
+     /**
+      * Set routingKey. Note that the AMQP API requires a routing key, but in fact if you are 
+      * using a headers exchange (as we are) the value of the routing key is not used in the routing. 
+      * However applications can still pass information between publishers and
+      * receivers in the routing key.
+      *
+      * @param routingKey the value to set.
+      */
+     public void setRoutingKey(String routingKey)
+     {
+         this.routingKey = routingKey;
      }
 }
