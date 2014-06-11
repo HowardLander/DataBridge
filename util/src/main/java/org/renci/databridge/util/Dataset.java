@@ -77,7 +77,8 @@ public class Dataset {
       * Add Property: additional properties not provided for in the constructor
       *   are added via this method
       *
-      * @return URI as String.
+      * @param key The key for this property
+      * @param val The value for this property
       */
      public void addProperty(String key, String val)
      {

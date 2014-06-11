@@ -10,14 +10,14 @@ import java.util.Properties;
 /**
  * This is intended to handle all communication tasks for an AMQP based 
  * communications network for the DataBridge project. As of this writing
- * our network consists of a topic based exchange for interchanging messages
+ * our network consists of a header based exchange for interchanging messages
  * amongst various system components. In the AMQP model, messages are sent to
  * an "exchange" whose responsibility is to distribute these messages as appropriate
- * to the correct set of queues.  In our case, we are going to use a topic based 
+ * to the correct set of queues.  In our case, we are going to use a header based 
  * exchange with each system component creating it's own queue and asserting the set
- * of topics it's interested in.  Messages therefore have to be sent to the exchange 
- * with a topic. It's up to the producing application to specify the topic, either hard
- * coded or from a properties file.  Each consumer specifies the topics it wants to receive.
+ * of headers it's interested in.  Messages therefore have to be sent to the exchange 
+ * with one or more headers. It's up to the producing application to specify the headers, either hard
+ * coded or from a properties file.  Each consumer specifies the headers set that it's interested in.
  * Note that since each instance of each consuming application will have it's own set of queues,
  * more than one application instance can receive each message.  In fact this is the behavior
  * we want in the DataBridge.
@@ -43,6 +43,27 @@ public class AMQPComms {
 
      /** The AMOP Queue for this comms object */
      private String primaryQueue;
+
+     /** The consumer for this queue */
+     private QueueingConsumer consumer;
+
+     /** Header map for publishing message */
+     private Map<String, Object> publishMap = new HashMap<String, Object>();
+
+     /** Header map for publishing message */
+     private String publishHeaders;
+
+     /** Header map for publishing message */
+     private String receiveHeaders;
+
+     // The API requires a routing key, but in fact if you are using a header exchange the
+     // value of the routing key is not used in the routing. So we define a dummy key
+     // Note that the applications can still pass information between publishers and 
+     // recievers in the routing key.
+     String routingKey = "unused";
+
+     /** The tag for this consumer */
+     private String theTag;
 
      /** The durability property for the main queue */
      private boolean queueDurability;
@@ -73,6 +94,12 @@ public class AMQPComms {
      /** The log topic */
      public static final String DATABRIDGE_LOG_TOPIC = "databridge.log";
 
+     /** The log key */
+     public static final String DATABRIDGE_LOG_KEY = "databridge.log";
+
+     /** The log value */
+     public static final String DATABRIDGE_LOG_VALUE = "databridge.log";
+
      /**
       * AMQPComms constructor with no arguments.
       */
@@ -95,6 +122,10 @@ public class AMQPComms {
              theExchange = prop.getProperty("org.renci.databridge.exchange", "localhost");
              theLevel = Integer.parseInt(prop.getProperty("org.renci.databridge.logLevel", "4"));
              queueDurability = Boolean.parseBoolean(prop.getProperty("org.renci.databridge.queueDurability", "false"));
+             // These headers are a single string that contains multiple key value pairs. The format is
+             // key1:value1;key2:value2 etc
+             publishHeaders = prop.getProperty("org.renci.databridge.publishHeaders", "localhost");
+             receiveHeaders = prop.getProperty("org.renci.databridge.receiveHeaders", "localhost");
 
              // Here's the Rabbit specific code.
              ConnectionFactory theFactory = new ConnectionFactory();
@@ -113,7 +144,11 @@ public class AMQPComms {
              // Note also that we are declaring the exchange as durable, without checking for a 
              // property.  We don't want various apps to declare this differently, but we do (I think)
              // want the exchange to be durable.
-             theChannel.exchangeDeclare(theExchange, "topic", true);
+             theChannel.exchangeDeclare(theExchange, "headers", true);
+
+             // Create the consumer
+             consumer = new QueueingConsumer(theChannel);
+ 
          } catch (Exception e){
             e.printStackTrace();
          }
@@ -125,15 +160,32 @@ public class AMQPComms {
       *  @param  theMessage The user provided AMQPMessage.
       *  @param  persistence Whether or not to set MessageProperties.PERSISTENT_TEXT_PLAIN in the message.
       */
-     public void publishMessage(AMQPMessage theMessage, Boolean persistence) {
+     public void publishMessage(AMQPMessage theMessage, String headers, Boolean persistence) {
          try {
-            // Resolve the persistence flag.
-            AMQP.BasicProperties theProp = null;
-            if (persistence) {
-                theProp = MessageProperties.PERSISTENT_TEXT_PLAIN;
+            String[] splitHeaders = headers.split(";");
+   
+            for (String thisHeader : splitHeaders) {
+                // Add a map entry for each of these headers
+                String[] thisSplitHeader = thisHeader.split(":");
+                publishMap.put(thisSplitHeader[0], thisSplitHeader[1]);
             }
-           
-            theChannel.basicPublish(theExchange, theMessage.getTopic(), theProp, theMessage.getBytes());
+   
+            AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
+       
+            if (persistence) {
+               // MessageProperties.PERSISTENT_TEXT_PLAIN is a static instance of AMQP.BasicProperties
+               // that contains a delivery mode and a priority. So we pass them to the builder.
+               builder.deliveryMode(MessageProperties.PERSISTENT_TEXT_PLAIN.getDeliveryMode());
+               builder.priority(MessageProperties.PERSISTENT_TEXT_PLAIN.getPriority());
+            }
+       
+            // Add the headers to the builder.
+            builder.headers(publishMap);
+       
+            // Use the builder to create the BasicProperties object.
+            AMQP.BasicProperties theProps = builder.build();
+
+            theChannel.basicPublish(theExchange, routingKey, theProps, theMessage.getBytes());
    
          } catch (Exception e){
             // Not much we can do with the exception ...
@@ -148,17 +200,40 @@ public class AMQPComms {
       *
       *  @param  thisLevel The level for this message provided message.
       *  @param  theMessage The user provided message.
+      *  @param  headers The headers to add to the message
       *  @param  persistence Whether or not to set MessageProperties.PERSISTENT_TEXT_PLAIN in the message.
       */
-     public void publishLog(int thisLevel, String theMessage, Boolean persistence) {
+     public void publishLog(int thisLevel, String theMessage, String headers, Boolean persistence) {
+
+         System.out.println("thisLevel: " + thisLevel + " theLevel: "  + theLevel);
          if (thisLevel <= theLevel) {
             try {
-               // Resolve the persistence flag.
-               AMQP.BasicProperties theProp = null;
-               if (persistence) {
-                   theProp = MessageProperties.PERSISTENT_TEXT_PLAIN;
+               String[] splitHeaders = headers.split(";");
+   
+               for (String thisHeader : splitHeaders) {
+                   // Add a map entry for each of these headers
+                   String[] thisSplitHeader = thisHeader.split(":");
+                   publishMap.put(thisSplitHeader[0], thisSplitHeader[1]);
                }
-              
+
+               // Let's add the DataBridge log key value header
+               publishMap.put(DATABRIDGE_LOG_KEY, DATABRIDGE_LOG_VALUE);
+   
+               AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
+          
+               if (persistence) {
+                  // MessageProperties.PERSISTENT_TEXT_PLAIN is a static instance of AMQP.BasicProperties
+                  // that contains a delivery mode and a priority. So we pass them to the builder.
+                  builder.deliveryMode(MessageProperties.PERSISTENT_TEXT_PLAIN.getDeliveryMode());
+                  builder.priority(MessageProperties.PERSISTENT_TEXT_PLAIN.getPriority());
+               }
+          
+               // Add the headers to the builder.
+               builder.headers(publishMap);
+          
+               // Use the builder to create the BasicProperties object.
+               AMQP.BasicProperties theProps = builder.build();
+
                // Let's format a date and time
                Formatter myFormatter = new Formatter();
                String myDate = myFormatter.format("%tc", new Date()).toString();
@@ -170,8 +245,10 @@ public class AMQPComms {
                String formattedMessage = new String("    " + theMessage);
                String logMessage = myDate + " " + stackInfo;
                
-               theChannel.basicPublish(theExchange, DATABRIDGE_LOG_TOPIC, theProp, logMessage.getBytes());
-               theChannel.basicPublish(theExchange, DATABRIDGE_LOG_TOPIC, theProp, formattedMessage.getBytes());
+               System.out.println("Publishing: " + logMessage);
+               theChannel.basicPublish(theExchange, DATABRIDGE_LOG_TOPIC, theProps, logMessage.getBytes());
+               System.out.println("Publishing: " + formattedMessage);
+               theChannel.basicPublish(theExchange, DATABRIDGE_LOG_TOPIC, theProps, formattedMessage.getBytes());
    
             } catch (Exception e){
                // Not much we can do with the exception ...
@@ -184,23 +261,15 @@ public class AMQPComms {
       *  Code to receive a message.  Note that this code blocks until a message is
       *  received.
       *
-      *  @param  topics An ArrayList of topics of interest.
       */
-     public AMQPMessage receiveMessage(ArrayList<String> topics) {
+     public AMQPMessage receiveMessage() {
 
          AMQPMessage thisMessage = new AMQPMessage();
 
          try {
-             for (String thisTopic : topics) {
-                 // Bind the queue and the exchange to every topic in the list
-                 theChannel.queueBind(primaryQueue, theExchange, thisTopic);
-             }
 
-             // Create the consumer
-             QueueingConsumer consumer = new QueueingConsumer(theChannel);
- 
              // Start the consumer
-             theChannel.basicConsume(primaryQueue, true, consumer);
+             theTag = theChannel.basicConsume(primaryQueue, true, consumer);
 
              // Wait for message to arrive
              QueueingConsumer.Delivery delivery = consumer.nextDelivery();
@@ -208,12 +277,10 @@ public class AMQPComms {
              // Build the AMQPMessage to return
              thisMessage.setTopic(delivery.getEnvelope().getRoutingKey());
              thisMessage.setBytes(delivery.getBody());
+             thisMessage.setProperties(delivery.getProperties());
 
-             // Now we unbind the topics, since the next request could have a different set
-             for (String thisTopic : topics) {
-                 // Bind the queue and the exchange to every topic in the list
-                 theChannel.queueUnbind(primaryQueue, theExchange, thisTopic);
-             }
+             // Turn off the consumer till the next time
+             theChannel.basicCancel(theTag);
 
          } catch (Exception e){
             // Not much we can do with the exception ...
@@ -224,6 +291,100 @@ public class AMQPComms {
          return thisMessage;
      }
      
+
+     /**
+      *  Code to receive a message.  Note that this code blocks until a message is
+      *  received or the timeout value is exceeded.
+      *
+      * @param timeout in milliseconds
+      * @return either the received message or null indicating a timeout.
+      */
+     public AMQPMessage receiveMessage(long timeout) {
+
+         AMQPMessage thisMessage = null;
+
+         try {
+
+             // Start the consumer
+             theTag = theChannel.basicConsume(primaryQueue, true, consumer);
+
+             // Wait for either message to arrive or timeout.  Returns null on 
+             // timeout
+             QueueingConsumer.Delivery delivery = consumer.nextDelivery(timeout);
+
+             if (null != delivery) {
+                // Build the AMQPMessage to return
+                thisMessage = new AMQPMessage();
+                thisMessage.setTopic(delivery.getEnvelope().getRoutingKey());
+                thisMessage.setBytes(delivery.getBody());
+                thisMessage.setProperties(delivery.getProperties());
+             } else 
+
+             // Turn off the consumer till the next time
+             theChannel.basicCancel(theTag);
+
+         } catch (Exception e){
+            // Not much we can do with the exception ...
+            e.printStackTrace();
+         }
+
+         // let's not forget to return the received message or null.
+         return thisMessage;
+     }
+     
+     /**
+      *  Bind the receive queue to the given headers
+      *
+      *  @param  headers: a string of headers in the format key1:value1;key2:value2
+      */
+     public void bindTheQueue(String headers) {
+         Map<String, Object> receiveMap = new HashMap<String, Object>();
+
+         try {
+             String[] splitHeaders = headers.split(";");
+
+             for (String thisHeader : splitHeaders) {
+                 // Add a map entry for each of these headers
+                 String[] thisSplitHeader = thisHeader.split(":");
+                 receiveMap.put(thisSplitHeader[0], thisSplitHeader[1]);
+             }
+
+             // Bind the queue and the exchange to every header in the list
+             theChannel.queueBind(primaryQueue, theExchange, routingKey, receiveMap);
+
+         } catch (Exception e){
+            // Not much we can do with the exception ...
+            e.printStackTrace();
+         }
+     }
+
+     
+     /**
+      *  Unbind the receive queue from the  given headers
+      *
+      *  @param  headers: a string of headers in the format key1:value1;key2:value2
+      */
+     public void unbindTheQueue(String headers) {
+         Map<String, Object> receiveMap = new HashMap<String, Object>();
+
+         try {
+             String[] splitHeaders = headers.split(";");
+
+             for (String thisHeader : splitHeaders) {
+                 // Add a map entry for each of these headers
+                 String[] thisSplitHeader = thisHeader.split(":");
+                 receiveMap.put(thisSplitHeader[0], thisSplitHeader[1]);
+             }
+
+             // Unbind the queue and the exchange from every header in the list
+             theChannel.queueUnbind(primaryQueue, theExchange, routingKey, receiveMap);
+
+         } catch (Exception e){
+            // Not much we can do with the exception ...
+            e.printStackTrace();
+         }
+     }
+
      /**
       * Get theConnection.
       *
@@ -317,7 +478,7 @@ public class AMQPComms {
      /**
       * Set level.
       *
-      * @param level the value to set.
+      * @param theLevel the value to set.
       */
      public void setTheLevel(int theLevel)
      {
@@ -382,5 +543,66 @@ public class AMQPComms {
      public void setQueueDurability(boolean queueDurability)
      {
          this.queueDurability = queueDurability;
+     }
+     
+
+     /**
+      * Get publishMap.
+      *
+      * @return publishMap as a Map<String, Object>
+      */
+     public Map<String, Object> getPublishMap()
+     {
+         return publishMap;
+     }
+     
+     /**
+      * Set publishMap.
+      *
+      * @param publishMap the value to set.
+      */
+     public void setPublishMap(Map<String, Object> publishMap)
+     {
+         this.publishMap = publishMap;
+     }
+
+     /**
+      * Get publishHeaders.
+      *
+      * @return publishHeaders as String.
+      */
+     public String getPublishHeaders()
+     {
+         return publishHeaders;
+     }
+     
+     /**
+      * Set publishHeaders.
+      *
+      * @param publishHeaders the value to set.
+      */
+     public void setPublishHeaders(String publishHeaders)
+     {
+         this.publishHeaders = publishHeaders;
+     }
+     
+     /**
+      * Get receiveHeaders.
+      *
+      * @return receiveHeaders as String.
+      */
+     public String getReceiveHeaders()
+     {
+         return receiveHeaders;
+     }
+     
+     /**
+      * Set receiveHeaders.
+      *
+      * @param receiveHeaders the value to set.
+      */
+     public void setReceiveHeaders(String receiveHeaders)
+     {
+         this.receiveHeaders = receiveHeaders;
      }
 }

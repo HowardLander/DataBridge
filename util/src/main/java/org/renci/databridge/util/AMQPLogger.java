@@ -215,7 +215,7 @@ public class AMQPLogger {
      /**
       * Set level.
       *
-      * @param level the value to set.
+      * @param theLevel the value to set.
       */
      public void setTheLevel(int theLevel)
      {
