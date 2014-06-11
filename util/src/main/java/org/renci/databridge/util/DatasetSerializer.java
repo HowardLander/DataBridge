@@ -46,7 +46,7 @@ public class DatasetSerializer extends Serializer<Dataset> {
       * Method for deserializing the data set.
       * 
       * @param kryo The Kryo object 
-      * @param output The kryo Input object 
+      * @param input The kryo Input object 
       * @param type The type identifier for the outputed object
       * @return a Dataset object populated from the input stream
       *                
