@@ -97,14 +97,16 @@ public class CommsTest {
 
     }
 
-
     @Test
     public void testSendAndReceiveMessage() {
         System.out.println("Testing the send of a regular message");
         AMQPMessage sendMessage = new AMQPMessage(new String("Regular Message").getBytes());
+
         AMQPComms theComm = new AMQPComms("testProperties.conf");
+        theComm.setRoutingKey("extra info");
         theComm.bindTheQueue("key3:val3;key4:val4;x-match:all");
         theComm.publishMessage(sendMessage, "key3:val3;key4:val4", true);
+
         System.out.println("Testing the receive of a regular message");
         AMQPMessage theMessage = theComm.receiveMessage();
         System.out.println("printing retrieved headers");
@@ -123,15 +125,18 @@ public class CommsTest {
         TestCase.assertTrue("Incorrect value for key4 " + value2, 
                              value2.compareTo("val4") == 0);
         
+        // Test the routingKey
+        System.out.println("Testing the receive of the routingKey");
+        TestCase.assertTrue("Incorrect value for routingKey " + theMessage.getRoutingKey(), 
+                             theMessage.getRoutingKey().compareTo("extra info") == 0);
+        
+        // Test the message
         String message1 = new String(theMessage.getBytes());
         System.out.println("message 1: " + message1);
-
         Map<String,String> mapHeaders1 = theMessage.getStringHeaders();
-
         TestCase.assertTrue("Incorrect value for message " + message1, 
                              message1.compareTo("Regular Message") == 0);
         
-        // Test the message
         theComm.unbindTheQueue("key3:val3;key4:val4;x-match:all");
     }
 
