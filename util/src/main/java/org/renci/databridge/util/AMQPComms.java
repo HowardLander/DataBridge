@@ -335,7 +335,7 @@ public class AMQPComms {
      /**
       *  Bind the receive queue to the given headers
       *
-      *  @param  headers: a string of headers in the format key1:value1;key2:value2
+      *  @param  headers a string of headers in the format key1:value1;key2:value2
       */
      public void bindTheQueue(String headers) {
          Map<String, Object> receiveMap = new HashMap<String, Object>();
@@ -362,7 +362,7 @@ public class AMQPComms {
      /**
       *  Unbind the receive queue from the  given headers
       *
-      *  @param  headers: a string of headers in the format key1:value1;key2:value2
+      *  @param  headers a string of headers in the format key1:value1;key2:value2
       */
      public void unbindTheQueue(String headers) {
          Map<String, Object> receiveMap = new HashMap<String, Object>();
