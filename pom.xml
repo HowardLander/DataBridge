@@ -120,6 +120,17 @@
             </links>
             <show>private</show>
         </configuration>
+
+        <executions>
+            <execution>
+                <id>attach-javadocs</id>
+                <phase>site</phase>
+                <goals>
+                    <goal>aggregate</goal>
+                </goals>
+            </execution>
+        </executions>
+
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
