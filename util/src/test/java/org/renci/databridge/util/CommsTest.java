@@ -24,6 +24,7 @@ public class CommsTest {
      */
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+       System.out.println("In the AfterClass");
     }
     @Test
     public void testProperties() {
@@ -36,7 +37,7 @@ public class CommsTest {
         Boolean durability = theComm.getQueueDurability();
         System.out.println("durability for queue  " + theComm.getPrimaryQueue() + " is " + durability);
         TestCase.assertTrue("Incorrect value for durability " + durability, 
-                             durability == true);
+                             durability == false);
     }
 
     @Test
