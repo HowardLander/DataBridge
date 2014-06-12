@@ -9,8 +9,8 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.renci.databridge.server</groupId>
-    <artifactId>databridge-server</artifactId>
+    <groupId>org.renci.databridge.networkwriter</groupId>
+    <artifactId>databridge-networkwriter</artifactId>
     <packaging>jar</packaging>
     <name>DataBridge Server</name>
     <version>1.0-BETA</version>

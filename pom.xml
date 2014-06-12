@@ -11,7 +11,8 @@
   <modules>
     <module>util</module>
     <module>network</module>
-    <module>server</module>
+    <module>networkwriter</module>
+    <module>authority</module>
   </modules>
 
   <properties>
@@ -145,13 +146,19 @@
         <artifactId>site-maven-plugin</artifactId>
         <version>0.8</version>
         <configuration>
-          <message>Maven artifacts for ${project.version}</message>  <!-- git commit message -->
-          <noJekyll>true</noJekyll>                                  <!-- disable webpage processing -->
-          <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory> <!-- matches distribution management repository url above -->
-          <branch>refs/heads/mvn-repo</branch>                       <!-- remote branch name -->
+          <!-- git commit message -->
+          <message>Maven artifacts for ${project.version}</message>  
+          <!-- disable webpage processing -->
+          <noJekyll>true</noJekyll>
+          <!-- matches distribution management repository url above -->
+          <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory>
+          <!-- remote branch name -->
+          <branch>refs/heads/mvn-repo</branch>                       
           <includes><include>**/*</include></includes>
-          <repositoryName>DataBridge</repositoryName>      <!-- github repo name -->
-          <repositoryOwner>HowardLander</repositoryOwner>    <!-- github username  -->
+          <!-- github repo name -->
+          <repositoryName>DataBridge</repositoryName>      
+          <!-- github username  -->
+          <repositoryOwner>HowardLander</repositoryOwner>    
         </configuration>
         <executions>
           <!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
@@ -169,6 +176,7 @@
       </plugin>
     </plugins>
   </build>
+
   <reporting>
     <plugins>
       <plugin>
@@ -180,4 +188,5 @@
       </plugin>
     </plugins>
   </reporting> 
+
 </project>

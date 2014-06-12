@@ -82,5 +82,20 @@ example usage:
 ./log.py -s localhost -q log
 
 The last argument is whatever you set the value of org.renci.databridge.logQueue 
-
 Note that, as of this writing the XMLSim program doesn't write to the log...
+
+GENERATING SITE
+
+From toplevel directory:
+
+  mvn clean compile site
+
+generates site in target/site
+
+GENERATING JAVADOC
+
+From toplevel directory:
+
+  mvn javadoc:aggregate
+
+generates javadoc in target/site/apidocs/
