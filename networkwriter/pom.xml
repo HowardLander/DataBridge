@@ -12,7 +12,7 @@
     <groupId>org.renci.databridge.networkwriter</groupId>
     <artifactId>databridge-networkwriter</artifactId>
     <packaging>jar</packaging>
-    <name>DataBridge Server</name>
+    <name>DataBridge Network Writer</name>
     <version>1.0-BETA</version>
 
     <dependencies>

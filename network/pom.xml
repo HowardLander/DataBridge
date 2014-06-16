@@ -31,13 +31,4 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <sourceDirectory>src</sourceDirectory>
-        <testResources>
-            <testResource>
-                <directory>test</directory>
-            </testResource>
-        </testResources>
-     </build>
-
 </project>

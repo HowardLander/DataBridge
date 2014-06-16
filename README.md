@@ -40,7 +40,7 @@ To Run
 
 To run Xing's distance generation code, use the following command from the network/ directory:
 
-mvn -e exec:java -D exec.mainClass=xmlsim.XMLSim
+mvn -e exec:java -Dexec.mainClass=xmlsim.XMLSim
 
 This class currently operates on an XML file, the location of which is hardcoded
 
