@@ -30,6 +30,7 @@ public class MessageHandlingTest{
   public static void tearDownAfterClass() throws Exception {
   }
 
+  @Ignore
   @Test
   public void testMessageHandling() throws IOException, InterruptedException{
 
@@ -48,7 +49,7 @@ public class MessageHandlingTest{
         "Handler: Populated from URL",
 	"Handler: complete"};
     
-    String path = System.getProperty("user.dir") + "/testWriteToDisk";
+    String path = System.getProperty("user.dir") + "/../util/testWriteToDisk";
     String message = MessageTypes.NETWORK + ":file://localhost" + path;
     File file = new File(path);
     TestCase.assertTrue("Cannot read file: " + path + ", ensure NetworkDataTest has run", file.canRead());
@@ -87,6 +88,7 @@ public class MessageHandlingTest{
     TestCase.assertTrue("unexpected log message: " + message, found);
   }
 
+  @Ignore
   @Test
   public void testBadFilename() throws IOException, InterruptedException{
 
