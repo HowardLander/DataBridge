@@ -11,7 +11,7 @@
   <modules>
     <module>util</module>
     <module>network</module>
-    <module>networkwriter</module>
+    <module>persistence</module>
     <module>authority</module>
   </modules>
 

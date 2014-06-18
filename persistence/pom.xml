@@ -9,10 +9,10 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.renci.databridge.networkwriter</groupId>
-    <artifactId>databridge-networkwriter</artifactId>
+    <groupId>org.renci.databridge.persistence</groupId>
+    <artifactId>databridge-persistence</artifactId>
     <packaging>jar</packaging>
-    <name>DataBridge Network Writer</name>
+    <name>DataBridge Persistence</name>
     <version>1.0-BETA</version>
 
     <dependencies>
