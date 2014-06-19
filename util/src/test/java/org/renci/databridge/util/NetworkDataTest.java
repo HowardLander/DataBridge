@@ -1,4 +1,5 @@
-package org.renci.databridge.util.NetworkDataTests;
+package org.renci.databridge.util;
+
 import org.renci.databridge.util.*;
 import java.util.ArrayList;
 import junit.framework.Assert;
