@@ -25,7 +25,7 @@ public class RelevanceEngine
      */
     public static Test suite()
     {
-        return new TestSuite( AppTest.class );
+        return new TestSuite( RelevanceEngine.class );
     }
 
     /**
