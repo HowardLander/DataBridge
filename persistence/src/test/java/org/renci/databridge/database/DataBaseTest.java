@@ -65,7 +65,7 @@ public class DataBaseTest{
     AMQPLogger amqpLogger = new AMQPLogger ();
 
     GraphDatabaseService neoDB = new GraphDatabaseFactory().newEmbeddedDatabase("data/test/neo4j");
-    TitanGraph titanDB = TitanFactory.open("data/test/titanHB");
+    TitanGraph titanDB = TitanFactory.open("target/data/test/titanHB");
 
     DBWriter neo = new DBWriterNeo4j(neoDB);
     DBWriter titan = new DBWriterTitanHB(titanDB);
@@ -93,7 +93,7 @@ public class DataBaseTest{
 
     System.out.println("Testing Queries");
 
-    DBQuery neoq = new DBQueryNeo4j("data/test/neo4j");
+    DBQuery neoq = new DBQueryNeo4j("target/data/test/neo4j");
 
     //System.out.println("DBQ initialized");
   try{

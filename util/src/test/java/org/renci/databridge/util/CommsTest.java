@@ -1,5 +1,5 @@
-package org.renci.databridge.util.CommsTests;
-import org.renci.databridge.util.*;
+package org.renci.databridge.util;
+
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
