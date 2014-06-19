@@ -68,9 +68,6 @@ public class AMQPComms {
      /** The durability property for the main queue */
      private boolean queueDurability;
 
-     /** The AMOP logging Queue for this comms object */
-     private String logQueue;
-
      /** The AMQP hostname for this comms object */
      private String theHost;
 
@@ -109,7 +106,11 @@ public class AMQPComms {
      /**
       * AMQPComms constructor with a properties file to read.
       *
-      *  @param  propFile  The prop file to read for the host, exchange, etc...
+      *  @param  propFile  The prop file to read to configure the communication channel. The property
+      *                    file has to define at least the following properties: 
+      *                    org.renci.databridge.primaryQueue, org.renci.databridge.exchange and
+      *                    org.renci.databridge.queueHost.  Other relevant properties are
+      *                    org.renci.databridge.queueDurability and org.renci.databridge.logLevel
       */
      public AMQPComms(String propFile) {
          try {
@@ -117,7 +118,6 @@ public class AMQPComms {
              Properties prop = new Properties();
              prop.load(new FileInputStream(propFile));
              primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
-             logQueue = prop.getProperty("org.renci.databridge.logQueue", "log");
              theHost = prop.getProperty("org.renci.databridge.queueHost", "localhost");
              theExchange = prop.getProperty("org.renci.databridge.exchange", "localhost");
              theLevel = Integer.parseInt(prop.getProperty("org.renci.databridge.logLevel", "4"));
@@ -503,26 +503,6 @@ public class AMQPComms {
      public void setPrimaryQueue(String primaryQueue)
      {
          this.primaryQueue = primaryQueue;
-     }
-     
-     /**
-      * Get logQueue.
-      *
-      * @return logQueue as String.
-      */
-     public String getLogQueue()
-     {
-         return logQueue;
-     }
-     
-     /**
-      * Set logQueue.
-      *
-      * @param logQueue the value to set.
-      */
-     public void setLogQueue(String logQueue)
-     {
-         this.logQueue = logQueue;
      }
      
      /**
