@@ -13,6 +13,7 @@
     <module>network</module>
     <module>persistence</module>
     <module>authority</module>
+    <module>engines</module>
   </modules>
 
   <properties>
