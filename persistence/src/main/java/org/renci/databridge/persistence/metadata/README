@@ -1,0 +1,21 @@
+This directory contains the persistence implementation for the databridge metadata.  There are several 
+interesting things to know about this.
+
+1) The data model is drawn from the subset of DDI-Lite that the DataVerse Network (DVN).  There is a 3 level 
+hierarchy that includes
+
+   a) collection of files (called a study in DVN) 
+   b) the individual files
+   c) the variables in the file
+
+One interesting consequence of this decision is that, by default, every file is in a collection even if there
+is just 1 file.  I think that's going to be neccessary so that, for example, the abstract class used in the
+relevance engine can always take in two objects for comparison that are of a known type.
+
+We are also going to include the concepts of "name space" and "version" in our data model.
+
+2) The implementation follows the Data Access Object, AbstractFactory and Transfer Object patterns. The 
+purpose of this is to insulate the users of this code from the implementation (schema and underlying 
+data store engine). Done properly, we should be able to switch the implementation from Mongo to Cassandra 
+(for example) and none of the application code should care, as long as the Data Model does not change
+too much.
