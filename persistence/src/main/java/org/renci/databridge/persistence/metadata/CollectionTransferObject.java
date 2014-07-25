@@ -7,7 +7,7 @@ public class CollectionTransferObject {
     private String description; // Free text metadata about the study
     private String producer;    // Producer of the collection
     private String subject;     // Subject of the study
-    private Map<String, String> additionalMetadata;
+    private HashMap<String, String> extra;
 
     // These attributes are specific to the DataBridge
     private String nameSpace;
@@ -27,7 +27,7 @@ public class CollectionTransferObject {
     /**
      * Set name.
      *
-     * @param name the value to set.
+     * @param title the value to set.
      */
     public void setTitle(String title)
     {
@@ -152,6 +152,26 @@ public class CollectionTransferObject {
     public void setURL(String URL)
     {
         this.URL = URL;
+    }
+    
+    /**
+     * Get extra.
+     *
+     * @return extra as HashMap<String, String>
+     */
+    public HashMap<String, String> getExtra()
+    {
+        return extra;
+    }
+    
+    /**
+     * Set extra.
+     *
+     * @param extra the value to set.
+     */
+    public void setExtra(HashMap<String, String> extra)
+    {
+        this.extra = extra;
     }
 }
 
