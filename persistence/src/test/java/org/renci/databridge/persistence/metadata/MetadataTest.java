@@ -55,23 +55,42 @@ public class MetadataTest {
      extra.put("reason", "Testing the code");
      theCollection.setExtra(extra);
 
-     CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
      try {
+         CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
          result = theCollectionDAO.insertCollection(theCollection);
+         System.out.println("done with insert");
+         System.out.println("inserted Id is: " + theCollection.getDataStoreId());
+         System.out.println("testing get");
+
+         HashMap<String, String> searchMap = new HashMap<String, String>();
+         searchMap.put("nameSpace", "test");
+         searchMap.put("title", "title");
+         CollectionTransferObject getObj = theCollectionDAO.getCollection(searchMap);
+         TestCase.assertTrue("subjects don't match", 
+             theCollection.getSubject().compareTo(getObj.getSubject()) == 0);
+         System.out.println("retrieved subject: " + getObj.getSubject());
+         TestCase.assertTrue("ids don't match", 
+             theCollection.getDataStoreId().compareTo(getObj.getDataStoreId()) == 0);
+         System.out.println("retrieved id: " + getObj.getDataStoreId());
+
+         // Now we'll try to delete the object
+         HashMap<String, String> deleteMap = new HashMap<String, String>();
+         deleteMap.put("_id", getObj.getDataStoreId());
+         int nDeleted = theCollectionDAO.deleteCollection(deleteMap);
+         System.out.println("nDeleted: " + nDeleted);
+         TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+
+         // One more insert so we can try deleteCollectionById
+         result = theCollectionDAO.insertCollection(theCollection);
+         nDeleted = theCollectionDAO.deleteCollectionById(theCollection.getDataStoreId());
+         System.out.println("nDeleted: " + nDeleted);
+         TestCase.assertTrue("nDeleted by Id not 1", nDeleted == 1);
+
+         // now we try the delete
      }  catch (Exception e) {
          e.printStackTrace();
      }
-     System.out.println("done with insert");
-     System.out.println("testing get");
-
-     HashMap<String, String> searchMap = new HashMap<String, String>();
-     searchMap.put("nameSpace", "test");
-     searchMap.put("title", "title");
-     CollectionTransferObject getObj = theCollectionDAO.getCollection(searchMap);
-     TestCase.assertTrue("subjects don't match", 
-         theCollection.getSubject().compareTo(getObj.getSubject()) == 0);
-     System.out.println("retrieved subject: " + getObj.getSubject());
-
+     
   }
 
   @Rule

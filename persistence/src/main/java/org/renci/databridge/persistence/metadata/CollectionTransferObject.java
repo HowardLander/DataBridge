@@ -12,6 +12,7 @@ public class CollectionTransferObject {
     // These attributes are specific to the DataBridge
     private String nameSpace;
     private int    version;
+    private String dataStoreId; // The id generated at insertion time.
 
     
     /**
@@ -172,6 +173,26 @@ public class CollectionTransferObject {
     public void setExtra(HashMap<String, String> extra)
     {
         this.extra = extra;
+    }
+    
+    /**
+     * Get dataStoreId.
+     *
+     * @return dataStoreId as String.
+     */
+    public String getDataStoreId()
+    {
+        return dataStoreId;
+    }
+    
+    /**
+     * Set dataStoreId.
+     *
+     * @param dataStoreId the value to set.
+     */
+    public void setDataStoreId(String dataStoreId)
+    {
+        this.dataStoreId = dataStoreId;
     }
 }
 

@@ -6,6 +6,7 @@ public interface CollectionDAO {
     public CollectionTransferObject getCollection(HashMap<String, String> searchMap);
     public boolean updateCollection(CollectionTransferObject theCollection, 
                                     Object collectionID);
-    public boolean deleteCollection(Object collectionID);
+    public int deleteCollectionById(String id);
+    public int deleteCollection(HashMap<String, String> searchMap);
 }
 
