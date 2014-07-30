@@ -65,32 +65,71 @@ public class MetadataTest {
          HashMap<String, String> searchMap = new HashMap<String, String>();
          searchMap.put("nameSpace", "test");
          searchMap.put("title", "title");
-         CollectionTransferObject getObj = theCollectionDAO.getCollection(searchMap);
-         TestCase.assertTrue("subjects don't match", 
-             theCollection.getSubject().compareTo(getObj.getSubject()) == 0);
-         System.out.println("retrieved subject: " + getObj.getSubject());
-         TestCase.assertTrue("ids don't match", 
-             theCollection.getDataStoreId().compareTo(getObj.getDataStoreId()) == 0);
-         System.out.println("retrieved id: " + getObj.getDataStoreId());
+         Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollection(searchMap);
+         System.out.println ("Do we have next? " +  collectionIterator.hasNext());
 
-         // Now we'll try to delete the object
-         HashMap<String, String> deleteMap = new HashMap<String, String>();
-         deleteMap.put("_id", getObj.getDataStoreId());
-         int nDeleted = theCollectionDAO.deleteCollection(deleteMap);
-         System.out.println("nDeleted: " + nDeleted);
-         TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+         if (collectionIterator.hasNext()) {
+             CollectionTransferObject getObj = collectionIterator.next(); 
 
-         // One more insert so we can try deleteCollectionById
-         result = theCollectionDAO.insertCollection(theCollection);
-         nDeleted = theCollectionDAO.deleteCollectionById(theCollection.getDataStoreId());
-         System.out.println("nDeleted: " + nDeleted);
-         TestCase.assertTrue("nDeleted by Id not 1", nDeleted == 1);
+             TestCase.assertTrue("subjects don't match", 
+                 theCollection.getSubject().compareTo(getObj.getSubject()) == 0);
+             System.out.println("retrieved subject: " + getObj.getSubject());
+             TestCase.assertTrue("ids don't match", 
+                 theCollection.getDataStoreId().compareTo(getObj.getDataStoreId()) == 0);
+             System.out.println("retrieved id: " + getObj.getDataStoreId());
 
-         // now we try the delete
+             // Now we'll try to delete the object
+             HashMap<String, String> deleteMap = new HashMap<String, String>();
+             deleteMap.put("_id", getObj.getDataStoreId());
+             int nDeleted = theCollectionDAO.deleteCollection(deleteMap);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+
+             // One more insert so we can try deleteCollectionById
+             result = theCollectionDAO.insertCollection(theCollection);
+             nDeleted = theCollectionDAO.deleteCollectionById(theCollection.getDataStoreId());
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted by Id not 1", nDeleted == 1);
+         }
+
+         // Now let's test multiple insertions, gets and deletes
+         for (int i = 0; i < 5; i ++) {
+             theCollection.setVersion(i);
+             result = theCollectionDAO.insertCollection(theCollection);
+         }
+
+         int nFound = 0;
+         int nDeleted = 0;
+         int totalDeleted = 0;
+         HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
+         searchMap.put("nameSpace", "test");
+         Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollection(nameSpaceMap);
+         while (nameSpaceIterator.hasNext()) {
+             CollectionTransferObject getObj = nameSpaceIterator.next(); 
+             System.out.println("retrieved version: " + getObj.getVersion());
+             nDeleted = theCollectionDAO.deleteCollectionById(getObj.getDataStoreId());
+             System.out.println("nDeleted: " + nDeleted);
+             nFound ++;
+             totalDeleted += nDeleted;
+         }
+         System.out.println("number found:" + nFound);
+         TestCase.assertTrue("total found not 5", nFound == 5);
+         TestCase.assertTrue("totalDeleted by Id not 5", totalDeleted == 5);
      }  catch (Exception e) {
          e.printStackTrace();
      }
-     
+  }
+
+  @Test(expected=UnsupportedOperationException.class)
+  public void testRemove () throws Exception {
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+     CollectionTransferObject theCollection = new CollectionTransferObject();
+     CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
+     HashMap<String, String> searchMap = new HashMap<String, String>();
+     searchMap.put("nameSpace", "test");
+     Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollection(searchMap);
+     nameSpaceIterator.remove();
   }
 
   @Rule

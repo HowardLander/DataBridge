@@ -26,6 +26,71 @@ public class MongoCollectionDAO implements CollectionDAO {
     private static final String MongoIdFieldName = new String("_id");
 
 
+
+    /** 
+     *  An iterator class for the CollectionTransferObject.  An instance is returned to the
+     *  the user by the getCollection call.  This implements the Iterator interface.
+     */
+    private class MongoCollectionDAOIterator implements Iterator<CollectionTransferObject> {
+       private DBCursor cursor;
+
+       /** 
+        * Returns whether or not there is a next item in this cursor.
+        */
+       @Override
+       public boolean hasNext() {
+           // Wrap the mongo cursor opened in the get call.
+           return cursor.hasNext();
+       }
+
+       /** 
+        * Returns the next CollectionTransferObject from the cursor or null.
+        */
+       @Override
+       public CollectionTransferObject next() {
+           CollectionTransferObject theCollection = null; 
+           try {
+               if (cursor.hasNext()) {
+                   // Translate the date from the MongoDB representation to the 
+                   // representation presented to the users in the Transfer object.
+                   theCollection = new CollectionTransferObject();
+                   DBObject theEntry = cursor.next();
+                   theCollection.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+                   theCollection.setURL((String)theEntry.get("URL"));
+                   theCollection.setTitle((String)theEntry.get("title"));
+                   theCollection.setDescription((String)theEntry.get("description"));
+                   theCollection.setProducer((String)theEntry.get("producer"));
+                   theCollection.setSubject((String)theEntry.get("subject"));
+                   theCollection.setNameSpace((String)theEntry.get("nameSpace"));
+                   theCollection.setVersion((int)theEntry.get("version"));
+                   @SuppressWarnings("unchecked")
+                   ArrayList<BasicDBObject> extraList = (ArrayList<BasicDBObject>) theEntry.get(MongoExtraName);
+                   HashMap<String, String> extra = new HashMap<String, String>();
+                   for (BasicDBObject extraObj : extraList) {
+                       // Get the key set.  We sort of expect there to be only one but...
+                       Set<String> keys = extraObj.keySet();
+                       for (String thisKey : keys) {
+                           extra.put(thisKey, (String) extraObj.get(thisKey));
+                       }
+                   }
+                   theCollection.setExtra(extra);
+               }
+           } catch (MongoException e) {
+               // should send this back using the message logs eventually
+               e.printStackTrace();
+           }
+           return theCollection;
+       }
+
+       /** 
+        * Remove the object. Currently and probably always unsupported.
+        */
+       @Override
+       public void remove() throws UnsupportedOperationException{
+           throw new UnsupportedOperationException();
+       }
+    }
+
     /** 
      * insert the specified Collection object into mongo.
      *
@@ -74,13 +139,12 @@ public class MongoCollectionDAO implements CollectionDAO {
 
 
     /** 
-     * retrieve the specified Collection object from mongo. Note that this API retrieves only
-     * one record.
+     * retrieve an iterator for all records that match the given search key.
      *
      * @param searchMap A HashMap with search keys.
      */
-    public CollectionTransferObject getCollection(HashMap<String, String> searchMap) {
-        CollectionTransferObject theCollection = null;
+    public Iterator<CollectionTransferObject> getCollection(HashMap<String, String> searchMap) {
+        MongoCollectionDAOIterator theIterator = null;
         try {
             BasicDBObject thisDoc = new BasicDBObject();
             for (String key : searchMap.keySet()) {
@@ -89,35 +153,14 @@ public class MongoCollectionDAO implements CollectionDAO {
             DB theDB = MongoDAOFactory.getTheDB();
             DBCollection theTable = theDB.getCollection(MongoName);
             DBCursor cursor = theTable.find(thisDoc);
-            if (cursor.hasNext()) {
-                theCollection = new CollectionTransferObject();
-                DBObject theEntry = cursor.next();
-                theCollection.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
-                theCollection.setURL((String)theEntry.get("URL"));
-                theCollection.setTitle((String)theEntry.get("title"));
-                theCollection.setDescription((String)theEntry.get("description"));
-                theCollection.setProducer((String)theEntry.get("producer"));
-                theCollection.setSubject((String)theEntry.get("subject"));
-                theCollection.setNameSpace((String)theEntry.get("nameSpace"));
-                theCollection.setVersion((int)theEntry.get("version"));
-                @SuppressWarnings("unchecked")
-                ArrayList<BasicDBObject> extraList = (ArrayList<BasicDBObject>) theEntry.get(MongoExtraName);
-                HashMap<String, String> extra = new HashMap<String, String>();
-                for (BasicDBObject extraObj : extraList) {
-                    // Get the key set.  We sort of expect there to be only one but...
-                    Set<String> keys = extraObj.keySet();
-                    for (String thisKey : keys) {
-                        extra.put(thisKey, (String) extraObj.get(thisKey));    
-                    }            
-                }
-                theCollection.setExtra(extra);
-            } 
+            theIterator = new MongoCollectionDAOIterator();
+            theIterator.cursor = cursor;
         } catch (MongoException e) {
             // should send this back using the message logs eventually
             e.printStackTrace(); 
         }
 
-        return theCollection;
+        return theIterator;
     }
 
     public boolean updateCollection( CollectionTransferObject theCollection, 
