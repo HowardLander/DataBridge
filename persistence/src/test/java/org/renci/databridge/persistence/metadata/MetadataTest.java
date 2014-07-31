@@ -30,10 +30,6 @@ public class MetadataTest {
   public static void tearDownAfterClass() throws Exception {
   }
 
-  /**
-   * @todo This is a transport test. Needs to be factored out properly.
-   * @todo Put in a proper junit test assertion...
-   */
   @Test
   public void testInsert () throws Exception {
 
@@ -130,6 +126,54 @@ public class MetadataTest {
      searchMap.put("nameSpace", "test");
      Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollection(searchMap);
      nameSpaceIterator.remove();
+  }
+
+
+  @Test
+  public void testMissingValue () throws Exception {
+
+     System.out.println("beginning testMissingValue");
+     boolean result;
+
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+     CollectionTransferObject theCollection = new CollectionTransferObject();
+     theCollection.setURL("http://www.renci.org");
+     //theCollection.setTitle("title");
+     theCollection.setDescription("here's an example description");
+     theCollection.setProducer("producer");
+     theCollection.setSubject("physics");
+     theCollection.setNameSpace("test");
+     theCollection.setVersion(1);
+     HashMap<String, String> extra = new HashMap<String, String>();
+     extra.put("author", "Howard Lander");
+     extra.put("reason", "Testing the code");
+     theCollection.setExtra(extra);
+
+     try {
+         CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
+         result = theCollectionDAO.insertCollection(theCollection);
+         System.out.println("done with insert");
+         System.out.println("inserted Id is: " + theCollection.getDataStoreId());
+         System.out.println("testing get");
+
+         HashMap<String, String> searchMap = new HashMap<String, String>();
+         searchMap.put("nameSpace", "test");
+         searchMap.put("producer", "producer");
+         Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollection(searchMap);
+         System.out.println ("Do we have next? " +  collectionIterator.hasNext());
+
+         if (collectionIterator.hasNext()) {
+             CollectionTransferObject getObj = collectionIterator.next(); 
+
+             TestCase.assertTrue("title is not null", getObj.getTitle() == null);
+             int nDeleted = theCollectionDAO.deleteCollectionById(getObj.getDataStoreId());
+             System.out.println("nDeleted: " + nDeleted);
+             
+         }
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
   }
 
   @Rule
