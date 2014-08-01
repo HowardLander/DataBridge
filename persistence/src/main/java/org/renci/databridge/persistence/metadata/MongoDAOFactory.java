@@ -45,8 +45,7 @@ public class MongoDAOFactory extends MetadataDAOFactory {
     }
 
     public FileDAO getFileDAO() {
-        //return new MongoFileDAO();
-        return null;
+        return new MongoFileDAO();
     }
 
     public VariableDAO getVariableDAO() {

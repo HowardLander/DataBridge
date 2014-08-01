@@ -7,6 +7,7 @@ public class CollectionTransferObject {
     private String description; // Free text metadata about the study
     private String producer;    // Producer of the collection
     private String subject;     // Subject of the study
+    private HashMap<String, String> files;
     private HashMap<String, String> extra;
 
     // These attributes are specific to the DataBridge
@@ -174,6 +175,31 @@ public class CollectionTransferObject {
     {
         this.extra = extra;
     }
+    
+    /**
+     * Get the files. This is protected because users should 
+     * not have access to this, but we can save a database access
+     * by saving a list of file ids in this object.
+     *
+     * @return files as HashMap<String, String>
+     */
+    protected HashMap<String, String> getFiles()
+    {
+        return files;
+    }
+    
+    /**
+     * Set files. This is protected because users should 
+     * not have access to this, but we can save a database access
+     * by saving a list of file ids in this object.
+     *
+     * @param files the value to set.
+     */
+    protected void setFiles(HashMap<String, String> files)
+    {
+        this.files = files;
+    }
+    
     
     /**
      * Get dataStoreId.
