@@ -50,13 +50,13 @@ First, a rabbitMQ server must be running, there's an init script in /etc/init.d
 
 Examples:
 
-# status
+## status
 sudo /etc/init.d/rabbitmq-server status
 
-# start 
+## start 
 sudo /etc/init.d/rabbitmq-server start
 
-# stop 
+## stop 
 sudo /etc/init.d/rabbitmq-server stop
 
 next, use the following command from the DataBridge/ directory to run the listener:
@@ -73,18 +73,18 @@ Howard's network classes and Ren's code can be tested using the following comman
 
 mvn test
 
-for more information on tests please see 'test_readme.txt' in the server directory
+For more information on tests please see 'test_readme.txt' in the server directory.
 
 to see the logs, we have a simple low queue reader.  It's in DataBridge/tools/python
 
-example usage:
+Example usage:
 
 ./log.py -s localhost -q log
 
 The last argument is whatever you set the value of org.renci.databridge.logQueue 
 Note that, as of this writing the XMLSim program doesn't write to the log...
 
-GENERATING SITE
+## Generating the docs site
 
 From toplevel directory:
 
@@ -92,7 +92,7 @@ From toplevel directory:
 
 generates site in target/site
 
-GENERATING JAVADOC
+## Generating the javadoc
 
 From toplevel directory:
 
