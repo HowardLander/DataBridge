@@ -148,7 +148,7 @@ public class MongoFileDAO implements FileDAO {
      * @param theCollection Collection object containing this file.
      * @param theFile FileTransfer object containing info to be inserted.
      */
-    public boolean insertFileForCollection(CollectionTransferObject theCollection, FileTransferObject theFile) {
+    public boolean insertFile(CollectionTransferObject theCollection, FileTransferObject theFile) {
         boolean returnCode = true;
         try {
           BasicDBObject thisDoc = new BasicDBObject();
@@ -197,7 +197,7 @@ public class MongoFileDAO implements FileDAO {
      *
      * @param searchMap A HashMap with search keys.
      */
-    public Iterator<FileTransferObject> getFile(HashMap<String, String> searchMap) {
+    public Iterator<FileTransferObject> getFiles(HashMap<String, String> searchMap) {
         MongoFileDAOIterator theIterator = null;
         try {
             BasicDBObject thisDoc = new BasicDBObject();
@@ -222,7 +222,7 @@ public class MongoFileDAO implements FileDAO {
      *
      * @param theCollection The collection for which to find associated files
      */
-    public Iterator<FileTransferObject> getFileForCollection(CollectionTransferObject theCollection) {
+    public Iterator<FileTransferObject> getFiles(CollectionTransferObject theCollection) {
         MongoFileDAOIterator theIterator = null;
         try {
             BasicDBObject thisDoc = new BasicDBObject();
@@ -257,11 +257,11 @@ public class MongoFileDAO implements FileDAO {
      *
      * @param searchMap A HashMap with search keys.
      */
-    public int deleteFileById(String id) {
+    public int deleteFile(FileTransferObject theFile) {
         WriteResult theResult = null;
         try {
             BasicDBObject thisDoc = new BasicDBObject();
-            ObjectId theId = new ObjectId(id);
+            ObjectId theId = new ObjectId(theFile.getDataStoreId());
             thisDoc.put(MongoIdFieldName, theId);
             DB theDB = MongoDAOFactory.getTheDB();
             DBCollection theTable = theDB.getCollection(MongoName);

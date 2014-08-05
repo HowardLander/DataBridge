@@ -143,7 +143,7 @@ public class MongoCollectionDAO implements CollectionDAO {
      *
      * @param searchMap A HashMap with search keys.
      */
-    public Iterator<CollectionTransferObject> getCollection(HashMap<String, String> searchMap) {
+    public Iterator<CollectionTransferObject> getCollections(HashMap<String, String> searchMap) {
         MongoCollectionDAOIterator theIterator = null;
         try {
             BasicDBObject thisDoc = new BasicDBObject();
@@ -175,11 +175,11 @@ public class MongoCollectionDAO implements CollectionDAO {
      *
      * @param searchMap A HashMap with search keys.
      */
-    public int deleteCollectionById(String id) {
+    public int deleteCollection(CollectionTransferObject theCollection) {
         WriteResult theResult = null;
         try {
             BasicDBObject thisDoc = new BasicDBObject();
-            ObjectId theId = new ObjectId(id);
+            ObjectId theId = new ObjectId(theCollection.getDataStoreId());
             thisDoc.put(MongoIdFieldName, theId);
             DB theDB = MongoDAOFactory.getTheDB();
             DBCollection theTable = theDB.getCollection(MongoName);

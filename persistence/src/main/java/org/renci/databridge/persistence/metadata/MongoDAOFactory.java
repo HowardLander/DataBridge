@@ -49,8 +49,7 @@ public class MongoDAOFactory extends MetadataDAOFactory {
     }
 
     public VariableDAO getVariableDAO() {
-        //return new MongoVariableDAO();
-        return null;
+        return new MongoVariableDAO();
     } 
     /**
      * Get db.

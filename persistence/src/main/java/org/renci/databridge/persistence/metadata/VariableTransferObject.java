@@ -4,10 +4,12 @@ import  java.util.*;
 public class VariableTransferObject {
     private String name;
     private String description; // Free text metadata about the study
-    private Map<String, String> additionalMetadata;
+    private HashMap<String, String> extra;
 
     // These attributes are specific to the DataBridge
     private int    version;
+    private String dataStoreId; // The id generated at insertion time.
+    private String fileDataStoreId;
     
     /**
      * Get name.
@@ -67,6 +69,66 @@ public class VariableTransferObject {
     public void setVersion(int version)
     {
         this.version = version;
+    }
+    
+    /**
+     * Get fileDataStoreId.
+     *
+     * @return fileDataStoreId as String.
+     */
+    public String getFileDataStoreId()
+    {
+        return fileDataStoreId;
+    }
+    
+    /**
+     * Set fileDataStoreId.
+     *
+     * @param fileDataStoreId the value to set.
+     */
+    public void setFileDataStoreId(String fileDataStoreId)
+    {
+        this.fileDataStoreId = fileDataStoreId;
+    }
+    
+    /**
+     * Get dataStoreId.
+     *
+     * @return dataStoreId as String.
+     */
+    public String getDataStoreId()
+    {
+        return dataStoreId;
+    }
+    
+    /**
+     * Set dataStoreId.
+     *
+     * @param dataStoreId the value to set.
+     */
+    public void setDataStoreId(String dataStoreId)
+    {
+        this.dataStoreId = dataStoreId;
+    }
+
+    /**
+     * Get extra.
+     *
+     * @return extra as HashMap<String, String>
+     */
+    public HashMap<String, String> getExtra()
+    {
+        return extra;
+    }
+
+    /**
+     * Set extra.
+     *
+     * @param extra the value to set.
+     */
+    public void setExtra(HashMap<String, String> extra)
+    {
+        this.extra = extra;
     }
 }
 

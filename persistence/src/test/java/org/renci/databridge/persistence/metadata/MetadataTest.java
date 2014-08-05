@@ -63,7 +63,7 @@ public class MetadataTest {
          HashMap<String, String> searchMap = new HashMap<String, String>();
          searchMap.put("nameSpace", "test");
          searchMap.put("title", "title");
-         Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollection(searchMap);
+         Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollections(searchMap);
          System.out.println ("Do we have next? " +  collectionIterator.hasNext());
 
          if (collectionIterator.hasNext()) {
@@ -85,7 +85,7 @@ public class MetadataTest {
 
              // One more insert so we can try deleteCollectionById
              result = theCollectionDAO.insertCollection(theCollection);
-             nDeleted = theCollectionDAO.deleteCollectionById(theCollection.getDataStoreId());
+             nDeleted = theCollectionDAO.deleteCollection(theCollection);
              System.out.println("nDeleted: " + nDeleted);
              TestCase.assertTrue("nDeleted by Id not 1", nDeleted == 1);
          }
@@ -101,11 +101,11 @@ public class MetadataTest {
          int totalDeleted = 0;
          HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
          searchMap.put("nameSpace", "test");
-         Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollection(nameSpaceMap);
+         Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollections(nameSpaceMap);
          while (nameSpaceIterator.hasNext()) {
              CollectionTransferObject getObj = nameSpaceIterator.next(); 
              System.out.println("retrieved version: " + getObj.getVersion());
-             nDeleted = theCollectionDAO.deleteCollectionById(getObj.getDataStoreId());
+             nDeleted = theCollectionDAO.deleteCollection(getObj);
              System.out.println("nDeleted: " + nDeleted);
              nFound ++;
              totalDeleted += nDeleted;
@@ -129,7 +129,7 @@ public class MetadataTest {
      CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
      HashMap<String, String> searchMap = new HashMap<String, String>();
      searchMap.put("nameSpace", "test");
-     Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollection(searchMap);
+     Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollections(searchMap);
      nameSpaceIterator.remove();
   }
 
@@ -167,14 +167,14 @@ public class MetadataTest {
          HashMap<String, String> searchMap = new HashMap<String, String>();
          searchMap.put("nameSpace", "test");
          searchMap.put("producer", "producer");
-         Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollection(searchMap);
+         Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollections(searchMap);
          System.out.println ("Do we have next? " +  collectionIterator.hasNext());
 
          if (collectionIterator.hasNext()) {
              CollectionTransferObject getObj = collectionIterator.next(); 
 
              TestCase.assertTrue("title is not null", getObj.getTitle() == null);
-             int nDeleted = theCollectionDAO.deleteCollectionById(getObj.getDataStoreId());
+             int nDeleted = theCollectionDAO.deleteCollection(getObj);
              System.out.println("nDeleted: " + nDeleted);
              
          }
@@ -217,7 +217,7 @@ public class MetadataTest {
          HashMap<String, String> searchMap = new HashMap<String, String>();
          searchMap.put("nameSpace", "test");
          searchMap.put("title", "title");
-         Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollection(searchMap);
+         Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollections(searchMap);
          System.out.println ("Do we have next? " +  collectionIterator.hasNext());
 
          if (collectionIterator.hasNext()) {
@@ -233,20 +233,20 @@ public class MetadataTest {
              fileExtra.put("author", "Howard Lander");
              fileExtra.put("reason", "Testing the code");
              theFile.setExtra(fileExtra);
-             result = theFileDAO.insertFileForCollection(getObj, theFile);
+             result = theFileDAO.insertFile(getObj, theFile);
 
              // Did it get inserted?
-             Iterator<FileTransferObject> fileIterator = theFileDAO.getFileForCollection(getObj);
+             Iterator<FileTransferObject> fileIterator = theFileDAO.getFiles(getObj);
              if (fileIterator.hasNext()) {
                  FileTransferObject theReturnedFile = fileIterator.next();
                  System.out.println("Returned file name: " + theReturnedFile.getName()); 
 
                  // Let's try the delete
-                 int nDeleted = theFileDAO.deleteFileById(theReturnedFile.getDataStoreId());
+                 int nDeleted = theFileDAO.deleteFile(theReturnedFile);
                  System.out.println("nDeleted: " + nDeleted); 
 
                  // Let's delete the collection as well.
-                 nDeleted = theCollectionDAO.deleteCollectionById(getObj.getDataStoreId());
+                 nDeleted = theCollectionDAO.deleteCollection(getObj);
                  System.out.println("nDeleted: " + nDeleted); 
              }
          }
@@ -254,6 +254,108 @@ public class MetadataTest {
          e.printStackTrace();
      }
   }
+
+  @Test
+  public void testVariableDAO () throws Exception {
+
+     System.out.println("");
+     System.out.println("");
+     System.out.println("beginning testVariableDAO");
+     boolean result;
+
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+     CollectionTransferObject theCollection = new CollectionTransferObject();
+     theCollection.setURL("http://www.renci.org");
+     theCollection.setTitle("title");
+     theCollection.setDescription("here's an example description");
+     theCollection.setProducer("producer");
+     theCollection.setSubject("physics");
+     theCollection.setNameSpace("test");
+     theCollection.setVersion(1);
+     HashMap<String, String> extra = new HashMap<String, String>();
+     extra.put("author", "Howard Lander");
+     extra.put("reason", "Testing the code");
+     theCollection.setExtra(extra);
+
+     try {
+         CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
+         result = theCollectionDAO.insertCollection(theCollection);
+         System.out.println("done with insert");
+         System.out.println("inserted Id is: " + theCollection.getDataStoreId());
+         System.out.println("testing get");
+
+         HashMap<String, String> searchMap = new HashMap<String, String>();
+         searchMap.put("nameSpace", "test");
+         searchMap.put("title", "title");
+         Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollections(searchMap);
+         System.out.println ("Do we have next? " +  collectionIterator.hasNext());
+
+         if (collectionIterator.hasNext()) {
+             CollectionTransferObject getObj = collectionIterator.next(); 
+             FileDAO theFileDAO = theMongoFactory.getFileDAO();
+             FileTransferObject theFile = new FileTransferObject();
+             theFile.setURL("http://www.renci.org");
+             theFile.setName("file1");
+             theFile.setDescription("here's an example file description");
+             theFile.setNameSpace("test");
+             theFile.setVersion(1);
+             HashMap<String, String> fileExtra = new HashMap<String, String>();
+             fileExtra.put("author", "Howard Lander");
+             fileExtra.put("reason", "Testing the code");
+             theFile.setExtra(fileExtra);
+             result = theFileDAO.insertFile(getObj, theFile);
+
+             // Did it get inserted?
+             Iterator<FileTransferObject> fileIterator = theFileDAO.getFiles(getObj);
+             if (fileIterator.hasNext()) {
+                 FileTransferObject theReturnedFile = fileIterator.next();
+                 System.out.println("Returned file name: " + theReturnedFile.getName()); 
+
+                 // Now let's add some variables
+                 VariableDAO theVarDAO = theMongoFactory.getVariableDAO();
+                 VariableTransferObject var1 = new VariableTransferObject();
+                 var1.setName("var1");
+                 var1.setDescription("here's an example file description");
+                 var1.setVersion(1);
+                 HashMap<String, String> varExtra = new HashMap<String, String>();
+                 varExtra.put("author", "Howard Lander");
+                 varExtra.put("reason", "Testing the code");
+                 var1.setExtra(varExtra);
+                 result = theVarDAO.insertVariable(theReturnedFile, var1);
+
+                 VariableTransferObject var2 = new VariableTransferObject();
+                 var2.setName("var2");
+                 var2.setDescription("here's an example file description");
+                 var2.setVersion(1);
+                 HashMap<String, String> varExtra2 = new HashMap<String, String>();
+                 varExtra2.put("name", "wavePeriod");
+                 varExtra2.put("convention", "CF");
+                 var2.setExtra(varExtra2);
+                 result = theVarDAO.insertVariable(theReturnedFile, var2);
+
+                 Iterator<VariableTransferObject> varIterator = theVarDAO.getVariables(theReturnedFile);
+                 while (varIterator.hasNext()) {
+                     VariableTransferObject theReturnedVar = varIterator.next();
+                     System.out.println("Returned var name: " + theReturnedVar.getName()); 
+                     int nDeleted = theVarDAO.deleteVariable(theReturnedVar);
+                     System.out.println("n variables Deleted: " + nDeleted); 
+                 }
+
+                 // Let's try the delete
+                 int nDeleted = theFileDAO.deleteFile(theReturnedFile);
+                 System.out.println("nDeleted: " + nDeleted); 
+
+                 // Let's delete the collection as well.
+                 nDeleted = theCollectionDAO.deleteCollection(getObj);
+                 System.out.println("nDeleted: " + nDeleted); 
+             }
+         }
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
+  }
+
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
