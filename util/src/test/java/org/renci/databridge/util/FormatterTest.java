@@ -20,9 +20,9 @@ import org.renci.databridge.formatter.oaipmh.*;
 public class FormatterTest {
 
     @Test
-    public void testOaiPmh () throws Exception {
+    public void testUnmarshalOaiPmh () throws Exception {
 
-      System.out.println ("Testing formatters...");
+      System.out.println ("Testing unmarshal OAI-PMH...");
 
       StringWriter sw = new StringWriter ();
 
@@ -33,7 +33,7 @@ public class FormatterTest {
         }
       }
 
-      OAIPMHtype ot = Formatter.getOAIPMHtype (sw.toString ());
+      OAIPMHtype ot = DataBridgeUnmarshaller.unmarshalOAIPMHtype (sw.toString ());
  
       TestCase.assertTrue ("Returned object is null",  ot != null);
 
