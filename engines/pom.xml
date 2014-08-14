@@ -17,6 +17,7 @@
   <url>http://maven.apache.org</url>
   <modules>
     <module>relevance</module>
+    <module>ingest</module>
   </modules>
 
 </project>
