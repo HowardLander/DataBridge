@@ -5,6 +5,7 @@ import java.lang.InterruptedException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -104,54 +105,71 @@ public class AMQPComms {
      }
 
      /**
+      * Convenience constructor to load properties from a file path.
+      */
+     public AMQPComms (String propFilePath) {
+       try {
+         Properties p = new Properties ();
+         p.load (new FileInputStream (propFilePath));
+         init (p);
+       } catch (Exception e) {
+         e.printStackTrace ();
+       }
+     }
+
+     /**
+      * Convenience method to load properties from an InputStream.
+      */
+     public AMQPComms (InputStream propInputStream) throws IOException {
+       Properties p = new Properties ();
+       p.load (propInputStream);
+       init (p);
+     }
+
+     /**
       * AMQPComms constructor with a properties file to read.
       *
-      *  @param  propFile  The prop file to read to configure the communication channel. The property
+      *  @param  prop  The prop file to read to configure the communication channel. The property
       *                    file has to define at least the following properties: 
       *                    org.renci.databridge.primaryQueue, org.renci.databridge.exchange and
       *                    org.renci.databridge.queueHost.  Other relevant properties are
       *                    org.renci.databridge.queueDurability and org.renci.databridge.logLevel
       */
-     public AMQPComms(String propFile) {
-         try {
-             // Read the property file for the communication related properties
-             Properties prop = new Properties();
-             prop.load(new FileInputStream(propFile));
-             primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
-             theHost = prop.getProperty("org.renci.databridge.queueHost", "localhost");
-             theExchange = prop.getProperty("org.renci.databridge.exchange", "localhost");
-             theLevel = Integer.parseInt(prop.getProperty("org.renci.databridge.logLevel", "4"));
-             queueDurability = Boolean.parseBoolean(prop.getProperty("org.renci.databridge.queueDurability", "false"));
-             // These headers are a single string that contains multiple key value pairs. The format is
-             // key1:value1;key2:value2 etc
-             publishHeaders = prop.getProperty("org.renci.databridge.publishHeaders", "localhost");
-             receiveHeaders = prop.getProperty("org.renci.databridge.receiveHeaders", "localhost");
+     public AMQPComms (Properties prop) throws IOException {
+       init (prop);
+     }
 
-             // Here's the Rabbit specific code.
-             ConnectionFactory theFactory = new ConnectionFactory();
-             theFactory.setHost(theHost);
-             theConnection = theFactory.newConnection();
-             theChannel = theConnection.createChannel();
+     protected void init (Properties prop) throws IOException {
+       primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
+       theHost = prop.getProperty("org.renci.databridge.queueHost", "localhost");
+       theExchange = prop.getProperty("org.renci.databridge.exchange", "localhost");
+       theLevel = Integer.parseInt(prop.getProperty("org.renci.databridge.logLevel", "4"));
+       queueDurability = Boolean.parseBoolean(prop.getProperty("org.renci.databridge.queueDurability", "false"));
+       // These headers are a single string that contains multiple key value pairs. The format is key1:value1;key2:value2 etc
+       publishHeaders = prop.getProperty("org.renci.databridge.publishHeaders", "localhost");
+       receiveHeaders = prop.getProperty("org.renci.databridge.receiveHeaders", "localhost");
 
-             // Declare a queue to be the main queue.  If the queue is durable and messages sent to it
-             // are also durable, then those messages will be recieved by the app at start time, even
-             // if they were queued before the app was started.
-             theChannel.queueDeclare(primaryQueue, queueDurability, false, false, null);
+       // Here's the Rabbit specific code.
+       ConnectionFactory theFactory = new ConnectionFactory();
+       theFactory.setHost(theHost);
+       theConnection = theFactory.newConnection();
+       theChannel = theConnection.createChannel();
 
-             // Declare a headers exchange.  Note that the declaration of the exchange is idempotent,
-             // so at execution time this will primarily makes sure the exchange is of the expected
-             // type.  If the exchange exists and is not a headers exchange, an error will be thrown.
-             // Note also that we are declaring the exchange as durable, without checking for a 
-             // property.  We don't want various apps to declare this differently, but we do (I think)
-             // want the exchange to be durable.
-             theChannel.exchangeDeclare(theExchange, "headers", true);
+       // Declare a queue to be the main queue.  If the queue is durable and messages sent to it
+       // are also durable, then those messages will be recieved by the app at start time, even
+       // if they were queued before the app was started.
+       theChannel.queueDeclare(primaryQueue, queueDurability, false, false, null);
 
-             // Create the consumer
-             consumer = new QueueingConsumer(theChannel);
- 
-         } catch (Exception e){
-            e.printStackTrace();
-         }
+       // Declare a headers exchange.  Note that the declaration of the exchange is idempotent,
+       // so at execution time this will primarily makes sure the exchange is of the expected
+       // type.  If the exchange exists and is not a headers exchange, an error will be thrown.
+       // Note also that we are declaring the exchange as durable, without checking for a 
+       // property.  We don't want various apps to declare this differently, but we do (I think)
+       // want the exchange to be durable.
+       theChannel.exchangeDeclare(theExchange, "headers", true);
+
+       // Create the consumer
+       consumer = new QueueingConsumer(theChannel);
      }
 
      /**

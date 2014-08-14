@@ -3,6 +3,8 @@ package org.renci.databridge.util;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 import java.util.Properties;
+import java.io.InputStream;
+import java.io.IOException;
 
 /**
  * A thread that listens to AMQP for messages based on specified headers and 
@@ -20,19 +22,41 @@ public class AMQPMessageListener extends Thread {
   protected Logger logger;
 
   /** 
-   * @param pathToPropsFile properties file for AMQPComms object initialization.
+   * @param propsInputStream properties for AMQPComms object initialization.
    * @param amqpMessageType 
    * @param amqpMessageHandler
    * @Param logger can be null.
    */
-  public AMQPMessageListener (String pathToPropsFile, AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) {
+  public AMQPMessageListener (InputStream propsInputStream, AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) throws IOException {
 
-    // creating AMQPComms here bc passing it in would enable reusing the same
-    // AMQPComms instance, which is not safe across multiple clients
+    this (amqpMessageType, amqpMessageHandler, logger);
+
+    // creating AMQPComms here becausec passing it in would enable reusing 
+    // the same AMQPComms instance, which is not safe across multiple clients
+    this.amqpComms = new AMQPComms (propsInputStream);
+
+  }
+
+  /**
+   * @param pathToPropsFile properties file for AMQPComms object initialization.
+   * @param amqpMessageType
+   * @param amqpMessageHandler
+   * @Param logger can be null.
+   */
+  public AMQPMessageListener (String pathToPropsFile, AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) throws IOException {
+
+    this (amqpMessageType, amqpMessageHandler, logger);
+
+    // creating AMQPComms here becausec passing it in would enable reusing
+    // the same AMQPComms instance, which is not safe across multiple clients
     this.amqpComms = new AMQPComms (pathToPropsFile);
 
+  }
+
+  protected AMQPMessageListener (AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) {
     this.amqpMessageType = amqpMessageType;
     this.amqpMessageHandler = amqpMessageHandler;
+    this.logger = logger;
   }
 
   protected volatile boolean terminate;
@@ -60,15 +84,13 @@ public class AMQPMessageListener extends Thread {
 
         AMQPMessage am = this.amqpComms.receiveMessage (LISTENER_TIMEOUT_MS);
         if (am != null) {
-          amqpMessageHandler.handle (am);
+          this.amqpMessageHandler.handle (am);
         }
 
       } catch (Exception e) {
 
-        // sink any exception from handler st it doesn't affect dispatching
-        if (this.logger != null) {
-          this.logger.log (Level.WARNING, "Sunk exception: ", e);
-        }
+        // dispatch exception to handler st it doesn't stop dispatch thread
+        this.amqpMessageHandler.handleException (e);
 
       }
 
