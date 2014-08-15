@@ -13,7 +13,7 @@ import org.renci.databridge.formatter.oaipmh.OAIPMHtype;
  */
 public class DataBridgeUnmarshaller {
 
-  public static OAIPMHtype unmarshalOAIPMHtype (String xml) throws Exception {
+  public static OAIPMHtype unmarshalOAIPMHtype (String xml) throws JAXBException {
 
     JAXBContext jc = JAXBContext.newInstance (OAIPMHtype.class);
     Unmarshaller unmarshaller = jc.createUnmarshaller ();

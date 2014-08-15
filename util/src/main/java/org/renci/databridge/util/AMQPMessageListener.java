@@ -92,6 +92,8 @@ public class AMQPMessageListener extends Thread {
         // dispatch exception to handler st it doesn't stop dispatch thread
         this.amqpMessageHandler.handleException (e);
 
+        // @todo deal with exceptions here.
+
       }
 
     } 
