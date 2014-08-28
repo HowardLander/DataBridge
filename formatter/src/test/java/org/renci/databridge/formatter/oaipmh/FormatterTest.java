@@ -1,4 +1,4 @@
-package org.renci.databridge.formatter;
+package org.renci.databridge.formatter.oaipmh;
 
 import java.util.List;
 import java.io.File;

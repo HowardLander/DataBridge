@@ -33,7 +33,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <packageName>org.renci.databridge.formatter.oaipmh</packageName> <!-- The name of your generated source package -->
+                    <packageName>org.renci.databridge.formatter.oaipmh</packageName> <!-- The name of the generated source package -->
                 </configuration>
              </plugin>
         </plugins>

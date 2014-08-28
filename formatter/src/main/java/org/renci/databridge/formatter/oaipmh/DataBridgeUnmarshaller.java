@@ -1,4 +1,4 @@
-package org.renci.databridge.formatter;
+package org.renci.databridge.formatter.oaipmh;
 
 import java.io.StringReader;
 import javax.xml.bind.*;
