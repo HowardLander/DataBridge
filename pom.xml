@@ -10,6 +10,7 @@
 
   <modules>
     <module>util</module>
+    <module>formatter</module>
     <module>network</module>
     <module>persistence</module>
     <module>engines</module>

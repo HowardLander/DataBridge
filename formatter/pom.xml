@@ -1,0 +1,42 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+       <groupId>org.renci.databridge</groupId>
+       <artifactId>databridge</artifactId>
+       <version>1.0-BETA</version>
+       <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.renci.databridge.formatter</groupId>
+    <artifactId>databridge-formatter</artifactId>
+    <packaging>jar</packaging>
+    <name>DataBridge Formatter</name>
+    <version>1.0-BETA</version>
+
+    <build>
+        <plugins>
+            <!-- Generates Java source from XSD using XJC -->
+            <!-- default outputDirectory ${project.build.directory}/generated-sources/jaxb -->
+            <!-- default schemaDirectory ${project.basedir}/src/main/xsd -->
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>jaxb2-maven-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>xjc</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <packageName>org.renci.databridge.formatter.oaipmh</packageName> <!-- The name of your generated source package -->
+                </configuration>
+             </plugin>
+        </plugins>
+    </build>
+
+</project>
