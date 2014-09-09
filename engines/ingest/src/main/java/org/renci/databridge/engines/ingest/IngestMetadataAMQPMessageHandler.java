@@ -11,17 +11,16 @@ import javax.xml.bind.JAXBException;
 
 import org.renci.databridge.util.AMQPMessage;
 import org.renci.databridge.util.AMQPMessageHandler;
-
-import org.renci.databridge.formatter.oaipmh.*;
-
+import org.renci.databridge.formatter.MetadataFormatter;
 import org.renci.databridge.persistence.metadata.CollectionTransferObject;
 import org.renci.databridge.persistence.metadata.MetadataDAOFactory;
 import org.renci.databridge.persistence.metadata.CollectionDAO;
 
 /**
- * Handles "ingest metadata" DataBridge message by extracting relevant content and persisting it. 
+ * Handles "ingest metadata" DataBridge message by calling relevant third-party metadata formatter and persisting it. 
  * 
  * @author mrshoffn
+ * @todo prevent JAR support classes from conflicting by isolating them
  */
 public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
@@ -30,47 +29,28 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
   @Override
   public void handle (AMQPMessage amqpMessage) throws Exception {
 
-    String metadataString = new String (amqpMessage.getBytes ());
-    this.logger.log (Level.INFO, "AMQPMessage: '" + metadataString + "'");
-    CollectionTransferObject cto = extract (metadataString);
+    // look up third party plug-in class
+
+String className = "org.renci.databridge.formatter.oaipmh.OaipmhMetadataFormatterImpl";
+
+    // instantiate third-party MetadataFormatter implementation 
+    MetadataFormatter mf = (MetadataFormatter) Class.forName (className).newInstance (); 
+
+    // dispatch to third-party formatter 
+    byte [] bytes = amqpMessage.getBytes ();
+    CollectionTransferObject cto = mf.format (bytes);
+
+    // persist the resulting CollectionTransferObject
     String id = persist (cto);
-    System.out.println ("Inserted id is '" + id + "'");
+    this.logger.log (Level.FINE, "Inserted CTO id is '" + id + "'");
 
   }
 
   public void handleException (Exception exception) {
-    System.out.println ("IngestMetadataAMQPMessageHandler received exception: ");
-    exception.printStackTrace ();
-    // this.logger.log (Level.SEVERE, "Exception thrown.", e);   
-  }
 
-  protected CollectionTransferObject extract (String metadataString) throws JAXBException {
+    this.logger.log (Level.WARNING, "handler received exception: ", exception);
 
-    CollectionTransferObject cto = new CollectionTransferObject ();
-
-    OAIPMHtype ot = DataBridgeUnmarshaller.unmarshalOAIPMHtype (metadataString);
-    ListRecordsType lrt = ot.getListRecords ();
-    List<RecordType> lr = lrt.getRecord ();
-    Iterator<RecordType> i = lr.iterator ();
-    while (i.hasNext ()) {
-      RecordType r = i.next ();
-      HeaderType h = r.getHeader ();
-      // Harris//hdl:1902.29/H-15085
-      cto.setURL (constructUrl (h.getIdentifier ()));
-
- cto.setTitle ("title");
- cto.setDescription ("");
- cto.setProducer ("producer");
-    cto.setSubject ("physics");
-    // Map<String, String> extra = new HashMap<String, String> ();
-    // extra.put ("", "");
-    // cto.setExtra (cto);
-    cto.setNameSpace ("test");
-    cto.setVersion (1);
-
-    }
-
-    return cto;
+// todo 
 
   }
 
@@ -83,16 +63,6 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
       throw new Exception ("Persist failed.");
     }
     return cto.getDataStoreId ();
-
-  }
-
-  /**
-   * Input: Harris//hdl:1902.29/H-15085
-   * Output: hdl.handle.net/1902.29/H-15085
-   */
-  protected String constructUrl (String headerIdentifier) {
-
-return headerIdentifier; 
 
   }
 

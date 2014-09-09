@@ -14,6 +14,14 @@
     <name>DataBridge Formatter</name>
     <version>1.0-BETA</version>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.renci.databridge.persistence</groupId>
+            <artifactId>databridge-persistence</artifactId>
+            <version>1.0-BETA</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <!-- Generates Java source from XSD using XJC -->

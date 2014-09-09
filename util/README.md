@@ -15,7 +15,4 @@ Handlers work in the following way. A GraphComputedMessageHandler must implement
 
 Every time a GraphComputedMessage comes in the listener will dispatch it to the GraphComputedAMQPMessageHandler instance's _handle (AMQPMessage amqpMessage)_ method.
 
-
-
-
-
+For messages that have a payload, Databridge serializes the payload as a Java object across the wire.

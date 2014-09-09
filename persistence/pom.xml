@@ -36,7 +36,6 @@
             <artifactId>databridge-util</artifactId>
             <version>1.0-BETA</version>
         </dependency>
-
         <dependency> 
             <groupId>org.mongodb</groupId> 
             <artifactId>mongo-java-driver</artifactId> 

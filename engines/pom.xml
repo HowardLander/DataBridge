@@ -1,12 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-   <parent>
-       <groupId>org.renci.databridge</groupId>
-       <artifactId>databridge</artifactId>
-       <version>1.0-BETA</version>
-       <relativePath>../pom.xml</relativePath>
-    </parent>
+  <parent>
+    <groupId>org.renci.databridge</groupId>
+    <artifactId>databridge</artifactId>
+    <version>1.0-BETA</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.renci.databridge.engines</groupId>

@@ -15,12 +15,16 @@ import org.junit.rules.ExpectedException;
 import org.junit.matchers.JUnitMatchers;
 import org.junit.Rule;
 
+import org.renci.databridge.formatter.MetadataFormatter;
 import org.renci.databridge.formatter.oaipmh.*;
 
+/**
+ * Test OaipmhMetadataFormatterImpl.
+ */
 public class FormatterTest {
 
     @Test
-    public void testUnmarshalOaiPmh () throws Exception {
+    public void testUnmarshalAnOaiPmh () throws Exception {
 
       System.out.println ("Testing unmarshal OAI-PMH...");
 
@@ -33,7 +37,9 @@ public class FormatterTest {
         }
       }
 
-      OAIPMHtype ot = DataBridgeUnmarshaller.unmarshalOAIPMHtype (sw.toString ());
+      OaipmhMetadataFormatterImpl omfi = new OaipmhMetadataFormatterImpl ();
+
+      OAIPMHtype ot = omfi.unmarshal (sw.toString ());
  
       TestCase.assertTrue ("Returned object is null",  ot != null);
 
@@ -45,8 +51,9 @@ public class FormatterTest {
 
       TestCase.assertTrue ("Record identifier is incorrect.", "Harris//hdl:1902.29/H-15085".equals (i));
 
-
     }
+ 
+    // @todo test "format" method
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
