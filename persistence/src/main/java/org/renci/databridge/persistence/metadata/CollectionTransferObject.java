@@ -7,6 +7,7 @@ public class CollectionTransferObject {
     private String description; // Free text metadata about the study
     private String producer;    // Producer of the collection
     private String subject;     // Subject of the study
+    private ArrayList<String>   keywords;  // The keywords
     private HashMap<String, String> extra;
 
     // These attributes are specific to the DataBridge
@@ -133,6 +134,26 @@ public class CollectionTransferObject {
     public void setSubject(String subject)
     {
         this.subject = subject;
+    }
+    
+    /**
+     * Get keywords.
+     *
+     * @return keywords as ArrayList<String>.
+     */
+    public ArrayList<String> getKeywords()
+    {
+        return keywords;
+    }
+    
+    /**
+     * Set keywords.
+     *
+     * @param keywords the value to set.
+     */
+    public void setKeywords(ArrayList<String> keywords)
+    {
+        this.keywords = keywords;
     }
     
     /**

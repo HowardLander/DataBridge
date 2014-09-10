@@ -61,6 +61,7 @@ public class MongoCollectionDAO implements CollectionDAO {
                    theCollection.setDescription((String)theEntry.get("description"));
                    theCollection.setProducer((String)theEntry.get("producer"));
                    theCollection.setSubject((String)theEntry.get("subject"));
+                   theCollection.setKeywords((ArrayList<String>)theEntry.get("keywords"));
                    theCollection.setNameSpace((String)theEntry.get("nameSpace"));
                    theCollection.setVersion((int)theEntry.get("version"));
                    @SuppressWarnings("unchecked")
@@ -112,6 +113,7 @@ public class MongoCollectionDAO implements CollectionDAO {
           thisDoc.put("description", theCollection.getDescription());
           thisDoc.put("producer", theCollection.getProducer());
           thisDoc.put("subject", theCollection.getSubject());
+          thisDoc.put("keywords", theCollection.getKeywords());
           thisDoc.put("nameSpace", theCollection.getNameSpace());
           thisDoc.put("version", theCollection.getVersion());
           HashMap <String, String> extra = theCollection.getExtra();

@@ -48,6 +48,13 @@ public class MetadataTest {
      theCollection.setSubject("physics");
      theCollection.setNameSpace("test");
      theCollection.setVersion(1);
+     ArrayList<String> keywords = new ArrayList<String>();
+
+     keywords.add("Keyword1");
+     keywords.add("Keyword2");
+     keywords.add("Keyword3");
+     theCollection.setKeywords(keywords);
+
      HashMap<String, String> extra = new HashMap<String, String>();
      extra.put("author", "Howard Lander");
      extra.put("reason", "Testing the code");
@@ -68,7 +75,11 @@ public class MetadataTest {
 
          if (collectionIterator.hasNext()) {
              CollectionTransferObject getObj = collectionIterator.next(); 
-
+             System.out.println("keywords");
+             System.out.println(getObj.getKeywords());
+             String firstKeyword = getObj.getKeywords().get(0);
+             TestCase.assertTrue("First keyword not found", 
+                 firstKeyword.compareTo("Keyword1") == 0);
              TestCase.assertTrue("subjects don't match", 
                  theCollection.getSubject().compareTo(getObj.getSubject()) == 0);
              System.out.println("retrieved subject: " + getObj.getSubject());
