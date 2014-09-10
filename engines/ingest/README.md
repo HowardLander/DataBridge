@@ -11,9 +11,10 @@ DAO Field  | Source
 ---------  | ------
 URL | record->header->indentifier (looks like) hdl.handle.net/1902.29/H-15085
 title | stdyDscr->citation->titlStmt->titl
-descriptioni | stdyDscr->stdyinfo->abstract
+description | stdyDscr->stdyinfo->abstract
 producer | stdyDscr->citation->prodStmt->producer
 subject | stdyDscr->stdyinfo->subject
+keywords | stdyDscr->stdyInfo->subject->keyword
 extra | HashMap  of  fields under stdyDscr->stdyinfo->sumDscr
 nameSpace | From User
 version	| Start with 1 (Do we need to add a timestamp in the data model?)
