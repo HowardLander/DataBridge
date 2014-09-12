@@ -34,7 +34,7 @@ public class RelevanceEngineMessageHandler extends Thread {
   private byte[] bytes;
   
   public RelevanceEngineMessageHandler(AMQPMessage theMessage){
-      // Get the individual components of the the message and store\
+      // Get the individual components of the the message and store
       // them in the fields
       routingKey = theMessage.getRoutingKey();
       properties = theMessage.getProperties();

@@ -20,6 +20,12 @@
             <artifactId>msgpack</artifactId>
             <version>0.6.7</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.renci.databridge.persistence</groupId>
+            <artifactId>databridge-persistence</artifactId>
+            <version>1.0-BETA</version>
+        </dependency>
     </dependencies>
 
 </project>
