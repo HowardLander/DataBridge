@@ -1,4 +1,4 @@
-package org.renci.databridge.util;
+package org.renci.databridge.persistence.metadata;
 import org.renci.databridge.persistence.metadata.*;
 /**
  * This is the interface for classes that are to be instantiated and executed by the
