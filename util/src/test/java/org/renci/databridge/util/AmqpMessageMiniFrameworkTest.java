@@ -57,7 +57,7 @@ public class AmqpMessageMiniFrameworkTest {
     // start handler thread 
     InputStream is = getClass ().getResourceAsStream ("/AmqpMessageMiniFrameworkTest-handler.conf");
     AMQPMessageHandler amh = new AMQPMessageHandler () {
-      public void handle (AMQPMessage amqpMessage) {
+      public void handle (AMQPMessage amqpMessage, Object extra) {
         receivedString = new String (amqpMessage.getBytes ());
         System.out.println ("AMQPMessageHandler message received: " + receivedString);
       }

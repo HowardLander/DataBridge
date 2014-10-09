@@ -84,7 +84,7 @@ public class AMQPMessageListener extends Thread {
 
         AMQPMessage am = this.amqpComms.receiveMessage (LISTENER_TIMEOUT_MS);
         if (am != null) {
-          this.amqpMessageHandler.handle (am);
+          this.amqpMessageHandler.handle (am, null);
         }
 
       } catch (Exception e) {

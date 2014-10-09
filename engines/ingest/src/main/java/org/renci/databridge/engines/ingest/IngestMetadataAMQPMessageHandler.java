@@ -27,7 +27,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
   private Logger logger = Logger.getLogger ("org.renci.databridge.engine.ingest");
 
   @Override
-  public void handle (AMQPMessage amqpMessage) throws Exception {
+  public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
 
     // look up third party plug-in class
 

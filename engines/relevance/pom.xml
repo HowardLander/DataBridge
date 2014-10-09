@@ -28,5 +28,15 @@
         <artifactId>databridge-util</artifactId>
         <version>1.0-BETA</version>
     </dependency>
+    <dependency>
+        <groupId>org.renci.databridge.persistence</groupId>
+        <artifactId>databridge-persistence</artifactId>
+        <version>1.0-BETA</version>
+    </dependency>
+    <dependency>
+        <groupId>org.renci.databridge-contrib.similarity</groupId>
+        <artifactId>mocksimilarity</artifactId>
+        <version>1.0-BETA</version>
+    </dependency>
   </dependencies>
 </project>

@@ -1,5 +1,8 @@
-package org.renci.databridge.engines;
+package org.renci.databridge.engines.relevance;
 import  org.renci.databridge.util.*;
+import  org.renci.databridge.message.*;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 import java.io.*;
 import java.util.Properties;
 
@@ -11,12 +14,8 @@ import java.util.Properties;
  */
 public class RelevanceEngine {
 
-    private static String bindHeaders;
-    private static AMQPComms theComms;
-   
-
-    public static void main( String[] args )
-    {
+    protected static Logger logger = Logger.getLogger ("org.renci.databridge.engines.relevance");
+    public static void main(String[] args ) {
         String propFileName = null;
 
         if (args.length > 0) {
@@ -25,39 +24,17 @@ public class RelevanceEngine {
             propFileName = new String("relevance.conf");
         }    
         try {
-            Properties prop = new Properties();
-            prop.load(new FileInputStream(propFileName)); 
-           
-            // The bind headers control the messages this server will respond to. If no headers
-            // are specified, the server listens for any message, which is pretty clearly the 
-            // wrong idea, so be sure to specify some.
-            bindHeaders = prop.getProperty("org.renci.databridge.relevance.engine.bindHeaders", "xmatch:any");
-        } catch (IOException ex) {
+            RelevanceEngineMessageListener aml = 
+                new RelevanceEngineMessageListener (propFileName, 
+                                         new RelevanceEngineMessage(), 
+                                         new RelevanceEngineMessageHandler(), logger);
+
+            aml.start ();
+            aml.join (); // keeps main thread from exiting 
+        } catch (Exception ex) {
             System.out.println(ex.toString());
             System.exit(1);
         }
 
-        try {
-
-            // Create the comms object.
-            theComms = new AMQPComms(propFileName);
- 
-            // Bind the queue
-            theComms.bindTheQueue(bindHeaders);
-
-            // Listen for messages on the queue in a loop.
-            while (true) {
-                // This is a blocking call.
-                AMQPMessage theMessage = theComms.receiveMessage();
-
-                // Start a new thread using the handler class with the message as the argument.
-                new RelevanceEngineMessageHandler(theMessage).start();
-            }
-        } catch (Exception ex) {
-            System.out.println(ex.toString());
-            System.exit(2);
-        } finally {
-            theComms.unbindTheQueue(bindHeaders);
-        }
     }
 }
