@@ -111,7 +111,7 @@ public class MetadataTest {
          int nDeleted = 0;
          int totalDeleted = 0;
          HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
-         searchMap.put("nameSpace", "test");
+         nameSpaceMap.put("nameSpace", "test");
          Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollections(nameSpaceMap);
          while (nameSpaceIterator.hasNext()) {
              CollectionTransferObject getObj = nameSpaceIterator.next(); 
@@ -122,7 +122,7 @@ public class MetadataTest {
              totalDeleted += nDeleted;
          }
          System.out.println("number found:" + nFound);
-         //TestCase.assertTrue("total found not 5", nFound == 5);
+         TestCase.assertTrue("total found not 5", nFound == 5);
          TestCase.assertTrue("totalDeleted by Id not 5", totalDeleted == 5);
      }  catch (Exception e) {
          e.printStackTrace();
