@@ -107,11 +107,17 @@ public class MetadataTest {
              result = theCollectionDAO.insertCollection(theCollection);
          }
 
+         // let's test the count collections code.
+         HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
+         nameSpaceMap.put("nameSpace", "test");
+         long theCount = theCollectionDAO.countCollections(nameSpaceMap);
+         System.out.println("countCollections found " + theCount + " matches");
+         TestCase.assertTrue("count of collections found not 5", theCount == 5);
+         
+
          int nFound = 0;
          int nDeleted = 0;
          int totalDeleted = 0;
-         HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
-         nameSpaceMap.put("nameSpace", "test");
          Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollections(nameSpaceMap);
          while (nameSpaceIterator.hasNext()) {
              CollectionTransferObject getObj = nameSpaceIterator.next(); 

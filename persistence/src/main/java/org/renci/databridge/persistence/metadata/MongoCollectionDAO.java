@@ -150,6 +150,7 @@ public class MongoCollectionDAO implements CollectionDAO {
         try {
             BasicDBObject thisDoc = new BasicDBObject();
             for (String key : searchMap.keySet()) {
+                System.out.println("Adding key: "  + key + " with value " + searchMap.get(key));
                 thisDoc.put(key, searchMap.get(key));
             }
             DB theDB = MongoDAOFactory.getTheDB();
@@ -191,7 +192,29 @@ public class MongoCollectionDAO implements CollectionDAO {
             e.printStackTrace();
         }
         return theResult.getN();
+    }
 
+    /**
+     * count the number of items in the "Collection" table that match the search keys in the search map.
+     * @param searchMap A HashMap with search keys.
+     *
+     */
+    public long countCollections(HashMap<String, String> searchMap) {
+        long theResult = 0;
+        try {
+            BasicDBObject thisDoc = new BasicDBObject();
+            for (String key : searchMap.keySet()) {
+                 thisDoc.put(key, searchMap.get(key));
+            }
+            DB theDB = MongoDAOFactory.getTheDB();
+            DBCollection theTable = theDB.getCollection(MongoName);
+            theResult  = theTable.count(thisDoc);
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace();
+            theResult = 0;
+        }
+        return theResult;
     }
 
     /** 
