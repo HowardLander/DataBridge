@@ -12,6 +12,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.matchers.JUnitMatchers;
 import org.junit.Rule;
 import org.la4j.*;
+import java.nio.file.*;
 
 public class SimilarityFileTest {
 
@@ -25,6 +26,7 @@ public class SimilarityFileTest {
     public ArrayList<String> collectionList = new ArrayList(Arrays.asList("1", "2", "3"));
     public String similiarityId = new String("547");
     public String testFileName = new String("testFile.ser");
+    
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
     }
@@ -40,6 +42,7 @@ public class SimilarityFileTest {
     public void testSimilarityFile() {
 
         try {
+            Path testFilePath = FileSystems.getDefault().getPath("./", testFileName);
             System.out.println("Basic similarity testing");
             SimilarityFile theData = new SimilarityFile(10, nameSpace);
             TestCase.assertTrue("could not create data", theData != null);
@@ -57,6 +60,9 @@ public class SimilarityFileTest {
             TestCase.assertTrue("could not read data", readData != null);
             TestCase.assertTrue("nameSpace doesn't match", readData.getNameSpace().compareTo(nameSpace) == 0);
             TestCase.assertTrue("similiarityId doesn't match", readData.getSimilarityInstanceId().compareTo(similiarityId) == 0);
+
+            // Let's clean up the test file. No reason to check the return code, what would we do?
+            Files.deleteIfExists(testFilePath);
         } catch (Exception e) {
             e.printStackTrace();
         }
