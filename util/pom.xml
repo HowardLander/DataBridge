@@ -20,6 +20,12 @@
             <artifactId>msgpack</artifactId>
             <version>0.6.7</version>
         </dependency>
+
+        <dependency>
+          <groupId>org.la4j</groupId>
+          <artifactId>la4j</artifactId>
+          <version>0.4.9</version>
+        </dependency>
     </dependencies>
 
 </project>
