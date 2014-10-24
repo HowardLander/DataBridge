@@ -47,6 +47,17 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       stringHeaders = amqpMessage.getStringHeaders();
       bytes = amqpMessage.getBytes();
 
+      // get the message name
+      String messageName = stringHeaders.get(RelevanceEngineMessage.NAME);
+
+      // Call the function appropriate for the message
+      if (messageName.compareTo(RelevanceEngineMessage.CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI) == 0) {
+         processCreateSimilarityMessage(stringHeaders, extra);
+      }
+  }
+
+
+  public void processCreateSimilarityMessage( Map<String, String> stringHeaders, Object extra) {
       // We need three pieces of information before we can continue.  This info has to all be
       // in the headers or we are toast.
       // 1) the class name
@@ -68,8 +79,15 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       }
 
       // We'll need an object of this type as well.
-      Constructor<?> cons = theClass.getConstructor(null);
-      Object theObject = cons.newInstance(null);
+      Constructor<?> cons = null;
+      Object theObject = null;
+      try {
+         cons = theClass.getConstructor(null);
+         theObject = cons.newInstance(null);
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't create instance");
+         return;
+      }
 
       // 2) the method name
       String methodName = stringHeaders.get(RelevanceEngineMessage.METHOD);    
@@ -134,12 +152,16 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
          // Now spin through the rest of the iterator 2 list.
          while (iterator2.hasNext()) {
-               cto2 = iterator2.next();
+            cto2 = iterator2.next();
 
-               // Now we have our 2 CollectionTransferObjects, so we want to call the method.
-               //double similarity =  (double) theMethod.invoke(theClass, cto1, cto2);
+            // Now we have our 2 CollectionTransferObjects, so we want to call the method.
+            try {
                double similarity =  (double) theMethod.invoke(theObject, cto1, cto2);
                System.out.println("Similarity is: " + similarity);
+            } catch (Exception e) {
+               this.logger.log (Level.SEVERE, "Can't invoke method " + methodName);
+               return;
+            }
          }
          counter ++;
       }
