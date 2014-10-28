@@ -58,8 +58,9 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
 
   public void processCreateSimilarityMessage( Map<String, String> stringHeaders, Object extra) {
-      // We need three pieces of information before we can continue.  This info has to all be
-      // in the headers or we are toast.
+      // We need several pieces of information before we can continue.  This info has to 
+
+      // all be in the headers or we are toast.
       // 1) the class name
       String className = stringHeaders.get(RelevanceEngineMessage.CLASS);    
       if (null == className) {
@@ -82,7 +83,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       Constructor<?> cons = null;
       Object theObject = null;
       try {
-         cons = theClass.getConstructor(null);
+         cons = (Constructor<?>) theClass.getConstructor(null);
          theObject = cons.newInstance(null);
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't create instance");
@@ -115,6 +116,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
+      // 4) the outputURI
+      String outputURI = stringHeaders.get(RelevanceEngineMessage.OUTPUT_URI);    
+      if (null == outputURI) {
+         this.logger.log (Level.SEVERE, "No output URI in message");
+         return;
+      }
+
       // The "extra" parameter in this case must be of type MetadataDAOFactory
       MetadataDAOFactory theFactory = (MetadataDAOFactory) extra;
       if (null == theFactory) {
@@ -130,25 +138,56 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       // Search for all of the collections in the nameSpace
       HashMap<String, String> searchMap = new HashMap<String, String>();
       searchMap.put("nameSpace", nameSpace);
+ 
+      // We need an array list of collectionIds
+      ArrayList<String> collectionIds = new ArrayList<String>();
 
-      // For each pair of collection objects, we are going to call the user provided function.
-      Iterator<CollectionTransferObject> iterator1 = theCollectionDAO.getCollections(searchMap);
+      // We need to declare a SimilarityFile object to use.
+      long nCollections = theCollectionDAO.countCollections(searchMap);
+
+      // Here we have a small problem.  Our DB infrastructure supports "long"
+      // cardinality for records, but the current similarity file uses a 
+      // matrix implementation that "only" supports an int. However, when we
+      // get past 2 billion collections, we'll figure out how to deal with this.
+      int nCollectionsInt;
+      if (nCollections > (long) Integer.MAX_VALUE) {
+         this.logger.log (Level.SEVERE, "nCollections > Integer.MAX_VALUE");
+         return;
+      } else {
+         nCollectionsInt = (int) nCollections;
+      }
+      SimilarityFile theSimFile = new SimilarityFile(nCollectionsInt, nameSpace);
+      theSimFile.setNameSpace(nameSpace);
+
+      // Until we write the SimilarityInstanceDAO, we dummy up the value
+      theSimFile.setSimilarityInstanceId("test_instance");
+
+      // For each pair of collection objects, we call the user provided function.
+      Iterator<CollectionTransferObject> iterator1 = 
+          theCollectionDAO.getCollections(searchMap);
       Iterator<CollectionTransferObject> iterator2 = null;
       
-      // Note that the following code is known to be ugly, but it's not easy to do better since
+      // The following code is known to be ugly, but it's not easy to do better since
       // you can't really copy java iterators.
       int counter = 1;
+      int rowCounter = 0;
       while (iterator1.hasNext()) { 
          CollectionTransferObject cto1 = iterator1.next();
          CollectionTransferObject cto2 = null;
+         collectionIds.add(cto1.getDataStoreId());
+         
 
-         // This is the weird part. Since you can't really copy iterators in java
+         int colCounter = 0;
+         // This is the weird part. Since you can't copy iterators in java
          // we re-declare the inner iterator for each iteration of the outer loop, than
          // spin it forward so it is at the position of the outer iterator.
          iterator2 = theCollectionDAO.getCollections(searchMap);
-         for (int i = 0; i < counter; i++) {
+         for (int k = 0; k < counter; k++) {
              iterator2.next();
+             colCounter ++;
          }
+
+         double similarity = 0.;
 
          // Now spin through the rest of the iterator 2 list.
          while (iterator2.hasNext()) {
@@ -156,14 +195,23 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
             // Now we have our 2 CollectionTransferObjects, so we want to call the method.
             try {
-               double similarity =  (double) theMethod.invoke(theObject, cto1, cto2);
-               System.out.println("Similarity is: " + similarity);
+               similarity =  (double) theMethod.invoke(theObject, cto1, cto2);
+               theSimFile.setSimilarityValue(rowCounter, colCounter, similarity);
+               colCounter++;
             } catch (Exception e) {
                this.logger.log (Level.SEVERE, "Can't invoke method " + methodName);
                return;
             }
          }
          counter ++;
+         rowCounter ++;
+      }
+      theSimFile.setCollectionIds(collectionIds);
+      try {
+         theSimFile.writeToDisk(outputURI);
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception writing to disk: " + e.getMessage());
+         return;
       }
   }
  

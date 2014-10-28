@@ -45,7 +45,7 @@ public class SimilarityFile {
          by doing a query in the code that loads the network, but by storing the list in the file we are
          guaranteeing that we have the list as it existed when the file was created.
        */
-     private ArrayList<String> collectionIds;
+     private java.util.ArrayList<String> collectionIds;
 
      /**
       * SimilarityFile constructor with no parameter. Note that this does not allocate the matrix
@@ -162,12 +162,25 @@ public class SimilarityFile {
              this.similarityInstanceId = (String) input.readObject();
              this.similarityMatrix = new org.la4j.matrix.sparse.CRSMatrix();
              this.similarityMatrix.readExternal(input);
-             this.collectionIds = (ArrayList<String>) input.readObject();
+             this.collectionIds = (java.util.ArrayList<String>) input.readObject();
          } catch (Exception e) {
              throw e;
          }
      }
      
+     
+     /**
+      * Set an i,j value in the similarity matrix.
+      *
+      * @param i The row for the entry
+      * @param j The column for the entry
+      * @param value The value for the entry
+      * @return void
+      */
+     public void setSimilarityValue(int i, int j, double value) {
+         this.similarityMatrix.set(i, j, value);
+     }
+
      /**
       * Get collectionIds
       *

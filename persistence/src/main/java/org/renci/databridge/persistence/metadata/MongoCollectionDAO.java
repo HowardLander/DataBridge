@@ -150,7 +150,7 @@ public class MongoCollectionDAO implements CollectionDAO {
         try {
             BasicDBObject thisDoc = new BasicDBObject();
             for (String key : searchMap.keySet()) {
-                System.out.println("Adding key: "  + key + " with value " + searchMap.get(key));
+                //System.out.println("Adding key: "  + key + " with value " + searchMap.get(key));
                 thisDoc.put(key, searchMap.get(key));
             }
             DB theDB = MongoDAOFactory.getTheDB();
