@@ -135,6 +135,93 @@ public class MetadataTest {
      }
   }
 
+  @Test
+  public void testSimilarityInstanceDAO () throws Exception {
+
+     System.out.println("");
+     System.out.println("");
+     System.out.println("beginning testSimilarityInstanceDAO");
+     boolean result;
+
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+     SimilarityInstanceTransferObject theSimilarityInstance = new SimilarityInstanceTransferObject();
+     theSimilarityInstance.setNameSpace("system_test");
+     theSimilarityInstance.setClassName("MockSimilarity");
+     theSimilarityInstance.setMethod("compareCollections");
+     theSimilarityInstance.setVersion(1);
+
+     try {
+         SimilarityInstanceDAO theSimilarityInstanceDAO = theMongoFactory.getSimilarityInstanceDAO();
+         result = theSimilarityInstanceDAO.insertSimilarityInstance(theSimilarityInstance);
+         System.out.println("done with insert");
+         System.out.println("inserted Id is: " + theSimilarityInstance.getDataStoreId());
+         System.out.println("testing get");
+
+         HashMap<String, String> searchMap = new HashMap<String, String>();
+         searchMap.put("nameSpace", "system_test");
+         Iterator<SimilarityInstanceTransferObject> similarityInstanceIterator = 
+            theSimilarityInstanceDAO.getSimilarityInstances(searchMap);
+         System.out.println ("Do we have next? " +  similarityInstanceIterator.hasNext());
+
+         if (similarityInstanceIterator.hasNext()) {
+             SimilarityInstanceTransferObject getObj = similarityInstanceIterator.next(); 
+             System.out.println("className: " + getObj.getClassName());
+             TestCase.assertTrue("classname doesn't match", 
+                 getObj.getClassName().compareTo("MockSimilarity") == 0);
+             TestCase.assertTrue("subjects don't match", 
+                 getObj.getNameSpace().compareTo("system_test") == 0);
+             TestCase.assertTrue("ids don't match", 
+                 getObj.getMethod().compareTo("compareCollections") == 0);
+
+             // Now we'll try to delete the object
+             HashMap<String, String> deleteMap = new HashMap<String, String>();
+             deleteMap.put("_id", getObj.getDataStoreId());
+             int nDeleted = theSimilarityInstanceDAO.deleteSimilarityInstance(deleteMap);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+
+             // One more insert so we can try deleteCollectionById
+             result = theSimilarityInstanceDAO.insertSimilarityInstance(theSimilarityInstance);
+             nDeleted = theSimilarityInstanceDAO.deleteSimilarityInstance(theSimilarityInstance);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted by Id not 1", nDeleted == 1);
+         }
+
+         // Now let's test multiple insertions, gets and deletes
+         for (int i = 0; i < 5; i ++) {
+             theSimilarityInstance.setVersion(i);
+             result = theSimilarityInstanceDAO.insertSimilarityInstance(theSimilarityInstance);
+         }
+
+         // let's test the count collections code.
+         HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
+         nameSpaceMap.put("nameSpace", "system_test");
+         long theCount = theSimilarityInstanceDAO.countSimilarityInstances(nameSpaceMap);
+         System.out.println("countCollections found " + theCount + " matches");
+         TestCase.assertTrue("count of collections found not 5", theCount == 5);
+         
+
+         int nFound = 0;
+         int nDeleted = 0;
+         int totalDeleted = 0;
+         Iterator<SimilarityInstanceTransferObject> nameSpaceIterator = theSimilarityInstanceDAO.getSimilarityInstances(nameSpaceMap);
+         while (nameSpaceIterator.hasNext()) {
+             SimilarityInstanceTransferObject getObj = nameSpaceIterator.next(); 
+             System.out.println("retrieved version: " + getObj.getVersion());
+             nDeleted = theSimilarityInstanceDAO.deleteSimilarityInstance(getObj);
+             System.out.println("nDeleted: " + nDeleted);
+             nFound ++;
+             totalDeleted += nDeleted;
+         }
+         System.out.println("number found:" + nFound);
+         TestCase.assertTrue("total found not 5", nFound == 5);
+         TestCase.assertTrue("totalDeleted by Id not 5", totalDeleted == 5);
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
+  }
+
   @Test(expected=UnsupportedOperationException.class)
   public void testRemove () throws Exception {
      System.out.println("");

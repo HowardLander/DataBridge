@@ -51,6 +51,11 @@ public class MongoDAOFactory extends MetadataDAOFactory {
     public VariableDAO getVariableDAO() {
         return new MongoVariableDAO();
     } 
+
+    public SimilarityInstanceDAO getSimilarityInstanceDAO() {
+        return new MongoSimilarityInstanceDAO();
+    } 
+
     /**
      * Get db.
      *

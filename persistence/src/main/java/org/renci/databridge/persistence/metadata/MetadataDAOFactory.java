@@ -8,6 +8,7 @@ public abstract class MetadataDAOFactory {
     public abstract CollectionDAO getCollectionDAO();
     public abstract FileDAO getFileDAO();
     public abstract VariableDAO getVariableDAO();
+    public abstract SimilarityInstanceDAO getSimilarityInstanceDAO();
 
     public static MetadataDAOFactory getMetadataDAOFactory(int factoryType,
                                                            String db,
