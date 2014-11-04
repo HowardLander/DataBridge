@@ -146,7 +146,7 @@ public class MetadataTest {
      MetadataDAOFactory theMongoFactory = 
         MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
      SimilarityInstanceTransferObject theSimilarityInstance = new SimilarityInstanceTransferObject();
-     theSimilarityInstance.setNameSpace("system_test");
+     theSimilarityInstance.setNameSpace("junit_test");
      theSimilarityInstance.setClassName("MockSimilarity");
      theSimilarityInstance.setMethod("compareCollections");
      theSimilarityInstance.setVersion(1);
@@ -159,7 +159,7 @@ public class MetadataTest {
          System.out.println("testing get");
 
          HashMap<String, String> searchMap = new HashMap<String, String>();
-         searchMap.put("nameSpace", "system_test");
+         searchMap.put("nameSpace", "junit_test");
          Iterator<SimilarityInstanceTransferObject> similarityInstanceIterator = 
             theSimilarityInstanceDAO.getSimilarityInstances(searchMap);
          System.out.println ("Do we have next? " +  similarityInstanceIterator.hasNext());
@@ -170,7 +170,7 @@ public class MetadataTest {
              TestCase.assertTrue("classname doesn't match", 
                  getObj.getClassName().compareTo("MockSimilarity") == 0);
              TestCase.assertTrue("subjects don't match", 
-                 getObj.getNameSpace().compareTo("system_test") == 0);
+                 getObj.getNameSpace().compareTo("junit_test") == 0);
              TestCase.assertTrue("ids don't match", 
                  getObj.getMethod().compareTo("compareCollections") == 0);
 
@@ -196,18 +196,40 @@ public class MetadataTest {
 
          // let's test the count collections code.
          HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
-         nameSpaceMap.put("nameSpace", "system_test");
+         nameSpaceMap.put("nameSpace", "junit_test");
          long theCount = theSimilarityInstanceDAO.countSimilarityInstances(nameSpaceMap);
          System.out.println("countCollections found " + theCount + " matches");
          TestCase.assertTrue("count of collections found not 5", theCount == 5);
-         
+
+         // Set up the search map to test the sortingi/limit code
+         HashMap<String, String> versionMap = new HashMap<String, String>();
+         versionMap.put("nameSpace", "junit_test");
+         versionMap.put("className", "MockSimilarity");
+         versionMap.put("method", "compareCollections");
+
+         HashMap<String, String> sortMap = new HashMap<String, String>();
+         sortMap.put("version", SimilarityInstanceDAO.SORT_DESCENDING);
+         Integer limit = new Integer(1);
 
          int nFound = 0;
          int nDeleted = 0;
          int totalDeleted = 0;
-         Iterator<SimilarityInstanceTransferObject> nameSpaceIterator = theSimilarityInstanceDAO.getSimilarityInstances(nameSpaceMap);
+         int highestVersionFound = 0;
+
+         // Test the sort first before the records are deleted.
+         Iterator<SimilarityInstanceTransferObject> iterator1 =
+          theSimilarityInstanceDAO.getSimilarityInstances(searchMap, sortMap, limit);
+         theSimilarityInstance = iterator1.next();
+         System.out.println("highest version found: " + theSimilarityInstance.getVersion());
+
+         // This better be the highest version number (4)
+         TestCase.assertTrue("version number (" + theSimilarityInstance.getVersion() + ") is wrong (should be 4", theSimilarityInstance.getVersion() == 4);
+ 
+         Iterator<SimilarityInstanceTransferObject> nameSpaceIterator = 
+            theSimilarityInstanceDAO.getSimilarityInstances(nameSpaceMap);
+         SimilarityInstanceTransferObject getObj = null;
          while (nameSpaceIterator.hasNext()) {
-             SimilarityInstanceTransferObject getObj = nameSpaceIterator.next(); 
+             getObj = nameSpaceIterator.next(); 
              System.out.println("retrieved version: " + getObj.getVersion());
              nDeleted = theSimilarityInstanceDAO.deleteSimilarityInstance(getObj);
              System.out.println("nDeleted: " + nDeleted);

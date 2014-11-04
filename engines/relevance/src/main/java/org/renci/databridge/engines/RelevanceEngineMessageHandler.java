@@ -59,8 +59,8 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
   public void processCreateSimilarityMessage( Map<String, String> stringHeaders, Object extra) {
       // We need several pieces of information before we can continue.  This info has to 
-
       // all be in the headers or we are toast.
+
       // 1) the class name
       String className = stringHeaders.get(RelevanceEngineMessage.CLASS);    
       if (null == className) {
@@ -135,6 +135,46 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          return;
       } 
 
+      SimilarityInstanceDAO theSimilarityInstanceDAO = theFactory.getSimilarityInstanceDAO();
+      if (null == theSimilarityInstanceDAO) {
+         this.logger.log (Level.SEVERE, "SimilarityInstanceDAO is null");
+         return;
+      }
+
+      // Let's add the SimilarityInstance.
+      SimilarityInstanceTransferObject theSimilarityInstance = new SimilarityInstanceTransferObject();
+      theSimilarityInstance.setNameSpace(nameSpace);
+      theSimilarityInstance.setClassName(className);
+      theSimilarityInstance.setMethod(methodName);
+
+      // let's find the highest version for this combination of nameSpace, className and method (if any)
+      // Set up the search map to test the sortingi/limit code
+      HashMap<String, String> versionMap = new HashMap<String, String>();
+      versionMap.put("nameSpace", nameSpace);
+      versionMap.put("className", className);
+      versionMap.put("method", methodName);
+      
+      HashMap<String, String> sortMap = new HashMap<String, String>();
+      sortMap.put("version", SimilarityInstanceDAO.SORT_DESCENDING);
+      Integer limit = new Integer(1);
+
+      // This is for the case of no previous instance
+      theSimilarityInstance.setVersion(1);
+      Iterator<SimilarityInstanceTransferObject> versionIterator =
+          theSimilarityInstanceDAO.getSimilarityInstances(versionMap, sortMap, limit);
+      if (versionIterator.hasNext()) {
+         // Found a previous instance
+         SimilarityInstanceTransferObject prevInstance = versionIterator.next();
+         theSimilarityInstance.setVersion(prevInstance.getVersion() + 1);
+      }
+
+      try {
+         boolean result = theSimilarityInstanceDAO.insertSimilarityInstance(theSimilarityInstance);
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't insert similarity instance");
+         return;
+      }
+      
       // Search for all of the collections in the nameSpace
       HashMap<String, String> searchMap = new HashMap<String, String>();
       searchMap.put("nameSpace", nameSpace);
@@ -142,13 +182,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       // We need an array list of collectionIds
       ArrayList<String> collectionIds = new ArrayList<String>();
 
-      // We need to declare a SimilarityFile object to use.
       long nCollections = theCollectionDAO.countCollections(searchMap);
 
       // Here we have a small problem.  Our DB infrastructure supports "long"
       // cardinality for records, but the current similarity file uses a 
       // matrix implementation that "only" supports an int. However, when we
       // get past 2 billion collections, we'll figure out how to deal with this.
+      // NOTE that handling this should probably be moved to the DAO level.
       int nCollectionsInt;
       if (nCollections > (long) Integer.MAX_VALUE) {
          this.logger.log (Level.SEVERE, "nCollections > Integer.MAX_VALUE");
@@ -159,8 +199,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       SimilarityFile theSimFile = new SimilarityFile(nCollectionsInt, nameSpace);
       theSimFile.setNameSpace(nameSpace);
 
-      // Until we write the SimilarityInstanceDAO, we dummy up the value
-      theSimFile.setSimilarityInstanceId("test_instance");
+      theSimFile.setSimilarityInstanceId(theSimilarityInstance.getDataStoreId());
 
       // For each pair of collection objects, we call the user provided function.
       Iterator<CollectionTransferObject> iterator1 = 

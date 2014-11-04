@@ -136,6 +136,54 @@ public class MongoSimilarityInstanceDAO implements SimilarityInstanceDAO {
         return theIterator;
     }
 
+    /** 
+     * retrieve an iterator for all records that match the given search key.
+     *
+     * @param searchMap A HashMap with search keys.
+     * @param sortMap   A Hashmap with sort keys that are fields in the record.
+     * @param limit     An Integer giving the limit on records returned.
+     */
+    public Iterator<SimilarityInstanceTransferObject> getSimilarityInstances(HashMap<String, String> searchMap,
+ HashMap<String, String> sortMap, Integer limit) {
+        MongoSimilarityInstanceDAOIterator theIterator = null;
+        try {
+            BasicDBObject thisDoc = new BasicDBObject();
+            for (String key : searchMap.keySet()) {
+                //System.out.println("Adding key: "  + key + " with value " + searchMap.get(key));
+                thisDoc.put(key, searchMap.get(key));
+            }
+
+            BasicDBObject thisSortObject = new BasicDBObject();
+            for (String key : sortMap.keySet()) {
+                // For mongo, -1 is descending and 1 is ascending
+                String sortValue = sortMap.get(key);
+                if (sortValue.compareTo(SimilarityInstanceDAO.SORT_ASCENDING) == 0) {
+                   thisSortObject.put(key, 1);
+                } else if (sortValue.compareTo(SimilarityInstanceDAO.SORT_DESCENDING) == 0) {
+                   thisSortObject.put(key, -1);
+                } else {
+                   // The user may have passed a value themselves.
+                   thisSortObject.put(key, Integer.parseInt(sortMap.get(key)));
+                }
+            }
+            DB theDB = MongoDAOFactory.getTheDB();
+            DBCollection theTable = theDB.getCollection(MongoName);
+            DBCursor cursor = theTable.find(thisDoc);
+            cursor = cursor.sort(thisSortObject);
+            if (null != limit) {
+               cursor = cursor.limit(limit.intValue());
+            }
+            theIterator = new MongoSimilarityInstanceDAOIterator();
+            theIterator.cursor = cursor;
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace(); 
+        }
+
+        return theIterator;
+    }
+
+
 
     /** 
      * delete the specified SimilarityInstance object from mongo. Note that this API deletes whatever matches
