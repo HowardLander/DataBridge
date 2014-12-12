@@ -16,6 +16,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
      */
     private class Neo4jNetworkNodeDAOIterator implements Iterator<NetworkNodeTransferObject> {
        private Iterator<Node> nodeIterator;
+       private Logger logger = Logger.getLogger ("org.renci.databridge.persistence.network");
 
        /** 
         * Returns whether or not there is a next item in this cursor.
@@ -65,7 +66,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
                }
            } catch (Exception e) {
                // should send this back using the message logs eventually
-               e.printStackTrace();
+               this.logger.log (Level.SEVERE, "exception in next: " + e.getMessage(), e);
            } finally {
                tx.close();
            }
@@ -113,9 +114,11 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
               newNode.addLabel(newLabel);
 
               // Add all of the attributes for the new node.
-              for (Map.Entry<String, Object> entry : transferNode.getAttributes().entrySet()){ 
-                  newNode.setProperty(entry.getKey(), entry.getValue());
-              } 
+              if (null != transferNode.getAttributes()) {
+                  for (Map.Entry<String, Object> entry : transferNode.getAttributes().entrySet()){ 
+                      newNode.setProperty(entry.getKey(), entry.getValue());
+                  } 
+              }
 
               // Don't forget to add the NodeId as an attribute.
               newNode.setProperty(NetworkNodeDAO.METADATA_NODE_KEY, transferNode.getNodeId());
@@ -125,7 +128,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
           tx.success();
        } catch (Exception e) {
           returnCode = -1;
-          this.logger.log (Level.SEVERE, "exception in Neo4jNetworkNodeDAO: " + e.toString());
+          this.logger.log (Level.SEVERE, "exception in insertNetworkNode: " + e.getMessage(), e);
        } finally {
           tx.close();
        }
@@ -179,7 +182,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
           }
           tx.success();
        } catch (Exception e) {
-          this.logger.log (Level.SEVERE, "exception in Neo4jNetworkNodeDAO: " + e.toString());
+          this.logger.log (Level.SEVERE, "exception in addPropertyToNetworkNode: " + e.getMessage(), e);
        } finally {
           tx.close();
        }
@@ -208,7 +211,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
             theIterator.nodeIterator = neo4jNodeList;
         } catch (Exception e) {
             // should send this back using the message logs eventually
-            e.printStackTrace();
+            this.logger.log (Level.SEVERE, "exception in getNetworkNodes: " + e.getMessage(), e);
         } finally {
             tx.close();
         }
@@ -238,7 +241,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
             theIterator.nodeIterator = neo4jNodeList;
         } catch (Exception e) {
             // should send this back using the message logs eventually
-            e.printStackTrace();
+            this.logger.log (Level.SEVERE, "exception in getNetworkNodes: " + e.getMessage(), e);
         } finally {
             tx.close();
         }
@@ -267,7 +270,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
             theIterator.nodeIterator = neo4jNodeList;
         } catch (Exception e) {
             // should send this back using the message logs eventually
-            e.printStackTrace();
+            this.logger.log (Level.SEVERE, "exception in getNetworkNodesForNameSpace: " + e.getMessage(), e);
        } finally {
             tx.close();
         }
@@ -305,7 +308,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
          tx.success();
          returnCode = true;
        } catch (Exception e) {
-          this.logger.log (Level.SEVERE, "exception in Neo4jNetworkNodeDAO: " + e.toString());
+          this.logger.log (Level.SEVERE, "exception in deleteNetworkNode: " + e.getMessage(), e);
           tx.failure();
        } finally {
           tx.close();

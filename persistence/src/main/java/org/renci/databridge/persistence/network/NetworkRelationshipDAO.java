@@ -69,4 +69,6 @@ public interface NetworkRelationshipDAO {
      */
     public Object getPropertyFromNetworkRelationship(NetworkRelationshipTransferObject theTransferNode, 
         String key);
+
+    public static final String METADATA_SIMILARITY_PROPERTY_NAME = "value";
 }

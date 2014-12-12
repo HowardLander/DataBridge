@@ -18,6 +18,7 @@
   <modules>
     <module>relevance</module>
     <module>ingest</module>
+    <module>network</module>
   </modules>
 
 </project>

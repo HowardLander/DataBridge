@@ -8,13 +8,24 @@ import org.renci.databridge.mhandling.*;
 import org.renci.databridge.util.*;
 import org.renci.databridge.message.*;
 import org.la4j.*;
+import org.la4j.matrix.functor.*;
 import java.nio.file.*;
 
 // This is just a diagnostic code so we can look at the serialized version of the
 // SimilarityFile and do a sanity check.
 public class PrintSimilarityFile {
-
   public static void main(String [] args) {
+
+  class MyClass implements MatrixProcedure {
+     String extraString = "Print me!";
+
+     public void apply(int i, int j, double value) {
+        System.out.println("Hello from apply " + i + " " + j + " " + value);
+        // System.out.println("Hello from apply ");
+   //     System.out.println("extra string: " + PrintSimilarityFile.extraString);
+     }
+  }
+
 
      System.out.println("\nReading file " + args[0]);
 
@@ -29,6 +40,9 @@ public class PrintSimilarityFile {
         for (String theId: readData.getCollectionIds()) {
             System.out.println("\tthisId: " + theId);
         }
+  
+        MyClass theNonZero = new MyClass();
+        readData.getSimilarityMatrix().eachNonZero(theNonZero);
         
      }  catch (Exception e) {
          e.printStackTrace();
