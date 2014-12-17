@@ -215,5 +215,18 @@ public class CollectionTransferObject {
     {
         this.dataStoreId = dataStoreId;
     }
+
+    @Override
+    public String toString () 
+    {
+   
+        return "{title: " + getTitle () + ", nameSpace: " + getNameSpace () +
+               ", version: " + getVersion () + ", description: " + 
+               getDescription () + ", producer: " + getProducer () + 
+               ", subject: " + getSubject () + ", keywords: " + getKeywords () +
+               ", URL: " + getURL () + ", extra: " + getExtra () + 
+               ", dataStoreId: " + getDataStoreId () + "}";
+    }
+
 }
 
