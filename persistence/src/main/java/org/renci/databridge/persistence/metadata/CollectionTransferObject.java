@@ -219,13 +219,7 @@ public class CollectionTransferObject {
     @Override
     public String toString () 
     {
-   
-        return "{title: " + getTitle () + ", nameSpace: " + getNameSpace () +
-               ", version: " + getVersion () + ", description: " + 
-               getDescription () + ", producer: " + getProducer () + 
-               ", subject: " + getSubject () + ", keywords: " + getKeywords () +
-               ", URL: " + getURL () + ", extra: " + getExtra () + 
-               ", dataStoreId: " + getDataStoreId () + "}";
+        return "{" + getClass ().getName () + ": title: " + getTitle () + ", nameSpace: " + getNameSpace () + ", version: " + getVersion () + ", description: " + getDescription () + ", producer: " + getProducer () + ", subject: " + getSubject () + ", keywords: " + getKeywords () + ", URL: " + getURL () + ", extra: " + getExtra () + ", dataStoreId: " + getDataStoreId () + "}";
     }
 
 }

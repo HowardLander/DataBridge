@@ -12,6 +12,7 @@ import javax.xml.bind.JAXBException;
 import org.renci.databridge.util.AMQPMessage;
 import org.renci.databridge.util.AMQPMessageHandler;
 import org.renci.databridge.formatter.MetadataFormatter;
+import org.renci.databridge.persistence.metadata.MetadataObject;
 import org.renci.databridge.persistence.metadata.CollectionTransferObject;
 import org.renci.databridge.persistence.metadata.MetadataDAOFactory;
 import org.renci.databridge.persistence.metadata.CollectionDAO;
@@ -38,11 +39,13 @@ String className = "org.renci.databridge.formatter.oaipmh.OaipmhMetadataFormatte
 
     // dispatch to third-party formatter 
     byte [] bytes = amqpMessage.getBytes ();
-    CollectionTransferObject cto = mf.format (bytes);
-
-    // persist the resulting CollectionTransferObject
-    String id = persist (cto);
-    this.logger.log (Level.FINE, "Inserted CTO id is '" + id + "'");
+    List<MetadataObject> metadataObjects = mf.format (bytes);
+    for (MetadataObject mo : metadataObjects) {
+      CollectionTransferObject cto = mo.getCollectionTransferObject ();
+      // persist the resulting CollectionTransferObject
+      String id = persist (cto);
+      this.logger.log (Level.FINE, "Inserted CTO id is '" + id + "'");
+    }
 
   }
 
@@ -50,7 +53,7 @@ String className = "org.renci.databridge.formatter.oaipmh.OaipmhMetadataFormatte
 
     this.logger.log (Level.WARNING, "handler received exception: ", exception);
 
-// todo 
+    // @todo 
 
   }
 

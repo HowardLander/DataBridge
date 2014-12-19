@@ -1,18 +1,20 @@
 package org.renci.databridge.formatter;
 
-import org.renci.databridge.persistence.metadata.CollectionTransferObject;
+import java.util.List;
+
+import org.renci.databridge.persistence.metadata.MetadataObject;
 
 /**
  * Interface for all metadata formatters. 
- * Formatter implementations are instantiated and invoked by the Ingest Engine.
  * 
  * @author mrshoffn
  */
 public interface MetadataFormatter {
 
   /**
-   * @param bytes Array of bytes that the implementor knows how to format.
+   * @param bytes "Document" that implementor understands the format for.
+   * @returns the metadata elements from the bytes.
    */
-  public CollectionTransferObject format (byte [] bytes) throws FormatterException;
+  public List<MetadataObject> format (byte [] bytes) throws FormatterException;
  
 }
