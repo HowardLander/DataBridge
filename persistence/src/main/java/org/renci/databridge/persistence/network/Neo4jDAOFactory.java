@@ -67,6 +67,15 @@ public class Neo4jDAOFactory extends NetworkDAOFactory {
         return new Neo4jNetworkRelationshipDAO();
     }
 
+    /**
+     * Factory method that returns a Neo4j version of the NetworkDyadDAO object.
+     * @return A NetworkDyadDAO object
+     */
+    public NetworkDyadDAO getNetworkDyadDAO() {
+        return new Neo4jNetworkDyadDAO();
+    }
+
+
     
     /**
      * Get databasePath.

@@ -42,7 +42,7 @@ public class NetworkTest {
      try {
          NetworkNodeDAO theNetworkNodeDAO = theNeo4jFactory.getNetworkNodeDAO();
          NetworkNodeTransferObject theNode = new NetworkNodeTransferObject();
-         theNode.setNameSpace("system_test");
+         theNode.setNameSpace("junit_test");
          theNode.setNodeId("1");
          HashMap<String, Object> attributes = new HashMap<String, Object>();
          attributes.put("sna1", "1,4");
@@ -67,7 +67,7 @@ public class NetworkTest {
 
          // Let's retrieve the node using the metadata id.
          Iterator<NetworkNodeTransferObject> theNodes = 
-            theNetworkNodeDAO.getNetworkNodes("system_test", NetworkNodeDAO.METADATA_NODE_KEY, "1");
+            theNetworkNodeDAO.getNetworkNodes("junit_test", NetworkNodeDAO.METADATA_NODE_KEY, "1");
          if (theNodes.hasNext()) {
              NetworkNodeTransferObject returnedNode = theNodes.next();
              System.out.println("returned nameSpace: " + returnedNode.getNameSpace());
@@ -84,13 +84,13 @@ public class NetworkTest {
          System.out.println("starting multiple insertions");
          for (int i = 0; i < 5; i ++) {
              theNode.setNodeId(Integer.toString(i));
-             theNode.setNameSpace("system_test");
+             theNode.setNameSpace("junit_test");
              result = theNetworkNodeDAO.insertNetworkNode(theNode);
              System.out.println("done with insert: number inserted is " + result);
              System.out.println("inserted Id is: " + theNode.getDataStoreId());
          }
 
-         theNodes = theNetworkNodeDAO.getNetworkNodesForNameSpace("system_test");
+         theNodes = theNetworkNodeDAO.getNetworkNodesForNameSpace("junit_test");
          int nDeleted = 0;
          System.out.println("Time to start deleting...");
          while (theNodes.hasNext()) {
@@ -128,14 +128,14 @@ public class NetworkTest {
          NetworkRelationshipDAO theNetworkRelationshipDAO = theNeo4jFactory.getNetworkRelationshipDAO();
 
          NetworkNodeTransferObject node1 = new NetworkNodeTransferObject();
-         node1.setNameSpace("system_test");
+         node1.setNameSpace("junit_test");
          node1.setNodeId("1");
          HashMap<String, Object> attributes1 = new HashMap<String, Object>();
          attributes1.put("sna1", "1,4");
          node1.setAttributes(attributes1);
 
          NetworkNodeTransferObject node2 = new NetworkNodeTransferObject();
-         node2.setNameSpace("system_test");
+         node2.setNameSpace("junit_test");
          node2.setNodeId("2");
          HashMap<String, Object> attributes2 = new HashMap<String, Object>();
          attributes2.put("sna1", "2,3");

@@ -7,6 +7,7 @@ public abstract class NetworkDAOFactory {
 
     public abstract NetworkNodeDAO getNetworkNodeDAO();
     public abstract NetworkRelationshipDAO getNetworkRelationshipDAO();
+    public abstract NetworkDyadDAO getNetworkDyadDAO();
 
     /**
      * @param factoryType  The type of the underlying database.  Currently only NEO4JDB is supported.
