@@ -15,7 +15,6 @@ import org.junit.Rule;
 
 import com.rabbitmq.client.*;
 
-import org.renci.databridge.mhandling.*;
 import org.renci.databridge.util.*;
 import org.renci.databridge.message.*;
 
