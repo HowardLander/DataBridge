@@ -78,8 +78,8 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
      *
      *  @param theTransfer object containing the relationship type, and the
      *         attributes (if any) of the relationship
-     *  @param node1 The first node of the relationship
-     *  @param node2 The second node of the relationship
+     *  @param transferNode1 The first node of the relationship
+     *  @param transferNode2 The second node of the relationship
      *  @return true on success, false on failure
      */
     public boolean insertNetworkRelationship(NetworkRelationshipTransferObject theTransfer, 
@@ -127,7 +127,7 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
      *  Add a property to an existing relationship. Note that if the property already exists, the old 
      *  value is overwritten with the new value.  
      *
-     *  @param Transfer object containing the existing relationship to which the property will be added.
+     *  @param theTransfer object containing the existing relationship to which the property will be added.
      *  @param key The key for the property to add
      *  @param value The value for the property to add
      *  @return the requested iterator
@@ -157,7 +157,7 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
     /**
      *  Delete a property from an existing relationship. 
      *
-     *  @param Transfer object containing the existing relationship from which the property will be deleted.
+     *  @param theTransfer object containing the existing relationship from which the property will be deleted.
      *  @param key The key for the property to delete
      *  @return true on success, false on failure
      */
@@ -186,7 +186,7 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
     /**
      *  Retrieve a property from an existing relationship. 
      *
-     *  @param Transfer object containing the existing relationship from which the property will be retrieved.
+     *  @param theTransfer object containing the relationship from which the property will be retrieved.
      *  @param key The key for the property to retrieve
      *  @return An object containing the value of the specified property of the given relationship.  At the
      *          moment that will always be a string, but that may change in the future.
@@ -217,7 +217,7 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
 
     /**
      *  Retrieve an iterator for all the relationships of the the specified node.
-     *  @param theTransfer object containing the nodes, the relationship type, and the
+     *  @param theTransferNode object containing the nodes, the relationship type, and the
      *         attributes (if any) of the relationship
      *  @return The requested iterator
      */
@@ -249,7 +249,7 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
      * are of a type specified in the key param. In our data model, at this writing, 
      * we will normally only expect one answer, but just in case that changes we are
      * returning an iterator.
-     *  @param theTransfer object containing the nodes, the relationship type, and the
+     *  @param theTransferNode object containing the nodes, the relationship type, and the
      *         attributes (if any) of the relationship
      *  @param key String containing the relationship type.
      *  @return the requested iterator

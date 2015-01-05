@@ -7,7 +7,7 @@ public interface NetworkNodeDAO {
      * @param transferNode The node to insert
      * @return 1 on success, -1 on failure, 0 if the node already exists.
      */
-    public int insertNetworkNode(NetworkNodeTransferObject theNode);
+    public int insertNetworkNode(NetworkNodeTransferObject transferNode);
 
     /**
      * Add a property to the given node.
@@ -16,7 +16,7 @@ public interface NetworkNodeDAO {
      * @param value The value for the new property
      * @return true on success, false on failure
      */
-    public boolean addPropertyToNetworkNode(NetworkNodeTransferObject theNode, String key, Object value);
+    public boolean addPropertyToNetworkNode(NetworkNodeTransferObject transferNode, String key, Object value);
 
     /**
      * Retrieve an iterator for all nodes that match the given search key.
@@ -25,7 +25,7 @@ public interface NetworkNodeDAO {
      * @param value The value for the new property
      * @return The iterator
      */
-    public Iterator<NetworkNodeTransferObject> getNetworkNodes(NetworkNodeTransferObject theNode, String key, Object value);
+    public Iterator<NetworkNodeTransferObject> getNetworkNodes(NetworkNodeTransferObject transferNode, String key, Object value);
 
     /**
      * Retrieve an iterator for all nodes that match the given search key.
@@ -48,7 +48,7 @@ public interface NetworkNodeDAO {
      * @param transferNode The node to delete
      * @return true on success, false on failure
      */
-    public boolean deleteNetworkNode(NetworkNodeTransferObject theNode);
+    public boolean deleteNetworkNode(NetworkNodeTransferObject transferNode);
 
     public static final String METADATA_NODE_KEY = "metaDataNodeKey";
 }

@@ -45,7 +45,7 @@ public class Neo4jDAOFactory extends NetworkDAOFactory {
     /**
      * Constructor that takes the databasePath as an argument. Note that this only works for a local
      * (not network-accessed) database
-     * @param the location of the database
+     * @param databasePath the location of the database
      */
     public Neo4jDAOFactory(String databasePath){
         this.databasePath = databasePath;

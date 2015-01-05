@@ -52,7 +52,7 @@ public class DBQueryNeo4j implements DBQuery{
    * until popNetowrk is called. Note this will return a node with label 'ERROR' if 
    * a problem is encountered.
    *
-   * @param label The type of node to look for e.g. 'dataset' or 'user'.
+   * @param labelstr The type of node to look for e.g. 'dataset' or 'user'.
    * @param dbID The databridge unique ID of the node for which to look.
    *
    * @return The DBNode abstraction of the node found in the dataset.

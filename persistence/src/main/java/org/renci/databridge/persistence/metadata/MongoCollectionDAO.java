@@ -176,7 +176,7 @@ public class MongoCollectionDAO implements CollectionDAO {
      * delete the specified Collection object from mongo. Note that this API deletes whatever matches
      * the search keys in the search map.
      *
-     * @param searchMap A HashMap with search keys.
+     * @param theCollection The collection object to be deleted.
      */
     public int deleteCollection(CollectionTransferObject theCollection) {
         WriteResult theResult = null;

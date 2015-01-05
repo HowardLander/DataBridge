@@ -25,7 +25,7 @@ public class AMQPMessageListener extends Thread {
    * @param propsInputStream properties for AMQPComms object initialization.
    * @param amqpMessageType 
    * @param amqpMessageHandler
-   * @Param logger can be null.
+   * @param logger can be null.
    */
   public AMQPMessageListener (InputStream propsInputStream, AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) throws IOException {
 
@@ -41,7 +41,7 @@ public class AMQPMessageListener extends Thread {
    * @param pathToPropsFile properties file for AMQPComms object initialization.
    * @param amqpMessageType
    * @param amqpMessageHandler
-   * @Param logger can be null.
+   * @param logger can be null.
    */
   public AMQPMessageListener (String pathToPropsFile, AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) throws IOException {
 

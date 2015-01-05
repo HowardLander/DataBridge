@@ -189,7 +189,7 @@ public class MongoSimilarityInstanceDAO implements SimilarityInstanceDAO {
      * delete the specified SimilarityInstance object from mongo. Note that this API deletes whatever matches
      * the search keys in the search map.
      *
-     * @param searchMap A HashMap with search keys.
+     * @param theSimilarityInstance The instance to delete
      */
     public int deleteSimilarityInstance(SimilarityInstanceTransferObject theSimilarityInstance) {
         WriteResult theResult = null;

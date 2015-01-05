@@ -10,8 +10,8 @@ public interface AMQPMessageHandler {
   /**
    * Message that has been successfully received.
    * @throws Exception. The dispatcher should hand the exception back on the handleException method.
-   * @param The amqp message
-   * @param Implementation specific extra info needed to handle the request.
+   * @param amqpMessage The amqp message
+   * @param extra Implementation specific extra info needed to handle the request.
    */
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception;
 
