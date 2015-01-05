@@ -214,7 +214,7 @@ public class MongoVariableDAO implements VariableDAO {
     /** 
      * retrieve an iterator for all records that match the given search key.
      *
-     * @param theCollection The collection for which to find associated files
+     * @param theFile The file for which to return the variables.
      */
     public Iterator<VariableTransferObject> getVariables(FileTransferObject theFile) {
         MongoVariableDAOIterator theIterator = null;
@@ -249,7 +249,7 @@ public class MongoVariableDAO implements VariableDAO {
     /** 
      * delete the specified Variable object from mongo. 
      *
-     * @param searchMap A HashMap with search keys.
+     * @param theVar the variable to delete.
      */
     public int deleteVariable(VariableTransferObject theVar) {
         WriteResult theResult = null;

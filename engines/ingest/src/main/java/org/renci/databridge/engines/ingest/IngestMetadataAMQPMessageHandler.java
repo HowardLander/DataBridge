@@ -21,7 +21,7 @@ import org.renci.databridge.persistence.metadata.CollectionDAO;
  * Handles "ingest metadata" DataBridge message by calling relevant third-party metadata formatter and persisting it. 
  * 
  * @author mrshoffn
- * @todo prevent JAR support classes from conflicting by isolating them
+ * TODO: prevent JAR support classes from conflicting by isolating them
  */
 public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 

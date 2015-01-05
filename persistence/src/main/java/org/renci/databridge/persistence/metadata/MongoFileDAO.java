@@ -255,7 +255,7 @@ public class MongoFileDAO implements FileDAO {
     /** 
      * delete the specified File object from mongo. 
      *
-     * @param searchMap A HashMap with search keys.
+     * @param theFile the file transfer object to delete.
      */
     public int deleteFile(FileTransferObject theFile) {
         WriteResult theResult = null;

@@ -13,7 +13,7 @@ public interface MetadataFormatter {
 
   /**
    * @param bytes "Document" that implementor understands the format for.
-   * @returns the metadata elements from the bytes.
+   * @return the metadata elements from the bytes.
    */
   public List<MetadataObject> format (byte [] bytes) throws FormatterException;
  

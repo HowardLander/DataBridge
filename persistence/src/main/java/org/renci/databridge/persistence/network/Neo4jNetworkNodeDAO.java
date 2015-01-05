@@ -191,7 +191,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
     
     /**
      * Retrieve an iterator for all nodes that match the given search key.
-     * @param transferNode The node containing the nameSpace in which to search
+     * @param theNode The node containing the nameSpace in which to search
      * @param key The key for the new property
      * @param value The value for the new property
      * @return The iterator
@@ -281,7 +281,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
 
     /** 
      * Delete the given node
-     * @param transferNode The node to delete
+     * @param theTransferNode The node to delete
      * @return true on success, false on failure
      */
     public boolean deleteNetworkNode(NetworkNodeTransferObject theTransferNode) {
