@@ -9,8 +9,8 @@ public interface NetworkDyadDAO {
     /**
      *  Retrieve an iterator for all the dyads in the network that exist in the given
      *  nameSpace and were produced using the given similarityID
-     *  @param The nameSpace in which to search for dyads
-     *  @param The similarity metric to use in the search for dyads
+     *  @param nameSpace The nameSpace in which to search for dyads
+     *  @param similarityId The similarity metric to use in the search for dyads
      *  @return the requested iterator
      */
     public Iterator<NetworkDyadTransferObject> getNetworkDyads(String nameSpace, String similarityId);

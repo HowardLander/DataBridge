@@ -175,7 +175,6 @@ public class SimilarityFile {
       * @param i The row for the entry
       * @param j The column for the entry
       * @param value The value for the entry
-      * @return void
       */
      public void setSimilarityValue(int i, int j, double value) {
          this.similarityMatrix.set(i, j, value);
