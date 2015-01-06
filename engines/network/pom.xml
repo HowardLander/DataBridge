@@ -12,7 +12,7 @@
   <groupId>org.renci.databridge.engines.network</groupId>
   <artifactId>network</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0-BETA</version>
   <name>DataBridge Network</name>
   <url>http://maven.apache.org</url>
 
