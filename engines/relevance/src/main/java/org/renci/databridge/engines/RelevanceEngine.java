@@ -15,6 +15,13 @@ import java.util.Properties;
 public class RelevanceEngine {
 
     protected static Logger logger = Logger.getLogger ("org.renci.databridge.engines.relevance");
+
+    /**
+     * @param args must contain a path to a properties file that defines:
+     * org.renci.databridge.primaryQueue
+     * org.renci.databridge.exchange
+     * org.renci.databridge.queueHost
+     */
     public static void main(String[] args ) {
         String propFileName = null;
 
