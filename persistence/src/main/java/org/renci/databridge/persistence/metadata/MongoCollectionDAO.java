@@ -166,6 +166,56 @@ public class MongoCollectionDAO implements CollectionDAO {
         return theIterator;
     }
 
+    /** 
+     * retrieve either a collection transfer object for the collection with the specified id
+     * or null
+     *
+     * @param id The id of the collection to return
+     */
+    public CollectionTransferObject getCollectionById(String id) {
+        CollectionTransferObject theCollection = null;
+        try {
+            BasicDBObject thisDoc = new BasicDBObject();
+            ObjectId theId = new ObjectId(id);
+            thisDoc.put(MongoIdFieldName, theId);
+            DB theDB = MongoDAOFactory.getTheDB();
+            DBCollection theTable = theDB.getCollection(MongoName);
+            DBCursor cursor = theTable.find(thisDoc);
+            if (cursor.hasNext()) {
+                // Translate the date from the MongoDB representation to the
+                // representation presented to the users in the Transfer object.
+                theCollection = new CollectionTransferObject();
+                DBObject theEntry = cursor.next();
+                theCollection.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+                theCollection.setURL((String)theEntry.get("URL"));
+                theCollection.setTitle((String)theEntry.get("title"));
+                theCollection.setDescription((String)theEntry.get("description"));
+                theCollection.setProducer((String)theEntry.get("producer"));
+                theCollection.setSubject((String)theEntry.get("subject"));
+                theCollection.setKeywords((ArrayList<String>)theEntry.get("keywords"));
+                theCollection.setNameSpace((String)theEntry.get("nameSpace"));
+                theCollection.setVersion((int)theEntry.get("version"));
+                @SuppressWarnings("unchecked")
+                ArrayList<BasicDBObject> extraList = (ArrayList<BasicDBObject>) theEntry.get(MongoExtraName);
+                HashMap<String, String> extra = new HashMap<String, String>();
+                for (BasicDBObject extraObj : extraList) {
+                    // Get the key set.  We sort of expect there to be only one but...
+                    Set<String> keys = extraObj.keySet();
+                    for (String thisKey : keys) {
+                        extra.put(thisKey, (String) extraObj.get(thisKey));
+                    }
+                }
+                theCollection.setExtra(extra);
+            }
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace(); 
+        }
+
+        return theCollection;
+    }
+
+
     public boolean updateCollection( CollectionTransferObject theCollection, 
                                     Object collectionID) {
         return true;

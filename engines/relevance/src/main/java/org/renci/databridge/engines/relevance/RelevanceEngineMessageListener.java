@@ -32,7 +32,7 @@ public class RelevanceEngineMessageListener extends Thread {
    * @param pathToPropsFile properties file for AMQPComms object initialization.
    * @param amqpMessageType
    * @param amqpMessageHandler
-   * @Param logger can be null.
+   * @param logger can be null.
    */
   public RelevanceEngineMessageListener (String pathToPropsFile, 
                                          AMQPMessageType amqpMessageType, 
