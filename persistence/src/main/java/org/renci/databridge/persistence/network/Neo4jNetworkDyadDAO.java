@@ -48,12 +48,14 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                       // the "currentNode"
                       theTransfer = new NetworkDyadTransferObject();
                       theTransfer.setNode1DataStoreId(Long.toString(currentNode.getId()));
+                      theTransfer.setNode1MetadataId((String)currentNode.getProperty(NetworkNodeDAO.METADATA_NODE_KEY));
                       Relationship theRel = relationshipIterator.next();
                       double simValue = (double)
                              theRel.getProperty(NetworkRelationshipDAO.METADATA_SIMILARITY_PROPERTY_NAME);
                       theTransfer.setSimilarity(simValue);
                       Node theOtherNode = theRel.getOtherNode(currentNode);
                       theTransfer.setNode2DataStoreId(Long.toString(theOtherNode.getId()));
+                      theTransfer.setNode2MetadataId((String)theOtherNode.getProperty(NetworkNodeDAO.METADATA_NODE_KEY));
                       stillLooking = false;
                   }  else if (nodeIterator.hasNext()) {
                       // All the relationships of the currentNode have been exhausted. If there is
@@ -62,6 +64,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                       Node theNode = nodeIterator.next();
                       currentNode = theNode;
                       theTransfer.setNode1DataStoreId(Long.toString(theNode.getId()));
+                      theTransfer.setNode1MetadataId((String)theNode.getProperty(NetworkNodeDAO.METADATA_NODE_KEY));
 
                       // We also have to reset the relationship iterator to access the relationships
                       // of this node
@@ -76,6 +79,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                           theTransfer.setSimilarity(simValue);
                           Node theOtherNode = theRel.getOtherNode(theNode);
                           theTransfer.setNode2DataStoreId(Long.toString(theOtherNode.getId()));
+                          theTransfer.setNode2MetadataId((String)theOtherNode.getProperty(NetworkNodeDAO.METADATA_NODE_KEY));
                           stillLooking = false;
                       } else {
                           // Why are we check for INCOMING relationships? The reason is to see if this

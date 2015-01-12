@@ -43,5 +43,10 @@
         <artifactId>databridge-network</artifactId>
         <version>1.0-BETA</version>
     </dependency>
+    <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.3.1</version>
+    </dependency>
   </dependencies>
 </project>

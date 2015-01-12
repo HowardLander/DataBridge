@@ -45,7 +45,7 @@ public class MetadataTest {
      theCollection.setDescription("here's an example description");
      theCollection.setProducer("producer");
      theCollection.setSubject("physics");
-     theCollection.setNameSpace("test");
+     theCollection.setNameSpace("junit_test");
      theCollection.setVersion(1);
      ArrayList<String> keywords = new ArrayList<String>();
 
@@ -66,8 +66,19 @@ public class MetadataTest {
          System.out.println("inserted Id is: " + theCollection.getDataStoreId());
          System.out.println("testing get");
 
+         // Test the retrieval by id code
+         CollectionTransferObject idObject = theCollectionDAO.getCollectionById(theCollection.getDataStoreId());
+
+         // Did we return anything?
+         TestCase.assertTrue("idObject is null", idObject != null);
+
+         // Do the fields match
+         TestCase.assertTrue("id fields don't march", idObject.getDataStoreId().compareTo(theCollection.getDataStoreId())== 0);
+         TestCase.assertTrue("title fields don't march", idObject.getTitle().compareTo(theCollection.getTitle()) == 0);
+         System.out.println("theCollectionDAO.getCollectionById tests passed");
+
          HashMap<String, String> searchMap = new HashMap<String, String>();
-         searchMap.put("nameSpace", "test");
+         searchMap.put("nameSpace", "junit_test");
          searchMap.put("title", "title");
          Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollections(searchMap);
          System.out.println ("Do we have next? " +  collectionIterator.hasNext());
@@ -108,7 +119,7 @@ public class MetadataTest {
 
          // let's test the count collections code.
          HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
-         nameSpaceMap.put("nameSpace", "test");
+         nameSpaceMap.put("nameSpace", "junit_test");
          long theCount = theCollectionDAO.countCollections(nameSpaceMap);
          System.out.println("countCollections found " + theCount + " matches");
          TestCase.assertTrue("count of collections found not 5", theCount == 5);
@@ -253,7 +264,7 @@ public class MetadataTest {
      CollectionTransferObject theCollection = new CollectionTransferObject();
      CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
      HashMap<String, String> searchMap = new HashMap<String, String>();
-     searchMap.put("nameSpace", "test");
+     searchMap.put("nameSpace", "junit_test");
      Iterator<CollectionTransferObject> nameSpaceIterator = theCollectionDAO.getCollections(searchMap);
      nameSpaceIterator.remove();
   }
@@ -290,7 +301,7 @@ public class MetadataTest {
          System.out.println("testing get");
 
          HashMap<String, String> searchMap = new HashMap<String, String>();
-         searchMap.put("nameSpace", "test");
+         searchMap.put("nameSpace", "junit_test");
          searchMap.put("producer", "producer");
          Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollections(searchMap);
          System.out.println ("Do we have next? " +  collectionIterator.hasNext());
@@ -325,7 +336,7 @@ public class MetadataTest {
      theCollection.setDescription("here's an example description");
      theCollection.setProducer("producer");
      theCollection.setSubject("physics");
-     theCollection.setNameSpace("test");
+     theCollection.setNameSpace("junit_test");
      theCollection.setVersion(1);
      HashMap<String, String> extra = new HashMap<String, String>();
      extra.put("author", "Howard Lander");
@@ -340,7 +351,7 @@ public class MetadataTest {
          System.out.println("testing get");
 
          HashMap<String, String> searchMap = new HashMap<String, String>();
-         searchMap.put("nameSpace", "test");
+         searchMap.put("nameSpace", "junit_test");
          searchMap.put("title", "title");
          Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollections(searchMap);
          System.out.println ("Do we have next? " +  collectionIterator.hasNext());
@@ -352,7 +363,7 @@ public class MetadataTest {
              theFile.setURL("http://www.renci.org");
              theFile.setName("file1");
              theFile.setDescription("here's an example file description");
-             theFile.setNameSpace("test");
+             theFile.setNameSpace("junit_test");
              theFile.setVersion(1);
              HashMap<String, String> fileExtra = new HashMap<String, String>();
              fileExtra.put("author", "Howard Lander");
@@ -396,7 +407,7 @@ public class MetadataTest {
      theCollection.setDescription("here's an example description");
      theCollection.setProducer("producer");
      theCollection.setSubject("physics");
-     theCollection.setNameSpace("test");
+     theCollection.setNameSpace("junit_test");
      theCollection.setVersion(1);
      HashMap<String, String> extra = new HashMap<String, String>();
      extra.put("author", "Howard Lander");
@@ -411,7 +422,7 @@ public class MetadataTest {
          System.out.println("testing get");
 
          HashMap<String, String> searchMap = new HashMap<String, String>();
-         searchMap.put("nameSpace", "test");
+         searchMap.put("nameSpace", "junit_test");
          searchMap.put("title", "title");
          Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollections(searchMap);
          System.out.println ("Do we have next? " +  collectionIterator.hasNext());
@@ -423,7 +434,7 @@ public class MetadataTest {
              theFile.setURL("http://www.renci.org");
              theFile.setName("file1");
              theFile.setDescription("here's an example file description");
-             theFile.setNameSpace("test");
+             theFile.setNameSpace("junit_test");
              theFile.setVersion(1);
              HashMap<String, String> fileExtra = new HashMap<String, String>();
              fileExtra.put("author", "Howard Lander");

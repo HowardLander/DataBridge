@@ -33,7 +33,7 @@ public class NetworkEngineMessageListener extends Thread {
    * @param pathToPropsFile properties file for AMQPComms object initialization.
    * @param amqpMessageType
    * @param amqpMessageHandler
-   * @Param logger can be null.
+   * @param logger can be null.
    */
   public NetworkEngineMessageListener (String pathToPropsFile, 
                                        AMQPMessageType amqpMessageType, 
@@ -73,7 +73,7 @@ public class NetworkEngineMessageListener extends Thread {
     String networkDBLocation;
     String networkDBType;
 
-    MetadataDAOFactory theFactory = null;
+    MetadataDAOFactory metadataFactory = null;
     NetworkDAOFactory  networkFactory = null;
 
     try {
@@ -96,9 +96,9 @@ public class NetworkEngineMessageListener extends Thread {
     }
 
     if (dbType.compareToIgnoreCase("mongo") == 0) {
-        theFactory = MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, 
+        metadataFactory = MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, 
                                                               dbName, dbHost, dbPort);
-        if (null == theFactory) {
+        if (null == metadataFactory) {
            this.logger.log (Level.SEVERE, "Couldn't produce the MetadataDAOFactory");
            return;
         }
@@ -110,7 +110,8 @@ public class NetworkEngineMessageListener extends Thread {
     }
 
     if (networkDBType.compareToIgnoreCase("neo4j") == 0) {
-        networkFactory = NetworkDAOFactory.getNetworkDAOFactory(NetworkDAOFactory.NEO4JDB, networkDBLocation);
+        networkFactory = 
+            NetworkDAOFactory.getNetworkDAOFactory(NetworkDAOFactory.NEO4JDB, networkDBLocation);
         if (null == networkFactory) {
            this.logger.log (Level.SEVERE, "Couldn't produce the NetworkDAOFactory");
            return;
@@ -132,13 +133,13 @@ public class NetworkEngineMessageListener extends Thread {
 
         AMQPMessage am = this.amqpComms.receiveMessage (LISTENER_TIMEOUT_MS);
         if (am != null) {
-           if (null == theFactory) {
-              this.logger.log (Level.SEVERE, "theFactory is null");
+           if (null == metadataFactory) {
+              this.logger.log (Level.SEVERE, "metadataFactory is null");
               return;
            } 
           // Need to pass both factories, so we will store them in array.
           Object theFactories[] = new Object[2];
-          theFactories[0] = (Object) theFactory;
+          theFactories[0] = (Object) metadataFactory;
           theFactories[1] = (Object) networkFactory;
           this.amqpMessageHandler.handle (am, (Object) theFactories);
         }

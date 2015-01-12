@@ -10,6 +10,8 @@ import  java.util.*;
 public class NetworkDyadTransferObject {
     private String node1DataStoreId; // First node id in the network database.
     private String node2DataStoreId; // Second node id the network database. null if the node is isolated
+    private String node1MetadataId;  // Id of node 1 in the metadata database
+    private String node2MetadataId;  // Id of node 2 in the metadata database, null if the node is isolated
     private double similarity; // The similarity between these to nodes.
     
     
@@ -81,11 +83,53 @@ public class NetworkDyadTransferObject {
 
     result.append(this.getClass().getName() + " Object {" );
     result.append(" Id1: " + node1DataStoreId);
+    result.append(" metaDataId1: " + node1MetadataId);
     result.append(" Similarity: " + similarity);
     result.append(" Id2: " + node2DataStoreId);
+    result.append(" metaDataId2: " + node2MetadataId);
     result.append("}");
 
     return result.toString();
   }
+    
+    /**
+     * Get node1MetadataId.
+     *
+     * @return node1MetadataId as String.
+     */
+    public String getNode1MetadataId()
+    {
+        return node1MetadataId;
+    }
+    
+    /**
+     * Set node1MetadataId.
+     *
+     * @param node1MetadataId the value to set.
+     */
+    public void setNode1MetadataId(String node1MetadataId)
+    {
+        this.node1MetadataId = node1MetadataId;
+    }
+    
+    /**
+     * Get node2MetadataId.
+     *
+     * @return node2MetadataId as String.
+     */
+    public String getNode2MetadataId()
+    {
+        return node2MetadataId;
+    }
+    
+    /**
+     * Set node2MetadataId.
+     *
+     * @param node2MetadataId the value to set.
+     */
+    public void setNode2MetadataId(String node2MetadataId)
+    {
+        this.node2MetadataId = node2MetadataId;
+    }
 }
 
