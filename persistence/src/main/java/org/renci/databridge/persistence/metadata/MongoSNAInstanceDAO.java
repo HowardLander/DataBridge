@@ -141,6 +141,51 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
         return theIterator;
     }
 
+    /**
+     * retrieve an iterator for all records that match the given search key.
+     *
+     * @param searchMap A HashMap with search keys.
+     * @param sortMap   A Hashmap with sort keys that are fields in the record.
+     * @param limit     An Integer giving the limit on records returned.
+     */
+    public Iterator<SNAInstanceTransferObject> getSNAInstances(HashMap<String, String> searchMap,
+                                                               HashMap<String, String> sortMap, Integer limit) {
+        MongoSNAInstanceDAOIterator theIterator = null;
+        try {
+            BasicDBObject thisDoc = new BasicDBObject();
+            for (String key : searchMap.keySet()) {
+                thisDoc.put(key, searchMap.get(key));
+            }
+            BasicDBObject thisSortObject = new BasicDBObject();
+            for (String key : sortMap.keySet()) {
+                // For mongo, -1 is descending and 1 is ascending
+                String sortValue = sortMap.get(key);
+                if (sortValue.compareTo(SNAInstanceDAO.SORT_ASCENDING) == 0) {
+                   thisSortObject.put(key, 1);
+                } else if (sortValue.compareTo(SNAInstanceDAO.SORT_DESCENDING) == 0) {
+                   thisSortObject.put(key, -1);
+                } else {
+                   // The user may have passed a value themselves.
+                   thisSortObject.put(key, Integer.parseInt(sortMap.get(key)));
+                }
+            }
+            DB theDB = MongoDAOFactory.getTheDB();
+            DBCollection theTable = theDB.getCollection(MongoName);
+            DBCursor cursor = theTable.find(thisDoc);
+            cursor = cursor.sort(thisSortObject);
+            if (null != limit) {
+               cursor = cursor.limit(limit.intValue());
+            }
+            theIterator = new MongoSNAInstanceDAOIterator();
+            theIterator.cursor = cursor;
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace();
+        }
+
+        return theIterator;
+    }
+
 
     /** 
      * delete the specified SNAInstance object from mongo. Note that this API deletes whatever matches

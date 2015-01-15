@@ -317,6 +317,20 @@ public class MetadataTest {
 
          HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
          nameSpaceMap.put("nameSpace", "junit_test");
+
+         HashMap<String, String> sortMap = new HashMap<String, String>();
+         sortMap.put("version", SimilarityInstanceDAO.SORT_DESCENDING);
+         Integer limit = new Integer(1);
+
+         // Test the sort first before the records are deleted.
+         Iterator<SNAInstanceTransferObject> iterator1 =
+            theSNAInstanceDAO.getSNAInstances(nameSpaceMap, sortMap, limit);
+         theSNAInstance = iterator1.next();
+
+         // This better be the highest version number (4)
+         System.out.println("highest version found: " + theSNAInstance.getVersion());
+         TestCase.assertTrue("version number (" + theSNAInstance.getVersion() + ") is wrong (should be 4", theSNAInstance.getVersion() == 4);
+
          Iterator<SNAInstanceTransferObject> nameSpaceIterator = 
             theSNAInstanceDAO.getSNAInstances(nameSpaceMap);
          SNAInstanceTransferObject getObj = null;

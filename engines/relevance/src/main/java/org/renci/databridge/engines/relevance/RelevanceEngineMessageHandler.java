@@ -148,7 +148,6 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       theSimilarityInstance.setMethod(methodName);
 
       // let's find the highest version for this combination of nameSpace, className and method (if any)
-      // Set up the search map to test the sortingi/limit code
       HashMap<String, String> versionMap = new HashMap<String, String>();
       versionMap.put("nameSpace", nameSpace);
       versionMap.put("className", className);
