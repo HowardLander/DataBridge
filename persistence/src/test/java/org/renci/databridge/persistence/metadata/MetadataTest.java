@@ -254,6 +254,93 @@ public class MetadataTest {
      }
   }
 
+  @Test
+  public void testSNAInstanceDAO () throws Exception {
+
+     System.out.println("");
+     System.out.println("");
+     System.out.println("beginning testSNAInstanceDAO");
+     boolean result;
+
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+     SNAInstanceTransferObject theSNAInstance = new SNAInstanceTransferObject();
+     theSNAInstance.setNameSpace("junit_test");
+     theSNAInstance.setClassName("MockSNAClass");
+     theSNAInstance.setMethod("MockSNAAlgorithm");
+     theSNAInstance.setSimilarityInstanceId("instance1");
+     theSNAInstance.setNResultingClusters(5);
+     theSNAInstance.setVersion(1);
+
+     try {
+         SNAInstanceDAO theSNAInstanceDAO = theMongoFactory.getSNAInstanceDAO();
+         result = theSNAInstanceDAO.insertSNAInstance(theSNAInstance);
+         System.out.println("done with insert");
+         System.out.println("inserted Id is: " + theSNAInstance.getDataStoreId());
+         System.out.println("testing get");
+
+         HashMap<String, String> searchMap = new HashMap<String, String>();
+         searchMap.put("nameSpace", "junit_test");
+         Iterator<SNAInstanceTransferObject> SNAInstanceIterator = 
+            theSNAInstanceDAO.getSNAInstances(searchMap);
+         System.out.println ("Do we have next? " +  SNAInstanceIterator.hasNext());
+
+         if (SNAInstanceIterator.hasNext()) {
+             SNAInstanceTransferObject getObj = SNAInstanceIterator.next(); 
+             System.out.println("className: " + getObj.getClassName());
+             TestCase.assertTrue("classname doesn't match", 
+                 getObj.getClassName().compareTo("MockSNAClass") == 0);
+             TestCase.assertTrue("nameSpaces don't match", 
+                 getObj.getNameSpace().compareTo("junit_test") == 0);
+             TestCase.assertTrue("methods don't match", 
+                 getObj.getMethod().compareTo("MockSNAAlgorithm") == 0);
+
+             // Now we'll try to delete the object
+             HashMap<String, String> deleteMap = new HashMap<String, String>();
+             deleteMap.put("_id", getObj.getDataStoreId());
+             int nDeleted = theSNAInstanceDAO.deleteSNAInstance(deleteMap);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+
+             // One more insert so we can try deleting by with the instance
+             result = theSNAInstanceDAO.insertSNAInstance(theSNAInstance);
+             nDeleted = theSNAInstanceDAO.deleteSNAInstance(theSNAInstance);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted by Id not 1", nDeleted == 1);
+         }
+
+         // Now let's test multiple insertions, gets and deletes
+         for (int i = 0; i < 5; i ++) {
+             theSNAInstance.setVersion(i);
+             result = theSNAInstanceDAO.insertSNAInstance(theSNAInstance);
+         }
+
+         HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
+         nameSpaceMap.put("nameSpace", "junit_test");
+         Iterator<SNAInstanceTransferObject> nameSpaceIterator = 
+            theSNAInstanceDAO.getSNAInstances(nameSpaceMap);
+         SNAInstanceTransferObject getObj = null;
+         int nDeleted = 0;
+         int nFound = 0;
+         int totalFound = 0;
+         int totalDeleted = 0;
+         while (nameSpaceIterator.hasNext()) {
+             getObj = nameSpaceIterator.next(); 
+             System.out.println("retrieved version: " + getObj.getVersion());
+             nDeleted = theSNAInstanceDAO.deleteSNAInstance(getObj);
+             System.out.println("nDeleted: " + nDeleted);
+             nFound ++;
+             totalDeleted += nDeleted;
+         }
+         System.out.println("number found:" + nFound);
+         TestCase.assertTrue("total found not 5", nFound == 5);
+         TestCase.assertTrue("totalDeleted not 5", totalDeleted == 5);
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
+  }
+
+
   @Test(expected=UnsupportedOperationException.class)
   public void testRemove () throws Exception {
      System.out.println("");
