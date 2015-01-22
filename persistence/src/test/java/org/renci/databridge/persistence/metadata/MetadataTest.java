@@ -269,7 +269,7 @@ public class MetadataTest {
      theSNAInstance.setClassName("MockSNAClass");
      theSNAInstance.setMethod("MockSNAAlgorithm");
      theSNAInstance.setSimilarityInstanceId("instance1");
-     theSNAInstance.setNResultingClusters(5);
+     theSNAInstance.setNResultingClusters("0");
      theSNAInstance.setVersion(1);
 
      try {
@@ -281,6 +281,14 @@ public class MetadataTest {
 
          HashMap<String, String> searchMap = new HashMap<String, String>();
          searchMap.put("nameSpace", "junit_test");
+         searchMap.put("similarityInstanceId", "instance1");
+
+         // Let's do an update
+         HashMap<String, String> updateMap = new HashMap<String, String>();
+         updateMap.put("nResultingClusters", "3");
+         updateMap.put("className", "test");
+         theSNAInstanceDAO.updateSNAInstance(searchMap, updateMap);
+         
          Iterator<SNAInstanceTransferObject> SNAInstanceIterator = 
             theSNAInstanceDAO.getSNAInstances(searchMap);
          System.out.println ("Do we have next? " +  SNAInstanceIterator.hasNext());
@@ -289,11 +297,17 @@ public class MetadataTest {
              SNAInstanceTransferObject getObj = SNAInstanceIterator.next(); 
              System.out.println("className: " + getObj.getClassName());
              TestCase.assertTrue("classname doesn't match", 
-                 getObj.getClassName().compareTo("MockSNAClass") == 0);
+                 getObj.getClassName().compareTo("test") == 0);
              TestCase.assertTrue("nameSpaces don't match", 
                  getObj.getNameSpace().compareTo("junit_test") == 0);
              TestCase.assertTrue("methods don't match", 
                  getObj.getMethod().compareTo("MockSNAAlgorithm") == 0);
+             TestCase.assertTrue("failed to add value for nResultingClusters", 
+                 getObj.getNResultingClusters().compareTo("3") == 0);
+ 
+             // These are the two modified values.
+             System.out.println("nResultingClusters value: " + getObj.getNResultingClusters());
+             System.out.println("className value: " + getObj.getClassName());
 
              // Now we'll try to delete the object
              HashMap<String, String> deleteMap = new HashMap<String, String>();

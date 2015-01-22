@@ -6,7 +6,7 @@ public class SNAInstanceTransferObject {
     private String method;
     private int    version;
     private String nameSpace;
-    private int    nResultingClusters; // How many clusters were created
+    private String nResultingClusters; // How many clusters were created
     private String similarityInstanceId; // The id for the similarity instance 
     private String dataStoreId; // The id generated at insertion time.
     
@@ -113,9 +113,9 @@ public class SNAInstanceTransferObject {
     /**
      * Get nResultingClusters.
      *
-     * @return nResultingClusters as int.
+     * @return nResultingClusters as String.
      */
-    public int getNResultingClusters()
+    public String getNResultingClusters()
     {
         return nResultingClusters;
     }
@@ -125,7 +125,7 @@ public class SNAInstanceTransferObject {
      *
      * @param nResultingClusters the value to set.
      */
-    public void setNResultingClusters(int nResultingClusters)
+    public void setNResultingClusters(String nResultingClusters)
     {
         this.nResultingClusters = nResultingClusters;
     }

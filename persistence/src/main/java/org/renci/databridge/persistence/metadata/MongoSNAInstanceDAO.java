@@ -60,7 +60,7 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
                    theSNAInstance.setClassName((String)theEntry.get("className"));
                    theSNAInstance.setMethod((String)theEntry.get("method"));
                    theSNAInstance.setVersion((int)theEntry.get("version"));
-                   theSNAInstance.setNResultingClusters((int)theEntry.get("nResultingClusters"));
+                   theSNAInstance.setNResultingClusters((String)theEntry.get("nResultingClusters"));
                    theSNAInstance.setSimilarityInstanceId((String)theEntry.get("similarityInstanceId"));
                }
            } catch (MongoException e) {
@@ -105,6 +105,40 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
           DB theDB = MongoDAOFactory.getTheDB();
           DBCollection theTable = theDB.getCollection(MongoName);
           theTable.insert(thisDoc);
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace(); 
+            returnCode = false;
+        }
+        
+        return returnCode;
+    }
+
+
+    /** 
+     * update the specified SNAInstance object into mongo.
+     *
+     * @param searchMap A hash map of values to use to select the record to update.
+     * @param updateMap A hash map of values that constitute the update for the record.
+     */
+    public boolean updateSNAInstance(HashMap<String, String> searchMap, HashMap<String, String> updateMap){
+        boolean returnCode = true;
+        try {
+          BasicDBObject thisDoc = new BasicDBObject();
+          for (String key : searchMap.keySet()) {
+              thisDoc.put(key, searchMap.get(key));
+          }
+
+          BasicDBObject updateDoc = new BasicDBObject();
+          for (String key : updateMap.keySet()) {
+              updateDoc.put(key, updateMap.get(key));
+          }
+
+          BasicDBObject setDoc = new BasicDBObject("$set", updateDoc);
+
+          DB theDB = MongoDAOFactory.getTheDB();
+          DBCollection theTable = theDB.getCollection(MongoName);
+          WriteResult theResult = theTable.update(thisDoc, setDoc, true, false);
         } catch (MongoException e) {
             // should send this back using the message logs eventually
             e.printStackTrace(); 
