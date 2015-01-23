@@ -64,6 +64,19 @@ public class NetworkTest {
          System.out.println("appProperty result: " + propResult);
          TestCase.assertTrue("propResult not true", propResult == true);
 
+         String returnedString = (String) theNetworkNodeDAO.getPropertyFromNetworkNode(theNode, "testProp");
+         System.out.println("returnedString: " + returnedString);
+         TestCase.assertTrue("returnedString value incorrect", returnedString.compareTo("testValue") == 0);
+
+         String deletedString = (String) theNetworkNodeDAO.deletePropertyFromNetworkNode(theNode, "testProp");
+         System.out.println("deletedString: " + returnedString);
+         TestCase.assertTrue("deletedString value incorrect", deletedString.compareTo("testValue") == 0);
+
+         String testString = (String) theNetworkNodeDAO.getPropertyFromNetworkNode(theNode, "testProp");
+         // Should be null
+         System.out.println("testString: " + testString);
+         TestCase.assertTrue("testString value incorrect", testString == null);
+
          // Let's retrieve the node using the metadata id.
          Iterator<NetworkNodeTransferObject> theNodes = 
             theNetworkNodeDAO.getNetworkNodes("junit_test", NetworkNodeDAO.METADATA_NODE_KEY, "1");

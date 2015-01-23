@@ -154,7 +154,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
 
           // Get the neo4j node id if it's in the transfer object
           String dataStoreId = transferNode.getDataStoreId();
-          // Is the nodeId in the transfer object?
+          // Is the dataStoreId in the transfer object?
           if (null == dataStoreId) {
               // Nope, try to find the node the hard away.
               Label newLabel = DynamicLabel.label(transferNode.getNameSpace());
@@ -188,6 +188,107 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
        }
        return returnCode;
     }
+    
+    /**
+     * Retrieve the value of a property of a node
+     * @param transferNode The node from which to retrieve the property
+     * @param key Which property to retrieve
+     * @return Object with the value of the property or null if the property does not exist on the node.
+     */
+    public Object getPropertyFromNetworkNode(NetworkNodeTransferObject transferNode, String key) {
+       Object returnObject = null;
+       Node updateNode = null;
+
+       GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
+       Transaction tx = theDB.beginTx();
+       try {
+
+          // Get the neo4j node id if it's in the transfer object
+          String dataStoreId = transferNode.getDataStoreId();
+          // Is the dataStoreId in the transfer object?
+          if (null == dataStoreId) {
+              // Nope, try to find the node the hard away.
+              Label newLabel = DynamicLabel.label(transferNode.getNameSpace());
+              Iterator<Node> neo4jNodeList = 
+                   theDB.findNodesByLabelAndProperty(newLabel,
+                                                     NetworkNodeDAO.METADATA_NODE_KEY, 
+                                                     transferNode.getNodeId()).iterator();
+              if (neo4jNodeList.hasNext()) {
+                  updateNode = neo4jNodeList.next();    
+              } else {
+                  // this node is not found, hmm
+                  this.logger.log (Level.SEVERE, "node " + transferNode.getNodeId() + " is not found");
+              }
+          } else {
+              long nodeId = Long.valueOf(dataStoreId).longValue();
+              updateNode = theDB.getNodeById(nodeId);
+              if (null == updateNode) {
+                  this.logger.log (Level.SEVERE, "node " + nodeId + " is not found");
+              }
+          }
+          if (null != updateNode) {
+              // Cool, we've got a node from which to get the property
+              returnObject = updateNode.getProperty(key, null);
+          }
+          tx.success();
+       } catch (Exception e) {
+          this.logger.log (Level.SEVERE, "exception in getPropertyFromNetworkNode: " + e.getMessage(), e);
+       } finally {
+          tx.close();
+       }
+       return returnObject;
+    }
+    
+    /**
+     * Delete a property from the node
+     * @param transferNode The node from which to delete the property
+     * @param key Which property to delete
+     * @return Object with the value of the deleted property or null if the property did not exist on the node.
+     */
+    public Object deletePropertyFromNetworkNode(NetworkNodeTransferObject transferNode, String key) {
+       Object returnObject = null;
+       Node updateNode = null;
+
+       GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
+       Transaction tx = theDB.beginTx();
+       try {
+
+          // Get the neo4j node id if it's in the transfer object
+          String dataStoreId = transferNode.getDataStoreId();
+          // Is the dataStoreId in the transfer object?
+          if (null == dataStoreId) {
+              // Nope, try to find the node the hard away.
+              Label newLabel = DynamicLabel.label(transferNode.getNameSpace());
+              Iterator<Node> neo4jNodeList = 
+                   theDB.findNodesByLabelAndProperty(newLabel,
+                                                     NetworkNodeDAO.METADATA_NODE_KEY, 
+                                                     transferNode.getNodeId()).iterator();
+              if (neo4jNodeList.hasNext()) {
+                  updateNode = neo4jNodeList.next();    
+              } else {
+                  // this node is not found, hmm
+                  this.logger.log (Level.SEVERE, "node " + transferNode.getNodeId() + " is not found");
+              }
+          } else {
+              long nodeId = Long.valueOf(dataStoreId).longValue();
+              updateNode = theDB.getNodeById(nodeId);
+              if (null == updateNode) {
+                  this.logger.log (Level.SEVERE, "node " + nodeId + " is not found");
+              }
+          }
+          if (null != updateNode) {
+              // Cool, we've got a node from which to get the property
+              returnObject = updateNode.removeProperty(key);
+          }
+          tx.success();
+       } catch (Exception e) {
+          this.logger.log (Level.SEVERE, "exception in removePropertyFromNetworkNode: " + e.getMessage(), e);
+       } finally {
+          tx.close();
+       }
+       return returnObject;
+    }
+    
     
     /**
      * Retrieve an iterator for all nodes that match the given search key.

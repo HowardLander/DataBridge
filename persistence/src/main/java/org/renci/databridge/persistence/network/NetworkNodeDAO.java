@@ -19,6 +19,22 @@ public interface NetworkNodeDAO {
     public boolean addPropertyToNetworkNode(NetworkNodeTransferObject transferNode, String key, Object value);
 
     /**
+     * Retrieve the value of a property of a node
+     * @param transferNode The node from which to retrieve the property
+     * @param key Which property to retrieve
+     * @return Object with the value of the property or null if the property does not exist on the node.
+     */
+    public Object getPropertyFromNetworkNode(NetworkNodeTransferObject transferNode, String key);
+
+    /**
+     * Delete a property from the node
+     * @param transferNode The node from which to delete the property
+     * @param key Which property to delete
+     * @return Object with the value of the deleted property or null if the property did not exist on the node.
+     */
+    public Object deletePropertyFromNetworkNode(NetworkNodeTransferObject transferNode, String key);
+
+    /**
      * Retrieve an iterator for all nodes that match the given search key.
      * @param transferNode The node containing the nameSpace in which to search
      * @param key The key for the new property
