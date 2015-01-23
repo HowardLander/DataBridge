@@ -150,6 +150,40 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
 
 
     /** 
+     * update the specified SNAInstance object into mongo.
+     *
+     * @param searchMap A hash map of values to use to select the record to update.
+     * @param updateMap A hash map of values that constitute the update for the record.
+     */
+    public boolean updateSNAInstance(SNAInstanceTransferObject theSNAInstance, 
+                                     HashMap<String, String> updateMap){
+        boolean returnCode = true;
+        try {
+          BasicDBObject thisDoc = new BasicDBObject();
+          ObjectId theId = new ObjectId(theSNAInstance.getDataStoreId());
+          thisDoc.put(MongoIdFieldName, theId);
+
+          BasicDBObject updateDoc = new BasicDBObject();
+          for (String key : updateMap.keySet()) {
+              updateDoc.put(key, updateMap.get(key));
+          }
+
+          BasicDBObject setDoc = new BasicDBObject("$set", updateDoc);
+
+          DB theDB = MongoDAOFactory.getTheDB();
+          DBCollection theTable = theDB.getCollection(MongoName);
+          WriteResult theResult = theTable.update(thisDoc, setDoc, true, false);
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace(); 
+            returnCode = false;
+        }
+        
+        return returnCode;
+    }
+
+
+    /** 
      * retrieve an iterator for all records that match the given search key.
      *
      * @param searchMap A HashMap with search keys.

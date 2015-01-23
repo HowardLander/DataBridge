@@ -4,6 +4,8 @@ import  java.util.*;
 public interface SNAInstanceDAO {
     public boolean insertSNAInstance(SNAInstanceTransferObject theSNAInstance);
     public boolean updateSNAInstance(HashMap<String, String> searchMap, HashMap<String, String> updateMap);
+    public boolean updateSNAInstance(SNAInstanceTransferObject theSNAInstance, 
+                                     HashMap<String, String> updateMap);
     public Iterator<SNAInstanceTransferObject> getSNAInstances(HashMap<String, String> searchMap);
     public Iterator<SNAInstanceTransferObject> getSNAInstances(HashMap<String, String> searchMap,
                                                                HashMap<String, String> sortMap, Integer limit);

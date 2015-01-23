@@ -309,6 +309,24 @@ public class MetadataTest {
              System.out.println("nResultingClusters value: " + getObj.getNResultingClusters());
              System.out.println("className value: " + getObj.getClassName());
 
+             // Let's try another update
+             HashMap<String, String> updateMap2 = new HashMap<String, String>();
+             updateMap2.put("nResultingClusters", "4");
+             updateMap2.put("className", "test2");
+             theSNAInstanceDAO.updateSNAInstance(getObj, updateMap2);
+         
+             Iterator<SNAInstanceTransferObject> SNAInstanceIterator2 = 
+                theSNAInstanceDAO.getSNAInstances(searchMap);
+             System.out.println ("Do we have next again? " +  SNAInstanceIterator2.hasNext());
+    
+             if (SNAInstanceIterator2.hasNext()) {
+                 SNAInstanceTransferObject getObj2 = SNAInstanceIterator2.next(); 
+                 TestCase.assertTrue("failed to add value for nResultingClusters", 
+                     getObj2.getNResultingClusters().compareTo("4") == 0);
+                 System.out.println("nResultingClusters newest value: " + getObj2.getNResultingClusters());
+                 System.out.println("className newest value: " + getObj2.getClassName());
+             }
+
              // Now we'll try to delete the object
              HashMap<String, String> deleteMap = new HashMap<String, String>();
              deleteMap.put("_id", getObj.getDataStoreId());
