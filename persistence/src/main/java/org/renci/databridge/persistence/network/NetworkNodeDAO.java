@@ -53,6 +53,13 @@ public interface NetworkNodeDAO {
     public Iterator<NetworkNodeTransferObject> getNetworkNodes(String nameSpace, String key, Object value);
 
     /**
+     * Retrieve the node specified by the id parameter.
+     * @param theId The string for which to return the node
+     * @return The requested node
+     */
+    public NetworkNodeTransferObject getNetworkNode(String id);
+
+    /**
      * Retrieve an iterator for all nodes in a given nameSpace
      * @param nameSpace The nameSpace in which to search
      * @return The iterator

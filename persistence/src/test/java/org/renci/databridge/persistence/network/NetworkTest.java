@@ -87,6 +87,14 @@ public class NetworkTest {
              System.out.println("returned dataStoreId: " + returnedNode.getDataStoreId());
              System.out.println("returned attributes: " + returnedNode.getAttributes());
              TestCase.assertTrue("dataStoreIds don't match", theNode.getDataStoreId().compareTo(returnedNode.getDataStoreId()) == 0);
+             // Let's test the getById functionality
+             NetworkNodeTransferObject byIdNode = theNetworkNodeDAO.getNetworkNode(returnedNode.getDataStoreId());
+             System.out.println("returned nameSpace byId: " + byIdNode.getNameSpace());
+             System.out.println("returned nodeId byId: " + byIdNode.getNodeId());
+             System.out.println("returned dataStoreId byId: " + byIdNode.getDataStoreId());
+             System.out.println("returned attributes byId: " + byIdNode.getAttributes());
+             TestCase.assertTrue("nameSpaces don't match byId", returnedNode.getDataStoreId().compareTo(byIdNode.getDataStoreId()) == 0);
+
              // Now let's delete this node
              propResult = theNetworkNodeDAO.deleteNetworkNode(theNode); 
              TestCase.assertTrue("propResult not true", propResult == true);

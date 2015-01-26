@@ -319,6 +319,53 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
 
         return theIterator;
     }
+
+       /** 
+        * Retrieve the node specified by the id parameter.
+        * @param theId The string for which to return the node
+        * @return The requested node
+        */
+       public NetworkNodeTransferObject getNetworkNode(String id) {
+           NetworkNodeTransferObject theNetworkTransfer = null; 
+           GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
+           Transaction tx = theDB.beginTx();
+           try {
+               Node theNode = theDB.getNodeById(Long.valueOf(id).longValue());
+               if (null != theNode) {
+                   // Translate the date from the Neo4j representation to the 
+                   // representation presented to the users in the Transfer object.
+                   theNetworkTransfer = new NetworkNodeTransferObject();
+                   // Note that at the moment we are assuming that each node is only in one
+                   // namespace. I'm not sure that is a good assumption.
+                   Iterator<Label> theLabels = theNode.getLabels().iterator();
+                   if (theLabels.hasNext()) {
+                       Label theFirstLabel = theLabels.next();
+                       theNetworkTransfer.setNameSpace(theFirstLabel.name());
+                   }
+
+                   HashMap<String, Object> attributes = new HashMap<String, Object>();
+                   Iterator<String> theAttributeKeys = theNode.getPropertyKeys().iterator();
+                   while (theAttributeKeys.hasNext()) {
+                       String theKey = theAttributeKeys.next();
+                       if (theKey.compareTo(NetworkNodeDAO.METADATA_NODE_KEY) == 0) {
+                           // Found the metadata key
+                           theNetworkTransfer.setNodeId((String)theNode.getProperty(NetworkNodeDAO.METADATA_NODE_KEY));
+                       } else {
+                           // an ordinary attribute
+                           attributes.put(theKey,theNode.getProperty(theKey));
+                       }
+                   }
+                   theNetworkTransfer.setAttributes(attributes);
+                   theNetworkTransfer.setDataStoreId(Long.toString(theNode.getId()));
+               }
+           } catch (Exception e) {
+               // should send this back using the message logs eventually
+               this.logger.log (Level.SEVERE, "exception in getNetworkNodeById: " + e.getMessage(), e);
+           } finally {
+               tx.close();
+           }
+           return theNetworkTransfer;
+       }
     
     /**
      * Retrieve an iterator for all nodes that match the given search key.
