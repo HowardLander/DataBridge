@@ -37,17 +37,21 @@ public abstract class JaxbMetadataFormatter implements MetadataFormatter {
 
   /**
    * Unmarshalls a given content object root type from a string.
+   *
+   * @param xml The string.
+   * @param contentClass The class of the root of the content tree that will be unmarshalled from the xml parameter.
+   * @param contextClasses Needs a class object for the root of every static class hierarchy that the unmarshaller requires; for example JAXB-generated classes built elsewhere and imported. Must include the contentClass object as well.
+   * @see https://jaxb.java.net/nonav/2.2.4/docs/api/javax/xml/bind/Unmarshaller.html
    */
-  public <X> X unmarshal (String xml, Class<X> clazz) throws FormatterException {
+  public <X> X unmarshal (String xml, Class<X> contentClass, Class... contextClasses) throws FormatterException {
 
     X content = null;
     try { 
 
-      JAXBContext jc = JAXBContext.newInstance (clazz);
+      JAXBContext jc = JAXBContext.newInstance (contextClasses);
       Unmarshaller unmarshaller = jc.createUnmarshaller ();
       StreamSource ss = new StreamSource (new StringReader (xml));
-      // JAXBElement<X> root = unmarshaller.unmarshal (ss, clazz);
-      Object o = unmarshaller.unmarshal (ss, clazz);
+      Object o = unmarshaller.unmarshal (ss, contentClass);
       // @todo this is gross but JAXB returns some content object roots in a wrapper. May be fixable with JAXB configuration.
       if (o instanceof JAXBElement) {
         content = ((JAXBElement<X>) o).getValue ();
