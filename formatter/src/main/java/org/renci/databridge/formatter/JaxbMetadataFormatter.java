@@ -69,15 +69,4 @@ public abstract class JaxbMetadataFormatter implements MetadataFormatter {
 
   }
 
-  /**
-   * @todo 1: fix. 2: probably should be factored up.
-   * Input: Harris//hdl:1902.29/H-15085
-   * Output: hdl.handle.net/1902.29/H-15085
-   */
-  public String constructUrl (String headerIdentifier) {
-
-    return headerIdentifier; 
-
-  }
-
 }
