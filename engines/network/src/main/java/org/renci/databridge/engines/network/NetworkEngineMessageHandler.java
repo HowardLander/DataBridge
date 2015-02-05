@@ -51,19 +51,21 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
   class JsonNode {
      public String name;
      public String title;
+     public String group;
 
     /**
       * Constructor that includes name (id) and the title of the nodes. 
       * @param name The id of the node, currently from the metadata database.
       * @param title The title of the node, currently from the metadata database.
       */
-     public JsonNode(String name, String title) {
+     public JsonNode(String name, String title, String group) {
         this.name = name;
         this.title = title;
+        this.group = group;
      }
 
      public String toString() {
-         return (this.name + " " + this.title);
+         return (this.name + " " + this.title + " " + this.group);
      }
   }
 
@@ -161,7 +163,9 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          processRunSnaAlgorithmJavaMessage(stringHeaders, extra);
       } else if (messageName.compareTo(NetworkEngineMessage.CREATE_JSON_FILE_NETWORKDB_URI) == 0) {
          processCreateJSONFileMessage(stringHeaders, extra);
-      } 
+      } else {
+         System.out.println("unimplemented messageName: " + messageName);
+      }
   }
 
     /**
@@ -191,10 +195,13 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
-      // 3) the output file
+      // 3) the sna_id: This can be null, user just won't get any cluster info
+      String snaId = stringHeaders.get(NetworkEngineMessage.SNA_ID);    
+
+      // 4) the output file
       String outputFile = stringHeaders.get(NetworkEngineMessage.OUTPUT_FILE);    
       if (null == outputFile) {
-         this.logger.log (Level.SEVERE, "No inputURI in message");
+         this.logger.log (Level.SEVERE, "No output file in message");
          return;
       }
 
@@ -218,14 +225,21 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          this.logger.log (Level.SEVERE, "NetworkDAOFactory is null");
          return;
       } 
+
       NetworkDyadDAO theDyadDAO = networkFactory.getNetworkDyadDAO();
       if (null == theDyadDAO) {
          this.logger.log (Level.SEVERE, "theDyadDAO is null");
          return;
       } 
 
+      NetworkNodeDAO theNodeDAO = networkFactory.getNetworkNodeDAO();
+      if (null == theNodeDAO) {
+         this.logger.log (Level.SEVERE, "theNodeDAO is null");
+         return;
+      } 
+
       // Preliminaries are out of the way. We can proceed to the main algorithm
-  
+      // Used to assure that we only add each node to the file once.  
       ArrayList<String> theNames = new ArrayList<String>();
       JsonNetworkFile theJson = new JsonNetworkFile();
 
@@ -245,9 +259,16 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
             // Get the relevant collection from the metadata database
             CollectionTransferObject node1Collection = theCollectionDAO.getCollectionById(id1);
+
+            // if the user has provided an snaID, than they want cluster info for the node.
+            String clusterString = "";
+            if (null != snaId) {
+                NetworkNodeTransferObject node1 = theNodeDAO.getNetworkNode(thisDyad.getNode1DataStoreId());
+                clusterString = (String)theNodeDAO.getPropertyFromNetworkNode(node1, snaId);
+            }
    
             // Now we can add the first node to the file
-            JsonNode jNode = new JsonNode(id1, node1Collection.getTitle());
+            JsonNode jNode = new JsonNode(id1, node1Collection.getTitle(), clusterString);
             theJson.addNode(jNode);
          }
 
@@ -261,8 +282,15 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
                // Get the relevant collection from the metadata database
                CollectionTransferObject node2Collection = theCollectionDAO.getCollectionById(id2);
    
-               // Now we can add the first node to the file
-               JsonNode jNode2 = new JsonNode(id2, node2Collection.getTitle());
+               // if the user has provided an snaID, than they want cluster info for the node.
+               String clusterString2 = "";
+               if (null != snaId) {
+                   NetworkNodeTransferObject node2 = theNodeDAO.getNetworkNode(thisDyad.getNode2DataStoreId());
+                   clusterString2= (String)theNodeDAO.getPropertyFromNetworkNode(node2, snaId);
+               }
+
+               // Now we can add the second node to the file
+               JsonNode jNode2 = new JsonNode(id2, node2Collection.getTitle(), clusterString2);
                theJson.addNode(jNode2);
             }
 
@@ -444,7 +472,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       try {
          theClass = classLoader.loadClass(className);
       } catch (ClassNotFoundException e) {
-         this.logger.log (Level.SEVERE, "Can't instantiate class " + className + e.getMessage(), e);
+         this.logger.log (Level.SEVERE, "Can't instantiate class " + className + ": " + e.getMessage(), e);
          return;
       }
 
@@ -467,13 +495,26 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       }
 
       java.lang.reflect.Method theMethod = null;
+      java.lang.reflect.Method theMethodArray[] = null;
       // Try for the method
       try {
          Class[] paramList = new Class[2];
-         paramList[0] = CollectionTransferObject.class;
-         paramList[1] = CollectionTransferObject.class;
+         paramList[0] = java.util.Iterator.class;
+         paramList[1] = String.class;
          theMethod = theClass.getMethod(methodName, paramList);
-      } catch (NoSuchMethodException e) {
+         Class<?>[] theParamTypes = theMethod.getParameterTypes();
+         System.out.println("Class 0:" + theParamTypes[0]);
+         System.out.println("Class 1:" + theParamTypes[1]);
+      /*
+         // Note that the class should have only one public method
+         theMethodArray = theClass.getMethods();
+         theMethod = theMethodArray[0];
+         Class<?>[] theParamTypes = theMethod.getParameterTypes();
+         System.out.println("Class 0:" + theParamTypes[0]);
+         System.out.println("Class 1:" + theParamTypes[1]);
+      */
+         
+      } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't instantiate method " + e.getMessage(), e);
          return;
       }
@@ -492,12 +533,8 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
-      // 4) the version
-      String version = stringHeaders.get(NetworkEngineMessage.VERSION);    
-      if (null == version) {
-         this.logger.log (Level.SEVERE, "No version in message");
-         return;
-      }
+      // 5) any extra params to pass.  This can be null
+      String params = stringHeaders.get(NetworkEngineMessage.PARAMS);    
 
       // In this case the extra parameter is an array of 2 objects, which are the metadata and
       // network factories.
@@ -520,14 +557,94 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          return;
       } 
 
-      SimilarityInstanceDAO theSimilarityInstanceDAO = metadataFactory.getSimilarityInstanceDAO();
-      if (null == theSimilarityInstanceDAO) {
-         this.logger.log (Level.SEVERE, "SimilarityInstanceDAO is null");
+      SNAInstanceDAO theSNAInstanceDAO = metadataFactory.getSNAInstanceDAO();
+      if (null == theSNAInstanceDAO) {
+         this.logger.log (Level.SEVERE, "SNAInstanceDAO is null");
          return;
       }
 
-      // Let's add the SimilarityInstance.
-      SimilarityInstanceTransferObject theSimilarityInstance = new SimilarityInstanceTransferObject();
+      NetworkNodeDAO theNetworkNodeDAO = networkFactory.getNetworkNodeDAO();
+      if (null == theSNAInstanceDAO) {
+         this.logger.log (Level.SEVERE, "SNAInstanceDAO is null");
+         return;
+      }
+
+      // Let's add the SNAInstance.
+      SNAInstanceTransferObject theSNAInstance = new SNAInstanceTransferObject();
+      theSNAInstance.setNameSpace(nameSpace);
+      theSNAInstance.setClassName(className);
+      theSNAInstance.setMethod(methodName);
+      theSNAInstance.setSimilarityInstanceId(similarityId);
+
+      // let's find the highest version for this combination of nameSpace, className and method (if any)
+      HashMap<String, String> versionMap = new HashMap<String, String>();
+      versionMap.put("nameSpace", nameSpace);
+      versionMap.put("className", className);
+      versionMap.put("method", methodName);
+      versionMap.put("similarityInstanceId", similarityId);
+
+      HashMap<String, String> sortMap = new HashMap<String, String>();
+      sortMap.put("version", SNAInstanceDAO.SORT_DESCENDING);
+      Integer limit = new Integer(1);
+
+      // This is for the case of no previous instance
+      theSNAInstance.setVersion(1);
+      Iterator<SNAInstanceTransferObject> versionIterator =
+          theSNAInstanceDAO.getSNAInstances(versionMap, sortMap, limit);
+      if (versionIterator.hasNext()) {
+         // Found a previous instance
+         SNAInstanceTransferObject prevInstance = versionIterator.next();
+         theSNAInstance.setVersion(prevInstance.getVersion() + 1);
+      }
+
+      try {
+         boolean result = theSNAInstanceDAO.insertSNAInstance(theSNAInstance);
+         System.out.println("Inserted Instance: " + theSNAInstance.getDataStoreId());
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't insert SNA instance");
+         return;
+      }
+
+      NetworkDyadDAO theNetworkDyadDAO = networkFactory.getNetworkDyadDAO();
+      Iterator<NetworkDyadTransferObject> theDyads = 
+           theNetworkDyadDAO.getNetworkDyads(nameSpace, similarityId);
+
+      HashMap<String, String[]> clusterList = null;
+      try {
+          // Invoke the method
+          clusterList = (HashMap<String, String[]>)theMethod.invoke(theObject, theDyads, params);
+          String nReturnedClusters = Integer.toString(clusterList.size());
+          HashMap<String, String> updateMap = new HashMap<String, String>();
+          updateMap.put("nResultingClusters", nReturnedClusters);
+          boolean result = theSNAInstanceDAO.updateSNAInstance(theSNAInstance, updateMap);
+          String SNAId = theSNAInstance.getDataStoreId();
+         
+          // For each returned cluster, add the cluster info to the nodes.
+          // We are allowing the possibility of a node being in more than one cluster
+          for (Map.Entry<String, String[]> thisCluster : clusterList.entrySet()){
+             String clusterKey = thisCluster.getKey();
+             String[] nodesInThisCluster = thisCluster.getValue();
+             for (String thisNodeId: nodesInThisCluster) {
+                 NetworkNodeTransferObject theNode = theNetworkNodeDAO.getNetworkNode(thisNodeId);
+                 String clusterString = 
+                    (String) theNetworkNodeDAO.getPropertyFromNetworkNode(theNode, SNAId);
+                 if (null == clusterString) {
+                    // No problem, just means this node is not already in a cluster
+                    theNetworkNodeDAO.addPropertyToNetworkNode(theNode, SNAId, clusterKey);
+                 } else {
+                    // This node was already assigned to a cluster, so we add this id
+                    String multiClusterString = clusterString = "," + clusterKey;
+                    theNetworkNodeDAO.deletePropertyFromNetworkNode(theNode, SNAId);
+                    theNetworkNodeDAO.addPropertyToNetworkNode(theNode, SNAId, multiClusterString);
+                 }
+             }
+          }
+          
+      } catch (Exception e) {
+          this.logger.log (Level.SEVERE, "Can't invoke method " + methodName + " " + e.getMessage(), e);
+          return;
+      }
+
   }
  
   public void handleException (Exception exception) {

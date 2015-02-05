@@ -46,6 +46,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       properties = amqpMessage.getProperties();
       stringHeaders = amqpMessage.getStringHeaders();
       bytes = amqpMessage.getBytes();
+      System.out.println("headers: " + stringHeaders);
 
       // get the message name
       String messageName = stringHeaders.get(RelevanceEngineMessage.NAME);
@@ -78,6 +79,8 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          e.printStackTrace();
          return;
       }
+
+      System.out.println("Loaded class: " + className);
 
       // We'll need an object of this type as well.
       Constructor<?> cons = null;

@@ -12,8 +12,10 @@ public class NetworkEngineMessage implements AMQPMessageType {
   public static final String NAME = "name";
   public static final String INPUT_URI = "inputURI";
   public static final String OUTPUT_FILE = "outputFile";
-  public static final String SIMILARITY_ID = "similarity_id";
+  public static final String SIMILARITY_ID = "similarityId";
+  public static final String SNA_ID = "snaId";
   public static final String VERSION = "version";
+  public static final String PARAMS = "params";
 
   // Message types for the network engine
   public static final String INSERT_SIMILARITYMATRIX_JAVA_URI_NETWORKDB = "Insert.SimilarityMatrix.Java.URI.NetworkDB";
