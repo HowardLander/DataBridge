@@ -130,5 +130,13 @@ public class VariableTransferObject {
     {
         this.extra = extra;
     }
+
+    @Override
+    public String toString ()
+    {
+        return "{" + getClass ().getName () + ": name: " + getName () + ", description: " + getDescription () + ", extra: " + getExtra () +  ", version: " + getVersion () + ", dataStoreId: " + getDataStoreId () + ", fileDataStoreId: " + getFileDataStoreId () + "}";
+    }
+
+
 }
 

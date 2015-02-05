@@ -173,5 +173,12 @@ public class FileTransferObject {
     {
         this.extra = extra;
     }
+
+    @Override
+    public String toString ()
+    {
+        return "{" + getClass ().getName () + ": name: " + getName () + ", description: " + getDescription () + ", url: " + getURL () + ", nameSpace: " + getNameSpace () + ", extra: " + getExtra () +  ", version: " + getVersion () + ", dataStoreId: " + getDataStoreId () + ", collectionDataStoreId: " + getCollectionDataStoreId () + "}";
+    }
+
 }
 

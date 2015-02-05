@@ -99,7 +99,6 @@ public class CommsTest {
     }
 
     @Test
-    @Ignore
     public void testSendAndReceiveMessage() {
         System.out.println("Testing the send of a regular message");
         AMQPMessage sendMessage = new AMQPMessage(new String("Regular Message").getBytes());
