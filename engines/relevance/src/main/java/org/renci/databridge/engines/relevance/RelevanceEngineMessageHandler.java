@@ -119,9 +119,9 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
-      // 4) the outputURI
-      String outputURI = stringHeaders.get(RelevanceEngineMessage.OUTPUT_URI);    
-      if (null == outputURI) {
+      // 4) the outputFile
+      String outputFile = stringHeaders.get(RelevanceEngineMessage.OUTPUT_FILE);    
+      if (null == outputFile) {
          this.logger.log (Level.SEVERE, "No output URI in message");
          return;
       }
@@ -249,7 +249,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       }
       theSimFile.setCollectionIds(collectionIds);
       try {
-         theSimFile.writeToDisk(outputURI);
+         theSimFile.writeToDisk(outputFile);
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Caught Exception writing to disk: " + e.getMessage());
          return;

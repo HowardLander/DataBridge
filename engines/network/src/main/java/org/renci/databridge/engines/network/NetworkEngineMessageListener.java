@@ -44,7 +44,7 @@ public class NetworkEngineMessageListener extends Thread {
     this.amqpMessageHandler = amqpMessageHandler;
     this.logger = logger;
 
-    // creating AMQPComms here becausec passing it in would enable reusing
+    // creating AMQPComms here because passing it in would enable reusing
     // the same AMQPComms instance, which is not safe across multiple clients
     this.amqpComms = new AMQPComms (pathToPropsFile);
     this.pathToPropsFile = pathToPropsFile;

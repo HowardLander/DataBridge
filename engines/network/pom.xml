@@ -49,4 +49,28 @@
         <version>2.3.1</version>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+           <executions>
+             <execution>
+               <id>copy</id>
+               <phase>install</phase>
+               <configuration>
+                 <tasks>
+                   <copy file="target/network-1.0-BETA.jar" tofile="../../bin/system/network-1.0-BETA.jar"/>
+                 </tasks>
+               </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+             </execution> 
+           </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -24,30 +24,20 @@
 
   <repositories>
     <repository>
-      <id>prime-repo</id>
-      <name>PrimeFaces Maven Repository</name>
-      <url>http://repository.primefaces.org</url>
+      <id>DataBridge.External</id>
+      <name>DataBridge External Repository</name>
+      <url>file:///projects/databridge/www/mvn-repo</url>
       <layout>default</layout>
-    </repository>
-    <repository>
-<!--        <id>DataBridge-mvn-repo</id> -->
-<!--        <url>https://raw.github.com/HowardLander/DataBridge/mvn-repo</url> -->
-        <id>github</id>
-        <url>https://github.com/HowardLander/DataBridge/blob/mvn-repo</url>
-        <snapshots>
-          <enabled>true</enabled>
-          <updatePolicy>always</updatePolicy>
-        </snapshots>
     </repository>
   </repositories>
 
-  <!-- distributionManagement>
+  <distributionManagement>
     <repository>
-        <id>internal.repo</id>
-        <name>Temporary Staging Repository</name>
-        <url>file://${project.build.directory}/mvn-repo</url>
+        <id>DataBridge.External</id>
+        <name>DataBridge External Repository</name>
+        <url>file:///projects/databridge/www/mvn-repo</url>
     </repository>
-  </distributionManagement -->
+  </distributionManagement>
 
   <dependencies>
     <dependency>
@@ -148,39 +138,8 @@
       <plugin>
         <artifactId>maven-deploy-plugin</artifactId>
         <version>2.8.1</version>
-        <configuration>
-            <altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>
-        </configuration>
       </plugin>
-      <plugin>
-        <groupId>com.github.github</groupId>
-        <artifactId>site-maven-plugin</artifactId>
-        <version>0.8</version>
-        <configuration>
-          <!-- git commit message -->
-          <message>Maven artifacts for ${project.version}</message>  
-          <!-- disable webpage processing -->
-          <noJekyll>true</noJekyll>
-          <!-- matches distribution management repository url above -->
-          <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory>
-          <!-- remote branch name -->
-          <branch>refs/heads/mvn-repo</branch>                       
-          <includes><include>**/*</include></includes>
-          <!-- github repo name -->
-          <repositoryName>DataBridge</repositoryName>      
-          <!-- github username  -->
-          <repositoryOwner>HowardLander</repositoryOwner>    
-        </configuration>
-        <executions>
-          <!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
-          <execution>
-            <goals>
-              <goal>site</goal>
-            </goals>
-            <phase>deploy</phase>
-          </execution>
-        </executions>
-      </plugin>
+
       <plugin>
         <artifactId>maven-project-info-reports-plugin</artifactId>
         <version>2.7</version>

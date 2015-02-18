@@ -145,10 +145,6 @@ public class AMQPComms {
        theExchange = prop.getProperty("org.renci.databridge.exchange", "localhost");
        theLevel = Integer.parseInt(prop.getProperty("org.renci.databridge.logLevel", "4"));
        queueDurability = Boolean.parseBoolean(prop.getProperty("org.renci.databridge.queueDurability", "false"));
-       // These headers are a single string that contains multiple key value pairs. The format is key1:value1;key2:value2 etc
-       publishHeaders = prop.getProperty("org.renci.databridge.publishHeaders", "localhost");
-       receiveHeaders = prop.getProperty("org.renci.databridge.receiveHeaders", "localhost");
-
        // Here's the Rabbit specific code.
        ConnectionFactory theFactory = new ConnectionFactory();
        theFactory.setHost(theHost);
@@ -564,46 +560,6 @@ public class AMQPComms {
          this.publishMap = publishMap;
      }
 
-     /**
-      * Get publishHeaders.
-      *
-      * @return publishHeaders as String.
-      */
-     public String getPublishHeaders()
-     {
-         return publishHeaders;
-     }
-     
-     /**
-      * Set publishHeaders.
-      *
-      * @param publishHeaders the value to set.
-      */
-     public void setPublishHeaders(String publishHeaders)
-     {
-         this.publishHeaders = publishHeaders;
-     }
-     
-     /**
-      * Get receiveHeaders.
-      *
-      * @return receiveHeaders as String.
-      */
-     public String getReceiveHeaders()
-     {
-         return receiveHeaders;
-     }
-     
-     /**
-      * Set receiveHeaders.
-      *
-      * @param receiveHeaders the value to set.
-      */
-     public void setReceiveHeaders(String receiveHeaders)
-     {
-         this.receiveHeaders = receiveHeaders;
-     }
-     
      /**
       * Get routingKey.
       *
