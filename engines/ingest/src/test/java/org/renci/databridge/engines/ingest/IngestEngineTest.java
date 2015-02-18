@@ -18,7 +18,7 @@ import org.junit.Rule;
 import org.renci.databridge.persistence.metadata.CollectionTransferObject;
 import org.renci.databridge.persistence.metadata.MetadataDAOFactory;
 
-public class IngestMetadataTest {
+public class IngestEngineTest {
 
     // setup must get resources
 
@@ -38,7 +38,7 @@ public class IngestMetadataTest {
         }
       }
 
-      IngestMetadataAMQPMessageHandler imamh = new IngestMetadataAMQPMessageHandler ();
+      IngestMetadataAMQPMessageHandler imamh = new IngestMetadataAMQPMessageHandler (MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
 
       // @todo create an ingest message and send it in
 
