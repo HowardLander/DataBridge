@@ -6,8 +6,6 @@ import org.renci.databridge.util.AMQPMessageType;
  */
 public class InsertMetadataJavaURIMetadataDB extends IngestMetadataMessage {
 
-  private String sendHeaders = null;
-
  /**
    * This function returns a parametrized header string specific to sending this message.
    *
@@ -17,15 +15,13 @@ public class InsertMetadataJavaURIMetadataDB extends IngestMetadataMessage {
    * @param nameSpace the nameSpace to attach to the inserted data.
    * @param inputURI the URI for the file containg the metadata to be inserted.
    */
-  public String getSendHeaders(String className, String methodName, String nameSpace, String inputURI) {
-      sendHeaders = bindHeaders + ";" +
+  public static String getSendHeaders(String className, String methodName, String nameSpace, String inputURI) {
+      return bindHeaders + ";" +
                     NAME + ":" + INSERT_METADATA_JAVA_URI_METADATADB  + ";" +
                     CLASS + ":" + className + ";" +
                     METHOD + ":" + methodName + ";" +
                     NAME_SPACE + ":" + nameSpace + ";" +
                     INPUT_URI + ":" + inputURI;
-
-      return sendHeaders;
   }
 
 }
