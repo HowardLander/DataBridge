@@ -18,14 +18,12 @@ public class InsertMetadataJavaURIMetadataDB extends IngestMetadataMessage {
    * @param inputURI the URI for the file containg the metadata to be inserted.
    */
   public static String getSendHeaders(String className, String methodName, String nameSpace, String inputURI) {
-      sendHeaders = bindHeaders + ";" +
+      return bindHeaders + ";" +
                     NAME + ":" + INSERT_METADATA_JAVA_URI_METADATADB  + ";" +
                     CLASS + ":" + className + ";" +
                     METHOD + ":" + methodName + ";" +
                     NAME_SPACE + ":" + nameSpace + ";" +
                     INPUT_URI + ":" + inputURI;
-
-      return sendHeaders;
   }
 
 }
