@@ -180,7 +180,7 @@ public class AMQPComms {
    
             for (String thisHeader : splitHeaders) {
                 // Add a map entry for each of these headers
-                String[] thisSplitHeader = thisHeader.split(":");
+                String[] thisSplitHeader = thisHeader.split(":", 2);
                 publishMap.put(thisSplitHeader[0], thisSplitHeader[1]);
             }
    
