@@ -55,6 +55,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
     this.logger.log (Level.FINE, "headers: " + stringHeaders);
 
     String className = stringHeaders.get (IngestMetadataMessage.CLASS);
+    // not used
     // String methodName = stringHeaders.get (IngestMetadataMessage.METHOD); 
     String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
     String inputURI = stringHeaders.get (IngestMetadataMessage.INPUT_URI);
@@ -69,7 +70,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
     // dispatch to third-party formatter 
     List<MetadataObject> metadataObjects = mf.format (bytes);
     for (MetadataObject mo : metadataObjects) {
-      persist (mo);
+      persist (mo, nameSpace);
       this.logger.log (Level.FINE, "Inserted MetadataObject.");
     }
 
@@ -83,9 +84,11 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
   }
 
-  protected void persist (MetadataObject metadataObject) throws Exception {
+  protected void persist (MetadataObject metadataObject, String nameSpace) throws Exception {
 
-    CollectionTransferObject cto = metadataObject.getCollectionTransferObject ();
+    CollectionTransferObject cto = metadataObject.getCollectionTransferObject ();  
+    cto.setNameSpace (nameSpace);
+
     CollectionDAO cd = this.metadataDAOFactory.getCollectionDAO ();
     boolean result = cd.insertCollection (cto);
     if (result != true) {
@@ -95,6 +98,8 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
     List<FileTransferObject> ftos = metadataObject.getFileTransferObjects ();
     for (FileTransferObject fto : ftos) {
+      fto.setNameSpace (nameSpace);
+      fto.setCollectionDataStoreId (cto.getDataStoreId ());
       FileDAO fd = this.metadataDAOFactory.getFileDAO ();
       fd.insertFile (fto);
       this.logger.log (Level.FINE, "Inserted FTO id: '" + fto.getDataStoreId () + "'");
@@ -102,6 +107,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
     List<VariableTransferObject> vtos = metadataObject.getVariableTransferObjects ();
     for (VariableTransferObject vto : vtos) {
+      // vto.setFileDataStoreId ();
       VariableDAO vd = this.metadataDAOFactory.getVariableDAO ();
       vd.insertVariable (vto);
       this.logger.log (Level.FINE, "Inserted VTO id: '" + vto.getDataStoreId () + "'");
@@ -128,7 +134,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
       bytes = baos.toByteArray ();
 
     } finally {
-      bis.close ();
+      if (bis != null) bis.close ();
     }
 
     return bytes;
