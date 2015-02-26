@@ -37,7 +37,7 @@ import org.renci.databridge.message.IngestMetadataMessage;
  */
 public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
-  private Logger logger = Logger.getLogger ("org.renci.databridge.engine.ingest");
+  private Logger logger = Logger.getLogger ("org.renci.databridge.engines.ingest");
 
   protected MetadataDAOFactory metadataDAOFactory;
 
