@@ -40,13 +40,13 @@ public class MessageTest {
      System.out.println("headers are: " + headers);
      TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
 
-     return1 = "type:databridge;subtype:ingestmetadata;xmatch:all;name:Insert.Metadata.Java.URI.MetadataDB;className:class1;methodName:method1;nameSpace:systemTest;inputURI:file1";
-     headers = InsertMetadataJavaURIMetadataDB.getSendHeaders("class1", "method1", "systemTest", "file1");
+     return1 = "type:databridge;subtype:ingestmetadata;xmatch:all;name:Insert.Metadata.Java.URI.MetadataDB;className:class1;nameSpace:systemTest;inputURI:file1";
+     headers = InsertMetadataJavaURIMetadataDB.getSendHeaders("class1", "systemTest", "file1");
      System.out.println("headers are: " + headers);
      TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
 
-     return1 = "type:databridge;subtype:relevance;xmatch:all;name:Create.SimilarityMatrix.Java.MetadataDB.URI;className:class1;methodName:method1;nameSpace:systemTest;outputFile:file1";
-     headers = CreateSimilarityMatrixJavaMetadataDBURI.getSendHeaders("class1","method1","systemTest", "file1");
+     return1 = "type:databridge;subtype:relevance;xmatch:all;name:Create.SimilarityMatrix.Java.MetadataDB.URI;className:class1;nameSpace:systemTest;outputFile:file1";
+     headers = CreateSimilarityMatrixJavaMetadataDBURI.getSendHeaders("class1","systemTest", "file1");
      System.out.println("headers are: " + headers);
      TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
 
@@ -55,8 +55,8 @@ public class MessageTest {
      System.out.println("headers are: " + headers);
      TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
 
-     return1 = "type:databridge;subtype:network;xmatch:all;name:Run.SNA.Algorithm.Java.NetworkDB;className:class1;methodName:method1;nameSpace:systemTest;similarityId:sim1";
-     headers = RunSNAAlgorithmJavaNetworkDB.getSendHeaders("class1","method1","systemTest", "sim1");
+     return1 = "type:databridge;subtype:network;xmatch:all;name:Run.SNA.Algorithm.Java.NetworkDB;className:class1;nameSpace:systemTest;similarityId:sim1";
+     headers = RunSNAAlgorithmJavaNetworkDB.getSendHeaders("class1","systemTest", "sim1");
      System.out.println("headers are: " + headers);
      TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
   }

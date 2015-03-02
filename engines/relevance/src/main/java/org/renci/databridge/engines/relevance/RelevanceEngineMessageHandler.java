@@ -52,8 +52,12 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       String messageName = stringHeaders.get(RelevanceEngineMessage.NAME);
 
       // Call the function appropriate for the message
-      if (messageName.compareTo(RelevanceEngineMessage.CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI) == 0) {
+      if (null == messageName) {
+         System.out.println("messageName is missing");
+      } else if (messageName.compareTo(RelevanceEngineMessage.CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI) == 0) {
          processCreateSimilarityMessage(stringHeaders, extra);
+      } else {
+         System.out.println("unimplemented messageName: " + messageName);
       }
   }
 
@@ -85,41 +89,24 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       // We'll need an object of this type as well.
       Constructor<?> cons = null;
       Object theObject = null;
+      SimilarityProcessor thisProcessor = null;
       try {
          cons = (Constructor<?>) theClass.getConstructor(null);
          theObject = cons.newInstance(null);
+         thisProcessor = (SimilarityProcessor) theObject;
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't create instance");
          return;
       }
 
-      // 2) the method name
-      String methodName = stringHeaders.get(RelevanceEngineMessage.METHOD);    
-      if (null == methodName) {
-         this.logger.log (Level.SEVERE, "No method name in message");
-         return;
-      }
-
-      java.lang.reflect.Method theMethod = null;
-      // Try for the method
-      try {
-         Class[] paramList = new Class[2];
-         paramList[0] = CollectionTransferObject.class;
-         paramList[1] = CollectionTransferObject.class;
-         theMethod = theClass.getMethod(methodName, paramList);
-      } catch (NoSuchMethodException e) {
-         this.logger.log (Level.SEVERE, "Can't instantiate method " + methodName);
-         return;
-      }
-
-      // 3) the name space
+      // 2) the name space
       String nameSpace = stringHeaders.get(RelevanceEngineMessage.NAME_SPACE);    
       if (null == nameSpace) {
          this.logger.log (Level.SEVERE, "No name space in message");
          return;
       }
 
-      // 4) the outputFile
+      // 3) the outputFile
       String outputFile = stringHeaders.get(RelevanceEngineMessage.OUTPUT_FILE);    
       if (null == outputFile) {
          this.logger.log (Level.SEVERE, "No output URI in message");
@@ -148,13 +135,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       SimilarityInstanceTransferObject theSimilarityInstance = new SimilarityInstanceTransferObject();
       theSimilarityInstance.setNameSpace(nameSpace);
       theSimilarityInstance.setClassName(className);
-      theSimilarityInstance.setMethod(methodName);
+      theSimilarityInstance.setMethod("compareCollections");
 
       // let's find the highest version for this combination of nameSpace, className and method (if any)
       HashMap<String, String> versionMap = new HashMap<String, String>();
       versionMap.put("nameSpace", nameSpace);
       versionMap.put("className", className);
-      versionMap.put("method", methodName);
+      versionMap.put("method", "compareCollections");
       
       HashMap<String, String> sortMap = new HashMap<String, String>();
       sortMap.put("version", SimilarityInstanceDAO.SORT_DESCENDING);
@@ -236,11 +223,11 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
             // Now we have our 2 CollectionTransferObjects, so we want to call the method.
             try {
-               similarity =  (double) theMethod.invoke(theObject, cto1, cto2);
+               similarity =  (double) thisProcessor.compareCollections(cto1, cto2);
                theSimFile.setSimilarityValue(rowCounter, colCounter, similarity);
                colCounter++;
             } catch (Exception e) {
-               this.logger.log (Level.SEVERE, "Can't invoke method " + methodName);
+               this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" );
                return;
             }
          }

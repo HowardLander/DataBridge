@@ -10,7 +10,7 @@ import java.util.*;
  * @author Howard Lander -RENCI (www.renci.org)
  *
  */
-public interface SNAInterface {
+public interface NetworkProcessor {
 
     /**
      *  Process a network through an SNA algorithm and return a partition

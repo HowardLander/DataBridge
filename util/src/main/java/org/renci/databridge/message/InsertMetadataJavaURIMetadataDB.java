@@ -13,15 +13,13 @@ public class InsertMetadataJavaURIMetadataDB extends IngestMetadataMessage {
    *
    *
    * @param className the class containing the method to be executed.
-   * @param methodName the method to be executed.
    * @param nameSpace the nameSpace to attach to the inserted data.
    * @param inputURI the URI for the file containg the metadata to be inserted.
    */
-  public static String getSendHeaders(String className, String methodName, String nameSpace, String inputURI) {
+  public static String getSendHeaders(String className, String nameSpace, String inputURI) {
       return bindHeaders + ";" +
                     NAME + ":" + INSERT_METADATA_JAVA_URI_METADATADB  + ";" +
                     CLASS + ":" + className + ";" +
-                    METHOD + ":" + methodName + ";" +
                     NAME_SPACE + ":" + nameSpace + ";" +
                     INPUT_URI + ":" + inputURI;
   }

@@ -7,7 +7,7 @@ import org.renci.databridge.persistence.metadata.*;
  * @author Howard Lander -RENCI (www.renci.org)
  * 
  */
-public interface RelevanceInterface {
+public interface SimilarityProcessor {
 
     double compareCollections(CollectionTransferObject collection1, 
                               CollectionTransferObject collection2);

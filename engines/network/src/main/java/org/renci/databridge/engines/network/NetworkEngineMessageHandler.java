@@ -154,6 +154,9 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
       // get the message name
       String messageName = stringHeaders.get(NetworkEngineMessage.NAME);
+      if (null == messageName) {
+         System.out.println("messageName is missing");
+      }
       System.out.println("messageName: " + messageName);
 
       // Call the function appropriate for the message
@@ -479,61 +482,31 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       // We'll need an object of this type as well.
       Constructor<?> cons = null;
       Object theObject = null;
+      NetworkProcessor thisProcessor = null;
       try {
          cons = (Constructor<?>) theClass.getConstructor(null);
          theObject = cons.newInstance(null);
+         thisProcessor = (NetworkProcessor) theObject;
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't create instance" + e.getMessage(), e);
          return;
       }
 
-      // 2) the method name
-      String methodName = stringHeaders.get(NetworkEngineMessage.METHOD);    
-      if (null == methodName) {
-         this.logger.log (Level.SEVERE, "No method name in message");
-         return;
-      }
-
-      java.lang.reflect.Method theMethod = null;
-      java.lang.reflect.Method theMethodArray[] = null;
-      // Try for the method
-      try {
-         Class[] paramList = new Class[2];
-         paramList[0] = java.util.Iterator.class;
-         paramList[1] = String.class;
-         theMethod = theClass.getMethod(methodName, paramList);
-         Class<?>[] theParamTypes = theMethod.getParameterTypes();
-         System.out.println("Class 0:" + theParamTypes[0]);
-         System.out.println("Class 1:" + theParamTypes[1]);
-      /*
-         // Note that the class should have only one public method
-         theMethodArray = theClass.getMethods();
-         theMethod = theMethodArray[0];
-         Class<?>[] theParamTypes = theMethod.getParameterTypes();
-         System.out.println("Class 0:" + theParamTypes[0]);
-         System.out.println("Class 1:" + theParamTypes[1]);
-      */
-         
-      } catch (Exception e) {
-         this.logger.log (Level.SEVERE, "Can't instantiate method " + e.getMessage(), e);
-         return;
-      }
-
-      // 3) the name space
+      // 2) the name space
       String nameSpace = stringHeaders.get(NetworkEngineMessage.NAME_SPACE);    
       if (null == nameSpace) {
          this.logger.log (Level.SEVERE, "No name space in message");
          return;
       }
 
-      // 4) the similarityId
+      // 3) the similarityId
       String similarityId = stringHeaders.get(NetworkEngineMessage.SIMILARITY_ID);    
       if (null == similarityId) {
          this.logger.log (Level.SEVERE, "No similarityId in message");
          return;
       }
 
-      // 5) any extra params to pass.  This can be null
+      // 4) any extra params to pass.  This can be null
       String params = stringHeaders.get(NetworkEngineMessage.PARAMS);    
 
       // In this case the extra parameter is an array of 2 objects, which are the metadata and
@@ -573,14 +546,14 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       SNAInstanceTransferObject theSNAInstance = new SNAInstanceTransferObject();
       theSNAInstance.setNameSpace(nameSpace);
       theSNAInstance.setClassName(className);
-      theSNAInstance.setMethod(methodName);
+      theSNAInstance.setMethod("processNetwork");
       theSNAInstance.setSimilarityInstanceId(similarityId);
 
       // let's find the highest version for this combination of nameSpace, className and method (if any)
       HashMap<String, String> versionMap = new HashMap<String, String>();
       versionMap.put("nameSpace", nameSpace);
       versionMap.put("className", className);
-      versionMap.put("method", methodName);
+      versionMap.put("method", "processNetwork");
       versionMap.put("similarityInstanceId", similarityId);
 
       HashMap<String, String> sortMap = new HashMap<String, String>();
@@ -612,7 +585,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       HashMap<String, String[]> clusterList = null;
       try {
           // Invoke the method
-          clusterList = (HashMap<String, String[]>)theMethod.invoke(theObject, theDyads, params);
+          clusterList = (HashMap<String, String[]>)thisProcessor.processNetwork(theDyads, params);
           String nReturnedClusters = Integer.toString(clusterList.size());
           HashMap<String, String> updateMap = new HashMap<String, String>();
           updateMap.put("nResultingClusters", nReturnedClusters);
@@ -641,7 +614,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
           }
           
       } catch (Exception e) {
-          this.logger.log (Level.SEVERE, "Can't invoke method " + methodName + " " + e.getMessage(), e);
+          this.logger.log (Level.SEVERE, "Can't invoke method " + "processNetwork" + " " + e.getMessage(), e);
           return;
       }
 

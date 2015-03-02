@@ -6,7 +6,6 @@ import org.renci.databridge.util.AMQPMessageType;
  */
 public class NetworkEngineMessage implements AMQPMessageType {
   public static final String CLASS = "className";
-  public static final String METHOD = "methodName";
   public static final String NAME_SPACE = "nameSpace";
   public static final String NAME = "name";
   public static final String INPUT_URI = "inputURI";
