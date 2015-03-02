@@ -6,8 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 
 import javax.xml.bind.JAXBException;
+
+import com.rabbitmq.client.AMQP.BasicProperties;
 
 import org.renci.databridge.util.AMQPMessage;
 import org.renci.databridge.util.AMQPMessageHandler;
@@ -20,6 +27,7 @@ import org.renci.databridge.persistence.metadata.FileDAO;
 import org.renci.databridge.persistence.metadata.FileTransferObject;
 import org.renci.databridge.persistence.metadata.VariableDAO;
 import org.renci.databridge.persistence.metadata.VariableTransferObject;
+import org.renci.databridge.message.IngestMetadataMessage;
 
 /**
  * Handles "ingest metadata" DataBridge message by calling relevant third-party metadata formatter and persisting it. 
@@ -29,7 +37,7 @@ import org.renci.databridge.persistence.metadata.VariableTransferObject;
  */
 public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
-  private Logger logger = Logger.getLogger ("org.renci.databridge.engine.ingest");
+  private Logger logger = Logger.getLogger ("org.renci.databridge.engines.ingest");
 
   protected MetadataDAOFactory metadataDAOFactory;
 
@@ -43,21 +51,26 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
   @Override
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
 
-    // @todo add a message demux like in RelevanceEngineMessageHandler
+    Map<String, String> stringHeaders = amqpMessage.getStringHeaders ();
+    this.logger.log (Level.FINE, "headers: " + stringHeaders);
 
-    // look up third party plug-in class
+    String className = stringHeaders.get (IngestMetadataMessage.CLASS);
+    // not used
+    // String methodName = stringHeaders.get (IngestMetadataMessage.METHOD); 
+    String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
+    String inputURI = stringHeaders.get (IngestMetadataMessage.INPUT_URI);
+    String messageName = stringHeaders.get(IngestMetadataMessage.NAME);
 
-String className = "org.renci.databridge.contrib.formatter.oaipmh.OaipmhMetadataFormatterImpl";
-// String className = "org.renci.databridge.contrib.formatter.codebook.CodeBookMetadataFormatterImpl";
+    // @todo add a message NAME demux like in RelevanceEngineMessageHandler
 
     // instantiate third-party MetadataFormatter implementation 
     MetadataFormatter mf = (MetadataFormatter) Class.forName (className).newInstance (); 
+    byte [] bytes = get (inputURI);
 
     // dispatch to third-party formatter 
-    byte [] bytes = amqpMessage.getBytes ();
     List<MetadataObject> metadataObjects = mf.format (bytes);
     for (MetadataObject mo : metadataObjects) {
-      persist (mo);
+      persist (mo, nameSpace);
       this.logger.log (Level.FINE, "Inserted MetadataObject.");
     }
 
@@ -71,11 +84,11 @@ String className = "org.renci.databridge.contrib.formatter.oaipmh.OaipmhMetadata
 
   }
 
-  protected void persist (MetadataObject metadataObject) throws Exception {
+  protected void persist (MetadataObject metadataObject, String nameSpace) throws Exception {
 
-    // @todo Wire this up properly
+    CollectionTransferObject cto = metadataObject.getCollectionTransferObject ();  
+    cto.setNameSpace (nameSpace);
 
-    CollectionTransferObject cto = metadataObject.getCollectionTransferObject ();
     CollectionDAO cd = this.metadataDAOFactory.getCollectionDAO ();
     boolean result = cd.insertCollection (cto);
     if (result != true) {
@@ -85,6 +98,8 @@ String className = "org.renci.databridge.contrib.formatter.oaipmh.OaipmhMetadata
 
     List<FileTransferObject> ftos = metadataObject.getFileTransferObjects ();
     for (FileTransferObject fto : ftos) {
+      fto.setNameSpace (nameSpace);
+      fto.setCollectionDataStoreId (cto.getDataStoreId ());
       FileDAO fd = this.metadataDAOFactory.getFileDAO ();
       fd.insertFile (fto);
       this.logger.log (Level.FINE, "Inserted FTO id: '" + fto.getDataStoreId () + "'");
@@ -92,10 +107,37 @@ String className = "org.renci.databridge.contrib.formatter.oaipmh.OaipmhMetadata
 
     List<VariableTransferObject> vtos = metadataObject.getVariableTransferObjects ();
     for (VariableTransferObject vto : vtos) {
+      // vto.setFileDataStoreId ();
       VariableDAO vd = this.metadataDAOFactory.getVariableDAO ();
       vd.insertVariable (vto);
       this.logger.log (Level.FINE, "Inserted VTO id: '" + vto.getDataStoreId () + "'");
     }
+
+  }
+
+  protected byte [] get (String url) throws IOException {
+
+    byte [] bytes = null;
+
+    BufferedInputStream bis = null;
+    try {
+
+      URL u = new URL (url);
+      URLConnection uc = u.openConnection ();
+      bis = new BufferedInputStream (uc.getInputStream ());
+      ByteArrayOutputStream baos = new ByteArrayOutputStream ();
+      int c;
+      while ((c = bis.read ()) != -1) {
+        baos.write (c);
+      }
+      baos.close ();
+      bytes = baos.toByteArray ();
+
+    } finally {
+      if (bis != null) bis.close ();
+    }
+
+    return bytes;
 
   }
 
