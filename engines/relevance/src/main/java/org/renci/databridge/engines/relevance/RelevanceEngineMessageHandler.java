@@ -96,6 +96,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          thisProcessor = (SimilarityProcessor) theObject;
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't create instance");
+         e.printStackTrace();
          return;
       }
 
