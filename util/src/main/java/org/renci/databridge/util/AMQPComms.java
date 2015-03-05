@@ -111,11 +111,27 @@ public class AMQPComms {
        try {
          Properties p = new Properties ();
          p.load (new FileInputStream (propFilePath));
-         init (p);
+         init (p, true);
        } catch (Exception e) {
          e.printStackTrace ();
        }
      }
+
+     /**
+      * Convenience constructor to load properties from a file path and include a boolean to specify
+      * consumer or producer.  Default is consumer. True for consumer, false for producer.
+      */
+     public AMQPComms (String propFilePath, boolean isConsumer) {
+       try {
+         Properties p = new Properties ();
+         p.load (new FileInputStream (propFilePath));
+         init (p, isConsumer);
+       } catch (Exception e) {
+         e.printStackTrace ();
+       }
+     }
+
+     /**
 
      /**
       * Convenience method to load properties from an InputStream.
@@ -123,7 +139,7 @@ public class AMQPComms {
      public AMQPComms (InputStream propInputStream) throws IOException {
        Properties p = new Properties ();
        p.load (propInputStream);
-       init (p);
+       init (p, true);
      }
 
      /**
@@ -136,10 +152,23 @@ public class AMQPComms {
       *                    org.renci.databridge.queueDurability and org.renci.databridge.logLevel
       */
      public AMQPComms (Properties prop) throws IOException {
-       init (prop);
+       init (prop, true);
      }
 
-     protected void init (Properties prop) throws IOException {
+     /**
+      *  This method close the RabbitMQ channel and connection resources.
+      */
+     public void shutdownConnection() {
+        try {
+           theChannel.close();
+           theConnection.close();
+         } catch (Exception e){
+            // Not much we can do with the exception ...
+            e.printStackTrace();
+        }
+     }
+
+     protected void init (Properties prop, boolean isConsumer) throws IOException {
        primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
        theHost = prop.getProperty("org.renci.databridge.queueHost", "localhost");
        theExchange = prop.getProperty("org.renci.databridge.exchange", "localhost");
@@ -154,7 +183,9 @@ public class AMQPComms {
        // Declare a queue to be the main queue.  If the queue is durable and messages sent to it
        // are also durable, then those messages will be recieved by the app at start time, even
        // if they were queued before the app was started.
-       theChannel.queueDeclare(primaryQueue, queueDurability, false, false, null);
+       if (isConsumer) {
+          theChannel.queueDeclare(primaryQueue, queueDurability, false, false, null);
+       }
 
        // Declare a headers exchange.  Note that the declaration of the exchange is idempotent,
        // so at execution time this will primarily makes sure the exchange is of the expected
@@ -165,7 +196,9 @@ public class AMQPComms {
        theChannel.exchangeDeclare(theExchange, "headers", true);
 
        // Create the consumer
-       consumer = new QueueingConsumer(theChannel);
+       if (isConsumer) {
+          consumer = new QueueingConsumer(theChannel);
+       }
      }
 
      /**
