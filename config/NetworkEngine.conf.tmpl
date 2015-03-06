@@ -1,0 +1,59 @@
+#
+## United configuration file for the DataBridge system. Configs are set for a production system
+#
+
+###############################################################################
+# Network database section
+###############################################################################
+# The type of the network database. Currently either Neo4j or Titan
+org.renci.databridge.databaseType=Neo4j
+
+# The location of the physical database files
+org.renci.databridge.networkdb.location=/projects/databridge/production/DataBridge/persistence/testData
+
+###############################################################################
+# Persistence database section
+###############################################################################
+# The type of the database
+org.renci.databridge.relevancedb.dbType=mongo
+
+# The name of the database
+org.renci.databridge.relevancedb.dbName=test
+
+# The host for the database
+org.renci.databridge.relevancedb.dbHost=localhost
+
+# The port for the database
+org.renci.databridge.relevancedb.dbPort=27017
+
+###############################################################################
+# Communication section
+###############################################################################
+# The communication host
+org.renci.databridge.queueHost=localhost
+
+# the exchange
+org.renci.databridge.exchange=databridge-production-exchange
+
+# The primary communication queue. 
+org.renci.databridge.primaryQueue=databridge-production-network-queue
+
+# The durability for the queue.
+org.renci.databridge.queueDurability=false
+
+###############################################################################
+# The logging section
+###############################################################################
+# The log queue. Use this value in whatever app you use to read the log queue.
+org.renci.databridge.logQueue=log-databridge-production-exchange
+
+# The logging level. Possible values:
+# LOG_EMERG =   0;
+# LOG_ALERT =   1;
+# LOG_CRIT  =   2;
+# LOG_ERR   =   3;
+# LOG_WARNING = 4;
+# LOG_NOTICE =  5;
+# LOG_INFO =    6;
+# LOG_DEBUG =   7;
+org.renci.databridge.logLevel=7
