@@ -6,7 +6,7 @@ package org.renci.databridge.util;
 public interface AMQPMessageType {
 
   /**
-   * @return AMQP message header string for messages that implementer wants to receive, in format key1:value1;key2:value2;[x-match:any|xmatch:all]
+   * @return AMQP message header string for messages that implementer wants to receive, in format key1:value1;key2:value2;[x-match:any|x-match:all]
    */
   public String getBindHeaders ();
 

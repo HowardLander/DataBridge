@@ -9,7 +9,7 @@ public class TestMessage implements AMQPMessageType {
 
   @Override
   public String getBindHeaders () {
-    return "type:databridge;subtype:test;xmatch:all";
+    return "type:databridge;subtype:test;x-match:all";
   }
 
 }

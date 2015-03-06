@@ -20,7 +20,7 @@ public class NetworkEngineMessage implements AMQPMessageType {
   public static final String RUN_SNA_ALGORITHM_JAVA_NETWORKDB = "Run.SNA.Algorithm.Java.NetworkDB";
   public static final String CREATE_JSON_FILE_NETWORKDB_URI = "Create.JSON.File.NetworkDB.URI";
 
-  public static final String bindHeaders = "type:databridge;subtype:network;xmatch:all";
+  public static final String bindHeaders = "type:databridge;subtype:network;x-match:all";
 
   @Override
   public String getBindHeaders () {

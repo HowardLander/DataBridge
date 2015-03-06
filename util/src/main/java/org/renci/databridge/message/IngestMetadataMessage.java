@@ -6,7 +6,7 @@ import org.renci.databridge.util.AMQPMessageType;
  */
 public class IngestMetadataMessage implements AMQPMessageType {
 
-  public static final String bindHeaders = "type:databridge;subtype:ingestmetadata;xmatch:all";
+  public static final String bindHeaders = "type:databridge;subtype:ingestmetadata;x-match:all";
 
   public static final String NAME = "name";
   public static final String CLASS = "className";

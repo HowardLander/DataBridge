@@ -74,6 +74,7 @@ public class AMQPMessageListener extends Thread {
     String bindHeaders = this.amqpMessageType.getBindHeaders ();
 
     this.amqpComms.bindTheQueue (bindHeaders);
+    System.out.println ("Binding: " + bindHeaders);
     if (this.logger != null) {
       this.logger.log (Level.FINE, "Bound '" + bindHeaders + "' to AMQPComms");
     }

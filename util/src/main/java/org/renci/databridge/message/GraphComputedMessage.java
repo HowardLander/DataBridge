@@ -9,7 +9,7 @@ public class GraphComputedMessage implements AMQPMessageType {
 
   @Override
   public String getBindHeaders () {
-    return "type:databridge;subtype:graphcomputed;xmatch:all";
+    return "type:databridge;subtype:graphcomputed;x-match:all";
   }
 
 }
