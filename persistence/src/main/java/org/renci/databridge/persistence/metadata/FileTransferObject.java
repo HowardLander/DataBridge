@@ -6,6 +6,7 @@ public class FileTransferObject {
     private String name;
     private String description; // Free text metadata about the study
     private HashMap<String, String> extra;
+    private int insertTime;     // Seconds since the epoch
 
     // These attributes are specific to the DataBridge
     private String nameSpace;
@@ -180,5 +181,25 @@ public class FileTransferObject {
         return "{" + getClass ().getName () + ": name: " + getName () + ", description: " + getDescription () + ", url: " + getURL () + ", nameSpace: " + getNameSpace () + ", extra: " + getExtra () +  ", version: " + getVersion () + ", dataStoreId: " + getDataStoreId () + ", collectionDataStoreId: " + getCollectionDataStoreId () + "}";
     }
 
+    
+    /**
+     * Get insertTime.
+     *
+     * @return insertTime as int.
+     */
+    public int getInsertTime()
+    {
+        return insertTime;
+    }
+    
+    /**
+     * Set insertTime.
+     *
+     * @param insertTime the value to set.
+     */
+    public void setInsertTime(int insertTime)
+    {
+        this.insertTime = insertTime;
+    }
 }
 

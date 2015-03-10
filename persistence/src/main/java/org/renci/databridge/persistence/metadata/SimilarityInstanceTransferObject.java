@@ -6,6 +6,7 @@ public class SimilarityInstanceTransferObject {
     private String method;
     private int    version;
     private String nameSpace;
+    private int insertTime;     // Seconds since the epoch
     private String dataStoreId; // The id generated at insertion time.
     
     /**
@@ -106,6 +107,26 @@ public class SimilarityInstanceTransferObject {
     public void setDataStoreId(String dataStoreId)
     {
         this.dataStoreId = dataStoreId;
+    }
+    
+    /**
+     * Get insertTime.
+     *
+     * @return insertTime as int.
+     */
+    public int getInsertTime()
+    {
+        return insertTime;
+    }
+    
+    /**
+     * Set insertTime.
+     *
+     * @param insertTime the value to set.
+     */
+    public void setInsertTime(int insertTime)
+    {
+        this.insertTime = insertTime;
     }
 }
 

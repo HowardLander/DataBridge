@@ -56,6 +56,7 @@ public class MongoCollectionDAO implements CollectionDAO {
                    theCollection = new CollectionTransferObject();
                    DBObject theEntry = cursor.next();
                    theCollection.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+                   theCollection.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                    theCollection.setURL((String)theEntry.get("URL"));
                    theCollection.setTitle((String)theEntry.get("title"));
                    theCollection.setDescription((String)theEntry.get("description"));
@@ -187,6 +188,7 @@ public class MongoCollectionDAO implements CollectionDAO {
                 theCollection = new CollectionTransferObject();
                 DBObject theEntry = cursor.next();
                 theCollection.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+                theCollection.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                 theCollection.setURL((String)theEntry.get("URL"));
                 theCollection.setTitle((String)theEntry.get("title"));
                 theCollection.setDescription((String)theEntry.get("description"));

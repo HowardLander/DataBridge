@@ -9,6 +9,7 @@ public class CollectionTransferObject {
     private String subject;     // Subject of the study
     private ArrayList<String>   keywords;  // The keywords
     private HashMap<String, String> extra;
+    private int insertTime;     // Seconds since the epoch
 
     // These attributes are specific to the DataBridge
     private String nameSpace;
@@ -222,5 +223,25 @@ public class CollectionTransferObject {
         return "{" + getClass ().getName () + ": title: " + getTitle () + ", nameSpace: " + getNameSpace () + ", version: " + getVersion () + ", description: " + getDescription () + ", producer: " + getProducer () + ", subject: " + getSubject () + ", keywords: " + getKeywords () + ", URL: " + getURL () + ", extra: " + getExtra () + ", dataStoreId: " + getDataStoreId () + "}";
     }
 
+    
+    /**
+     * Get insertTime.
+     *
+     * @return insertTime as int.
+     */
+    public int getInsertTime()
+    {
+        return insertTime;
+    }
+    
+    /**
+     * Set insertTime.
+     *
+     * @param insertTime the value to set.
+     */
+    public void setInsertTime(int insertTime)
+    {
+        this.insertTime = insertTime;
+    }
 }
 

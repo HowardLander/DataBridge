@@ -59,6 +59,7 @@ public class MongoVariableDAO implements VariableDAO {
                    theVariable.setDescription((String)theEntry.get("description"));
                    theVariable.setVersion((int)theEntry.get("version"));
                    theVariable.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+                   theVariable.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                    theVariable.setFileDataStoreId(theEntry.get(MongoFileIdFieldName).toString());
                    @SuppressWarnings("unchecked")
                    ArrayList<BasicDBObject> extraList = (ArrayList<BasicDBObject>) theEntry.get(MongoExtraName);

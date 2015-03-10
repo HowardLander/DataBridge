@@ -8,6 +8,7 @@ public class VariableTransferObject {
 
     // These attributes are specific to the DataBridge
     private int    version;
+    private int insertTime;     // Seconds since the epoch
     private String dataStoreId; // The id generated at insertion time.
     private String fileDataStoreId;
     
@@ -138,5 +139,25 @@ public class VariableTransferObject {
     }
 
 
+    
+    /**
+     * Get insertTime.
+     *
+     * @return insertTime as int.
+     */
+    public int getInsertTime()
+    {
+        return insertTime;
+    }
+    
+    /**
+     * Set insertTime.
+     *
+     * @param insertTime the value to set.
+     */
+    public void setInsertTime(int insertTime)
+    {
+        this.insertTime = insertTime;
+    }
 }
 

@@ -56,6 +56,7 @@ public class MongoSimilarityInstanceDAO implements SimilarityInstanceDAO {
                    theSimilarityInstance = new SimilarityInstanceTransferObject();
                    DBObject theEntry = cursor.next();
                    theSimilarityInstance.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+                   theSimilarityInstance.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                    theSimilarityInstance.setNameSpace((String)theEntry.get("nameSpace"));
                    theSimilarityInstance.setClassName((String)theEntry.get("className"));
                    theSimilarityInstance.setMethod((String)theEntry.get("method"));
