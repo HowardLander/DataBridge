@@ -14,10 +14,11 @@ import org.renci.databridge.util.AMQPMessage;
 /** 
  * Java Util Logging handler that publishes to an AMQP queue.
  *
- * Host, queue, exchange properties must be configured, for example (in logging properties file): 
+ * Properties that must be configured, for example (in properties file): 
  * org.renci.databridge.util.AMQPJULHandler.host=<hostname>
  * org.renci.databridge.util.AMQPJULHandler.exchange=<exchange>
  * org.renci.databridge.util.AMQPJULHandler.queue=<queue>
+ * org.renci.databridge.util.AMQPJULHandler.formatter=<Formatter subclass>
  *
  * @todo how to deal with nulls (e.g., config) where exceptions would be thrown
  * 
