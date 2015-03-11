@@ -66,6 +66,18 @@ public class MetadataTest {
          System.out.println("inserted Id is: " + theCollection.getDataStoreId());
          System.out.println("testing get");
 
+         // Test the getNamespaceList() code
+         boolean found = false;
+         Iterator<String> theNames = theCollectionDAO.getNamespaceList();
+         while (theNames.hasNext() ) {
+            String nameSpace = theNames.next();
+            System.out.println("Found nameSpace: " + nameSpace);
+            if (nameSpace.compareTo("junit_test") == 0) {
+               found = true;
+            }
+         } 
+         TestCase.assertTrue("Didn't find nameSpace junit_test", found == true);
+
          // Test the retrieval by id code
          CollectionTransferObject idObject = theCollectionDAO.getCollectionById(theCollection.getDataStoreId());
 
@@ -75,6 +87,9 @@ public class MetadataTest {
          // Do the fields match
          TestCase.assertTrue("id fields don't march", idObject.getDataStoreId().compareTo(theCollection.getDataStoreId())== 0);
          TestCase.assertTrue("title fields don't march", idObject.getTitle().compareTo(theCollection.getTitle()) == 0);
+         System.out.println("insertTime is " + idObject.getInsertTime());
+         long now = System.currentTimeMillis()/1000;
+         TestCase.assertTrue("insertTime is unreasonable", (now - idObject.getInsertTime()) < 5 );
          System.out.println("theCollectionDAO.getCollectionById tests passed");
 
          HashMap<String, String> searchMap = new HashMap<String, String>();
@@ -177,6 +192,9 @@ public class MetadataTest {
          if (similarityInstanceIterator.hasNext()) {
              SimilarityInstanceTransferObject getObj = similarityInstanceIterator.next(); 
              System.out.println("className: " + getObj.getClassName());
+             System.out.println("insertTime is " + getObj.getInsertTime());
+             long now = System.currentTimeMillis()/1000;
+             TestCase.assertTrue("insertTime is unreasonable", (now - getObj.getInsertTime()) < 5 );
              TestCase.assertTrue("classname doesn't match", 
                  getObj.getClassName().compareTo("MockSimilarity") == 0);
              TestCase.assertTrue("subjects don't match", 
@@ -304,6 +322,9 @@ public class MetadataTest {
                  getObj.getMethod().compareTo("MockSNAAlgorithm") == 0);
              TestCase.assertTrue("failed to add value for nResultingClusters", 
                  getObj.getNResultingClusters().compareTo("3") == 0);
+             System.out.println("insertTime is " + getObj.getInsertTime());
+             long now = System.currentTimeMillis()/1000;
+             TestCase.assertTrue("insertTime is unreasonable", (now - getObj.getInsertTime()) < 5 );
  
              // These are the two modified values.
              System.out.println("nResultingClusters value: " + getObj.getNResultingClusters());
@@ -509,6 +530,9 @@ public class MetadataTest {
              if (fileIterator.hasNext()) {
                  FileTransferObject theReturnedFile = fileIterator.next();
                  System.out.println("Returned file name: " + theReturnedFile.getName()); 
+                 System.out.println("insertTime is " + theReturnedFile.getInsertTime());
+                 long now = System.currentTimeMillis()/1000;
+                 TestCase.assertTrue("insertTime is unreasonable", (now - theReturnedFile.getInsertTime()) < 5 );
 
                  // Let's try the delete
                  int nDeleted = theFileDAO.deleteFile(theReturnedFile);
@@ -607,6 +631,9 @@ public class MetadataTest {
                  while (varIterator.hasNext()) {
                      VariableTransferObject theReturnedVar = varIterator.next();
                      System.out.println("Returned var name: " + theReturnedVar.getName()); 
+                     System.out.println("insertTime is " + theReturnedVar.getInsertTime());
+                     long now = System.currentTimeMillis()/1000;
+                     TestCase.assertTrue("insertTime is unreasonable", (now - theReturnedVar.getInsertTime()) < 5 );
                      int nDeleted = theVarDAO.deleteVariable(theReturnedVar);
                      System.out.println("n variables Deleted: " + nDeleted); 
                  }

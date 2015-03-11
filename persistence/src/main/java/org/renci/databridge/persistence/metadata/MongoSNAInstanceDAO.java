@@ -56,6 +56,7 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
                    theSNAInstance = new SNAInstanceTransferObject();
                    DBObject theEntry = cursor.next();
                    theSNAInstance.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+                   theSNAInstance.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                    theSNAInstance.setNameSpace((String)theEntry.get("nameSpace"));
                    theSNAInstance.setClassName((String)theEntry.get("className"));
                    theSNAInstance.setMethod((String)theEntry.get("method"));

@@ -61,6 +61,7 @@ public class MongoFileDAO implements FileDAO {
                    theFile.setNameSpace((String)theEntry.get("nameSpace"));
                    theFile.setVersion((int)theEntry.get("version"));
                    theFile.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+                   theFile.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                    theFile.setCollectionDataStoreId(theEntry.get(MongoCollectionIdFieldName).toString());
                    @SuppressWarnings("unchecked")
                    ArrayList<BasicDBObject> extraList = (ArrayList<BasicDBObject>) theEntry.get(MongoExtraName);
