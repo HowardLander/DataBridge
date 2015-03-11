@@ -66,6 +66,18 @@ public class MetadataTest {
          System.out.println("inserted Id is: " + theCollection.getDataStoreId());
          System.out.println("testing get");
 
+         // Test the getNamespaceList() code
+         boolean found = false;
+         Iterator<String> theNames = theCollectionDAO.getNamespaceList();
+         while (theNames.hasNext() ) {
+            String nameSpace = theNames.next();
+            System.out.println("Found nameSpace: " + nameSpace);
+            if (nameSpace.compareTo("junit_test") == 0) {
+               found = true;
+            }
+         } 
+         TestCase.assertTrue("Didn't find nameSpace junit_test", found == true);
+
          // Test the retrieval by id code
          CollectionTransferObject idObject = theCollectionDAO.getCollectionById(theCollection.getDataStoreId());
 

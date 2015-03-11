@@ -5,6 +5,7 @@ public interface CollectionDAO {
     public boolean insertCollection(CollectionTransferObject theCollection);
     public Iterator<CollectionTransferObject> getCollections(HashMap<String, String> searchMap);
     public CollectionTransferObject getCollectionById(String id);
+    public Iterator<String> getNamespaceList();
     public boolean updateCollection(CollectionTransferObject theCollection, Object collectionID);
     public int deleteCollection(CollectionTransferObject theCollection);
     public int deleteCollection(HashMap<String, String> searchMap);

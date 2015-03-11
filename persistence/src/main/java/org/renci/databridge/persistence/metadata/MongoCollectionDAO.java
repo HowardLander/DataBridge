@@ -24,6 +24,7 @@ public class MongoCollectionDAO implements CollectionDAO {
     private static final String MongoName = new String("DB_Collection");
     private static final String MongoExtraName = new String("extra");
     private static final String MongoIdFieldName = new String("_id");
+    private static final String MongoNamespace = new String("nameSpace");
 
 
 
@@ -165,6 +166,27 @@ public class MongoCollectionDAO implements CollectionDAO {
         }
 
         return theIterator;
+    }
+
+    /** 
+     * retrieve a list of all of the name spaces the various collections represent
+     */
+    public Iterator<String> getNamespaceList() {
+        List<String> theNamespaces = null;
+        try {
+            DB theDB = MongoDAOFactory.getTheDB();
+            DBCollection theTable = theDB.getCollection(MongoName);
+            theNamespaces = theTable.distinct(MongoNamespace);
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace(); 
+        }
+
+        if (null != theNamespaces) {
+           return theNamespaces.iterator();
+        } else {
+           return null;
+       }
     }
 
     /** 

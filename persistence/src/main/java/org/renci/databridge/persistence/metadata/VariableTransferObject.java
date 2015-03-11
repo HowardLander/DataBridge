@@ -137,8 +137,6 @@ public class VariableTransferObject {
     {
         return "{" + getClass ().getName () + ": name: " + getName () + ", description: " + getDescription () + ", extra: " + getExtra () +  ", version: " + getVersion () + ", dataStoreId: " + getDataStoreId () + ", fileDataStoreId: " + getFileDataStoreId () + "}";
     }
-
-
     
     /**
      * Get insertTime.
