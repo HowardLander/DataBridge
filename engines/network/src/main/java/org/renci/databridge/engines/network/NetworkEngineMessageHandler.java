@@ -470,7 +470,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       }
 
       // Let's try to load the class.
-      Class theClass = null;
+      Class<?> theClass = null;
       ClassLoader classLoader = NetworkEngineMessageHandler.class.getClassLoader();
       try {
          theClass = classLoader.loadClass(className);

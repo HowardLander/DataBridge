@@ -61,6 +61,7 @@ public class MongoSimilarityInstanceDAO implements SimilarityInstanceDAO {
                    theSimilarityInstance.setClassName((String)theEntry.get("className"));
                    theSimilarityInstance.setMethod((String)theEntry.get("method"));
                    theSimilarityInstance.setVersion((int)theEntry.get("version"));
+                   theSimilarityInstance.setOutput((String)theEntry.get("output"));
                }
            } catch (MongoException e) {
                // should send this back using the message logs eventually
@@ -98,6 +99,7 @@ public class MongoSimilarityInstanceDAO implements SimilarityInstanceDAO {
           thisDoc.put("className", theSimilarityInstance.getClassName());
           thisDoc.put("method", theSimilarityInstance.getMethod());
           thisDoc.put("version", theSimilarityInstance.getVersion());
+          thisDoc.put("output", theSimilarityInstance.getOutput());
           DB theDB = MongoDAOFactory.getTheDB();
           DBCollection theTable = theDB.getCollection(MongoName);
           theTable.insert(thisDoc);

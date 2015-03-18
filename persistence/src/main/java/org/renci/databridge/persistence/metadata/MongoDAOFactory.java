@@ -60,6 +60,10 @@ public class MongoDAOFactory extends MetadataDAOFactory {
         return new MongoSNAInstanceDAO();
     } 
 
+    public ActionDAO getActionDAO() {
+        return new MongoActionDAO();
+    } 
+
     /**
      * Get db.
      *

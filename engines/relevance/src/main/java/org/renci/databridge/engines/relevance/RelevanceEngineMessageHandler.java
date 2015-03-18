@@ -74,7 +74,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       }
 
       // Let's try to load the class.
-      Class theClass = null;
+      Class<?> theClass = null;
       ClassLoader classLoader = RelevanceEngineMessageHandler.class.getClassLoader();
       try {
          theClass = classLoader.loadClass(className);
@@ -137,6 +137,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       theSimilarityInstance.setNameSpace(nameSpace);
       theSimilarityInstance.setClassName(className);
       theSimilarityInstance.setMethod("compareCollections");
+      theSimilarityInstance.setOutput(outputFile);
 
       // let's find the highest version for this combination of nameSpace, className and method (if any)
       HashMap<String, String> versionMap = new HashMap<String, String>();

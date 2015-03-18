@@ -161,6 +161,54 @@ public class MetadataTest {
   }
 
   @Test
+  public void testActionDAO () throws Exception {
+
+     System.out.println("");
+     System.out.println("");
+     System.out.println("beginning testActionDAO");
+     boolean result;
+
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+     ActionTransferObject theAction = new ActionTransferObject();
+     theAction.setCurrentMessage("Insert.Metadata.Java.URI.MetadataDB");
+     theAction.setNameSpace("junit_test");
+     theAction.setActionMessage("Create.SimilarityMatrix.Java.MetadataDB.URI");
+     HashMap<String, String> actionHeaders = new HashMap<String, String>();
+     actionHeaders.put("className", "org.renci.databridgecontrib.ingest.mockingest");
+     actionHeaders.put("inputURI", "/projects/databridge/metadata.xml");
+     theAction.setHeaders(actionHeaders);
+
+     try {
+         ActionDAO theActionDAO = theMongoFactory.getActionDAO();
+         result = theActionDAO.insertAction(theAction);
+         System.out.println("done with insert");
+         System.out.println("inserted Id is: " + theAction.getDataStoreId());
+         System.out.println("testing get");
+
+         Iterator<ActionTransferObject> actionIt = 
+            theActionDAO.getActions("Insert.Metadata.Java.URI.MetadataDB", "junit_test");
+         boolean found = false;
+         if (actionIt.hasNext() ) {
+            ActionTransferObject returnedObject = actionIt.next();
+            System.out.println("Found nameSpace: " + returnedObject.getNameSpace());
+            if (returnedObject.getNameSpace().compareTo("junit_test") == 0) {
+               found = true;
+            }
+         } 
+         TestCase.assertTrue("Didn't find nameSpace junit_test", found == true);
+
+         // Now we'll try to delete the object
+         int nDeleted = theActionDAO.deleteAction("Insert.Metadata.Java.URI.MetadataDB", "junit_test");
+         System.out.println("nDeleted: " + nDeleted);
+         TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
+  }
+
+  @Test
   public void testSimilarityInstanceDAO () throws Exception {
 
      System.out.println("");
@@ -174,6 +222,7 @@ public class MetadataTest {
      theSimilarityInstance.setNameSpace("junit_test");
      theSimilarityInstance.setClassName("MockSimilarity");
      theSimilarityInstance.setMethod("compareCollections");
+     theSimilarityInstance.setOutput("/home/howard/testOutput");
      theSimilarityInstance.setVersion(1);
 
      try {
@@ -197,8 +246,10 @@ public class MetadataTest {
              TestCase.assertTrue("insertTime is unreasonable", (now - getObj.getInsertTime()) < 5 );
              TestCase.assertTrue("classname doesn't match", 
                  getObj.getClassName().compareTo("MockSimilarity") == 0);
-             TestCase.assertTrue("subjects don't match", 
+             TestCase.assertTrue("nameSpaces don't match", 
                  getObj.getNameSpace().compareTo("junit_test") == 0);
+             TestCase.assertTrue("outputs don't match", 
+                 getObj.getOutput().compareTo("/home/howard/testOutput") == 0);
              TestCase.assertTrue("ids don't match", 
                  getObj.getMethod().compareTo("compareCollections") == 0);
 

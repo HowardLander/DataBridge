@@ -48,6 +48,7 @@ public class MongoCollectionDAO implements CollectionDAO {
         * Returns the next CollectionTransferObject from the cursor or null.
         */
        @Override
+       @SuppressWarnings("unchecked")
        public CollectionTransferObject next() {
            CollectionTransferObject theCollection = null; 
            try {
@@ -66,7 +67,6 @@ public class MongoCollectionDAO implements CollectionDAO {
                    theCollection.setKeywords((ArrayList<String>)theEntry.get("keywords"));
                    theCollection.setNameSpace((String)theEntry.get("nameSpace"));
                    theCollection.setVersion((int)theEntry.get("version"));
-                   @SuppressWarnings("unchecked")
                    ArrayList<BasicDBObject> extraList = (ArrayList<BasicDBObject>) theEntry.get(MongoExtraName);
                    HashMap<String, String> extra = new HashMap<String, String>();
                    for (BasicDBObject extraObj : extraList) {
@@ -171,12 +171,13 @@ public class MongoCollectionDAO implements CollectionDAO {
     /** 
      * retrieve a list of all of the name spaces the various collections represent
      */
+    @SuppressWarnings("unchecked")
     public Iterator<String> getNamespaceList() {
         List<String> theNamespaces = null;
         try {
             DB theDB = MongoDAOFactory.getTheDB();
             DBCollection theTable = theDB.getCollection(MongoName);
-            theNamespaces = theTable.distinct(MongoNamespace);
+            theNamespaces = (java.util.List<String>)theTable.distinct(MongoNamespace);
         } catch (MongoException e) {
             // should send this back using the message logs eventually
             e.printStackTrace(); 
@@ -195,6 +196,7 @@ public class MongoCollectionDAO implements CollectionDAO {
      *
      * @param id The id of the collection to return
      */
+    @SuppressWarnings("unchecked")
     public CollectionTransferObject getCollectionById(String id) {
         CollectionTransferObject theCollection = null;
         try {
@@ -219,7 +221,6 @@ public class MongoCollectionDAO implements CollectionDAO {
                 theCollection.setKeywords((ArrayList<String>)theEntry.get("keywords"));
                 theCollection.setNameSpace((String)theEntry.get("nameSpace"));
                 theCollection.setVersion((int)theEntry.get("version"));
-                @SuppressWarnings("unchecked")
                 ArrayList<BasicDBObject> extraList = (ArrayList<BasicDBObject>) theEntry.get(MongoExtraName);
                 HashMap<String, String> extra = new HashMap<String, String>();
                 for (BasicDBObject extraObj : extraList) {

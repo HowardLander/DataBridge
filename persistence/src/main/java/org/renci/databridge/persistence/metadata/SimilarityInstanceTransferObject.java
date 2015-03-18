@@ -6,6 +6,7 @@ public class SimilarityInstanceTransferObject {
     private String method;
     private int    version;
     private String nameSpace;
+    private String output;      // currently a file, could later be a database.
     private int insertTime;     // Seconds since the epoch
     private String dataStoreId; // The id generated at insertion time.
     
@@ -127,6 +128,26 @@ public class SimilarityInstanceTransferObject {
     public void setInsertTime(int insertTime)
     {
         this.insertTime = insertTime;
+    }
+    
+    /**
+     * Get output.
+     *
+     * @return output as String.
+     */
+    public String getOutput()
+    {
+        return output;
+    }
+    
+    /**
+     * Set output.
+     *
+     * @param output the value to set.
+     */
+    public void setOutput(String output)
+    {
+        this.output = output;
     }
 }
 
