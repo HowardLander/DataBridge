@@ -52,16 +52,20 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
      public String name;
      public String title;
      public String group;
+     public String URL;
+     public String description;
 
     /**
       * Constructor that includes name (id) and the title of the nodes. 
       * @param name The id of the node, currently from the metadata database.
       * @param title The title of the node, currently from the metadata database.
       */
-     public JsonNode(String name, String title, String group) {
+     public JsonNode(String name, String title, String group, String URL, String description) {
         this.name = name;
         this.title = title;
         this.group = group;
+        this.URL = URL;
+        this.description = description;
      }
 
      public String toString() {
@@ -247,7 +251,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       JsonNetworkFile theJson = new JsonNetworkFile();
 
       // All the dyads are accounted for so we can use the google gson lib to write this out.
-      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).setPrettyPrinting().serializeNulls().create();
+      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).setPrettyPrinting().serializeNulls().disableHtmlEscaping().create();
 
       // Let's get all of the Dyads
       Iterator<NetworkDyadTransferObject> theDyads = theDyadDAO.getNetworkDyads(nameSpace, similarityId);
@@ -271,7 +275,9 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
             }
    
             // Now we can add the first node to the file
-            JsonNode jNode = new JsonNode(id1, node1Collection.getTitle(), clusterString);
+            JsonNode jNode = new JsonNode(id1, node1Collection.getTitle(), clusterString,
+                                          node1Collection.getURL(), node1Collection.getDescription());
+            System.out.println("Description: " + node1Collection.getDescription());
             theJson.addNode(jNode);
          }
 
@@ -293,7 +299,8 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
                }
 
                // Now we can add the second node to the file
-               JsonNode jNode2 = new JsonNode(id2, node2Collection.getTitle(), clusterString2);
+               JsonNode jNode2 = new JsonNode(id2, node2Collection.getTitle(), clusterString2,
+                                              node2Collection.getURL(), node2Collection.getDescription());
                theJson.addNode(jNode2);
             }
 
