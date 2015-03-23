@@ -55,7 +55,6 @@ public class MongoActionDAO implements ActionDAO {
                    DBObject theEntry = cursor.next();
                    theAction.setCurrentMessage((String)theEntry.get("currentMessage"));
                    theAction.setNameSpace((String)theEntry.get("nameSpace"));
-                   theAction.setActionMessage((String)theEntry.get("actionMessage"));
                    theAction.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
                    theAction.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                    ArrayList<BasicDBObject> dbHeaders = (ArrayList<BasicDBObject>) theEntry.get("headers");
@@ -105,7 +104,6 @@ public class MongoActionDAO implements ActionDAO {
           thisDoc.put(MongoIdFieldName, theId);
           thisDoc.put("currentMessage", theAction.getCurrentMessage());
           thisDoc.put("nameSpace", theAction.getNameSpace());
-          thisDoc.put("actionMessage", theAction.getActionMessage());
           HashMap <String, String> headers = theAction.getHeaders();
 
           if (null != headers) {
@@ -134,7 +132,8 @@ public class MongoActionDAO implements ActionDAO {
     /** 
      * retrieve an iterator for all records that match the given search key.
      *
-     * @param searchMap A HashMap with search keys.
+     * @param currentMessage The message we are processing
+     * @param nameSpace The nameSpace we are processing.
      */
     public Iterator<ActionTransferObject> getActions(String currentMessage, String nameSpace) {
         MongoActionDAOIterator theIterator = null;
@@ -155,6 +154,32 @@ public class MongoActionDAO implements ActionDAO {
 
         return theIterator;
     }
+
+    /** 
+     * retrieve an iterator for all records that match the given search key.
+     *
+     * @param currentMessage The message we are processing
+     */
+    public Iterator<ActionTransferObject> getActions(String currentMessage) {
+        MongoActionDAOIterator theIterator = null;
+        try {
+            BasicDBObject thisDoc = new BasicDBObject();
+            thisDoc.put("currentMessage", currentMessage);
+
+            DB theDB = MongoDAOFactory.getTheDB();
+            DBCollection theTable = theDB.getCollection(MongoName);
+            DBCursor cursor = theTable.find(thisDoc);
+            theIterator = new MongoActionDAOIterator();
+            theIterator.cursor = cursor;
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace(); 
+        }
+
+        return theIterator;
+    }
+
+
 /*
     public boolean updateAction( ActionTransferObject theAction, 
                                     Object collectionID) {
