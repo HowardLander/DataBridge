@@ -23,6 +23,13 @@ import javax.xml.bind.JAXBElement;
  */
 public abstract class JaxbMetadataFormatter implements MetadataFormatter {
 
+  protected Logger logger = Logger.getLogger ("org.renci.databridge.formatter");
+
+  @Override
+  public void setLogger (Logger logger) {
+    this.logger = logger;
+  }
+
   /**
    * "Flattens" content object from XmlMixed type to a string.
    * @returns first entry of list, cast to String, or null
