@@ -4,6 +4,7 @@ import  java.util.*;
 public interface ActionDAO {
     public boolean insertAction(ActionTransferObject theAction);
     public Iterator<ActionTransferObject> getActions(String currentMessage, String nameSpace);
+    public Iterator<ActionTransferObject> getActions(String currentMessage);
     public int deleteAction(ActionTransferObject theAction);
     public int deleteAction(String currentMessage, String nameSpace);
 }

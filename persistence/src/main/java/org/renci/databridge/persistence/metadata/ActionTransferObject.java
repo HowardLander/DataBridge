@@ -4,16 +4,14 @@ import  java.util.*;
 public class ActionTransferObject {
     private String currentMessage; // The message currently being executed.
     private String nameSpace;      // The name space on which the current message is executing
-    private String actionMessage; // The message to invoke as the target action.
     private HashMap<String, String> headers; // Headers for the action message
     private int insertTime;     // Seconds since the epoch
-
     private String dataStoreId; // The id generated at insertion time.
 
     @Override
     public String toString ()
     {
-        return "{" + getClass ().getName () + ": currentMessage: " + getCurrentMessage () + ", nameSpace: " + getNameSpace () + ", actionMessage: " + getActionMessage () + ", headers: " + getHeaders () + ", dataStoreId: " + getDataStoreId () + ", insertTime: " + getInsertTime() + "}";
+        return "{" + getClass ().getName () + ": currentMessage: " + getCurrentMessage () + ", nameSpace: " + getNameSpace () + ", headers: " + getHeaders () + ", dataStoreId: " + getDataStoreId () + ", insertTime: " + getInsertTime() + "}";
     }
 
     
@@ -75,26 +73,6 @@ public class ActionTransferObject {
     public void setNameSpace(String nameSpace)
     {
         this.nameSpace = nameSpace;
-    }
-    
-    /**
-     * Get actionMessage.
-     *
-     * @return actionMessage as String.
-     */
-    public String getActionMessage()
-    {
-        return actionMessage;
-    }
-    
-    /**
-     * Set actionMessage.
-     *
-     * @param actionMessage the value to set.
-     */
-    public void setActionMessage(String actionMessage)
-    {
-        this.actionMessage = actionMessage;
     }
     
     /**

@@ -173,7 +173,6 @@ public class MetadataTest {
      ActionTransferObject theAction = new ActionTransferObject();
      theAction.setCurrentMessage("Insert.Metadata.Java.URI.MetadataDB");
      theAction.setNameSpace("junit_test");
-     theAction.setActionMessage("Create.SimilarityMatrix.Java.MetadataDB.URI");
      HashMap<String, String> actionHeaders = new HashMap<String, String>();
      actionHeaders.put("className", "org.renci.databridgecontrib.ingest.mockingest");
      actionHeaders.put("inputURI", "/projects/databridge/metadata.xml");
