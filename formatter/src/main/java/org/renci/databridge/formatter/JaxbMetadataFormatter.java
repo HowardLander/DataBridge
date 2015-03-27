@@ -15,6 +15,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBIntrospector;
 
 /**
  * Abstract superclass for MetadataFormatters that use JAXB.
@@ -59,12 +60,7 @@ public abstract class JaxbMetadataFormatter implements MetadataFormatter {
       Unmarshaller unmarshaller = jc.createUnmarshaller ();
       StreamSource ss = new StreamSource (new StringReader (xml));
       Object o = unmarshaller.unmarshal (ss, contentClass);
-      // @todo this is gross but JAXB returns some content object roots in a wrapper. May be fixable with JAXB configuration.
-      if (o instanceof JAXBElement) {
-        content = ((JAXBElement<X>) o).getValue ();
-      } else {
-        content = (X) o;
-      }
+      content = (X) JAXBIntrospector.getValue (o);
 
     } catch (JAXBException je) {
 
