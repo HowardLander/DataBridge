@@ -55,8 +55,6 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
     this.logger.log (Level.FINE, "headers: " + stringHeaders);
 
     String className = stringHeaders.get (IngestMetadataMessage.CLASS);
-    // not used
-    // String methodName = stringHeaders.get (IngestMetadataMessage.METHOD); 
     String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
     String inputURI = stringHeaders.get (IngestMetadataMessage.INPUT_URI);
     String messageName = stringHeaders.get(IngestMetadataMessage.NAME);
@@ -65,10 +63,12 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
     // instantiate third-party MetadataFormatter implementation 
     MetadataFormatter mf = (MetadataFormatter) Class.forName (className).newInstance (); 
+    mf.setLogger (this.logger);
     byte [] bytes = get (inputURI);
 
     // dispatch to third-party formatter 
     List<MetadataObject> metadataObjects = mf.format (bytes);
+
     for (MetadataObject mo : metadataObjects) {
       persist (mo, nameSpace);
       this.logger.log (Level.FINE, "Inserted MetadataObject.");
