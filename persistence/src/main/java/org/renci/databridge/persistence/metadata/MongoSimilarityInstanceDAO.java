@@ -114,6 +114,40 @@ public class MongoSimilarityInstanceDAO implements SimilarityInstanceDAO {
 
 
     /** 
+     * retrieve a SimilarityInstanceTransfer object (or null) for the record matching the provided id
+     *
+     * @param id The id to search for.
+     */
+    public SimilarityInstanceTransferObject getSimilarityInstanceById(String id) {
+        SimilarityInstanceTransferObject theSimilarityInstance = null;
+        try {
+            BasicDBObject thisDoc = new BasicDBObject();
+            ObjectId theId = new ObjectId(id);
+            thisDoc.put(MongoIdFieldName, theId);
+            DB theDB = MongoDAOFactory.getTheDB();
+            DBCollection theTable = theDB.getCollection(MongoName);
+            DBCursor cursor = theTable.find(thisDoc);
+            if (cursor.hasNext()) {
+               theSimilarityInstance = new SimilarityInstanceTransferObject();
+               DBObject theEntry = cursor.next();
+               theSimilarityInstance.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+               theSimilarityInstance.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
+               theSimilarityInstance.setNameSpace((String)theEntry.get("nameSpace"));
+               theSimilarityInstance.setClassName((String)theEntry.get("className"));
+               theSimilarityInstance.setMethod((String)theEntry.get("method"));
+               theSimilarityInstance.setVersion((int)theEntry.get("version"));
+               theSimilarityInstance.setOutput((String)theEntry.get("output"));
+            }
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace(); 
+        }
+
+        return theSimilarityInstance;
+    }
+
+
+    /** 
      * retrieve an iterator for all records that match the given search key.
      *
      * @param searchMap A HashMap with search keys.
