@@ -231,6 +231,12 @@ public class MetadataTest {
          System.out.println("inserted Id is: " + theSimilarityInstance.getDataStoreId());
          System.out.println("testing get");
 
+         // Let's try the getById
+         SimilarityInstanceTransferObject byId = 
+             theSimilarityInstanceDAO.getSimilarityInstanceById(theSimilarityInstance.getDataStoreId());
+         System.out.println("Testing getSimilarityInstanceById");
+         TestCase.assertTrue("nameSpaces don't match", byId.getNameSpace().compareTo("junit_test") == 0);
+
          HashMap<String, String> searchMap = new HashMap<String, String>();
          searchMap.put("nameSpace", "junit_test");
          Iterator<SimilarityInstanceTransferObject> similarityInstanceIterator = 
