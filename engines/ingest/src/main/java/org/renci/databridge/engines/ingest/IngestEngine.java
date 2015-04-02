@@ -34,8 +34,10 @@ public class IngestEngine {
       throw new RuntimeException ("Usage: IngestEngine <abs_path_to_AMQPComms_props_file");
     }
 
+    String pathToAmqpPropsFile = args [0];
+System.out.println ("pathToAmqpPropsFile: " + pathToAmqpPropsFile);
     Properties p = new Properties ();
-    p.load (new FileInputStream (args [0]));
+    p.load (new FileInputStream (pathToAmqpPropsFile));
     String dbTypeProp = p.getProperty ("org.renci.databridge.relevancedb.dbType", "mongo");
     String dbName = p.getProperty ("org.renci.databridge.relevancedb.dbName", "test2");
     String dbHost = p.getProperty ("org.renci.databridge.relevancedb.dbHost", "localhost");
@@ -48,7 +50,7 @@ public class IngestEngine {
       dbType = MetadataDAOFactory.MONGODB;
     }
 
-    AMQPMessageListener aml = new AMQPMessageListener (args [0], new IngestMetadataMessage (), new IngestMetadataAMQPMessageHandler (dbType, dbName, dbHost, dbPort), logger);
+    AMQPMessageListener aml = new AMQPMessageListener (pathToAmqpPropsFile, new IngestMetadataMessage (), new IngestMetadataAMQPMessageHandler (dbType, dbName, dbHost, dbPort, pathToAmqpPropsFile), logger);
 
     aml.start ();
     aml.join (); // keeps main thread from exiting
