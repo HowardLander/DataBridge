@@ -15,6 +15,14 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBIntrospector;
+
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Schema;
+import javax.xml.XMLConstants;
+import java.io.File;
+import java.io.IOException;
+import org.xml.sax.SAXException;
 
 /**
  * Abstract superclass for MetadataFormatters that use JAXB.
@@ -56,24 +64,37 @@ public abstract class JaxbMetadataFormatter implements MetadataFormatter {
     try { 
 
       JAXBContext jc = JAXBContext.newInstance (contextClasses);
-      Unmarshaller unmarshaller = jc.createUnmarshaller ();
-      StreamSource ss = new StreamSource (new StringReader (xml));
-      Object o = unmarshaller.unmarshal (ss, contentClass);
-      // @todo this is gross but JAXB returns some content object roots in a wrapper. May be fixable with JAXB configuration.
-      if (o instanceof JAXBElement) {
-        content = ((JAXBElement<X>) o).getValue ();
-      } else {
-        content = (X) o;
+      Unmarshaller u = jc.createUnmarshaller ();
+
+      File f = getValidationSchema ();
+      if (f != null) {
+        SchemaFactory sf = SchemaFactory.newInstance (XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        Schema s = sf.newSchema (f);
+        u.setSchema (s);
+        u.setEventHandler (new ValidationEventHandlerImpl ());
       }
 
+      StreamSource ss = new StreamSource (new StringReader (xml));
+      Object o = u.unmarshal (ss, contentClass);
+      content = (X) JAXBIntrospector.getValue (o);
+
+    } catch (SAXException se) {
+      throw new FormatterException (se);
     } catch (JAXBException je) {
-
       throw new FormatterException (je);
-
+    } catch (IOException ie) {
+      throw new FormatterException (ie); 
     }
 
     return content;
 
   }
+
+  /**
+   * Implementers must override to allow for possible validation.
+   *
+   * @returns a java.io.File that is an XML Schema (an XSD document) describing the format that the formatter understands for validation purposes. Returning a null means that no validation will be done.
+   */ 
+  protected abstract File getValidationSchema () throws IOException;
 
 }
