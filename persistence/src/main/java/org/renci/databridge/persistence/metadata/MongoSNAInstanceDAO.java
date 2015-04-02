@@ -255,6 +255,39 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
         return theIterator;
     }
 
+    /**
+     * retrieve a SNAInstanceTransfer object (or null) for the record matching the provided id
+     *
+     * @param id The id to search for.
+     */
+    public SNAInstanceTransferObject getSNAInstanceById(String id) {
+        SNAInstanceTransferObject theSNAInstance = null;
+        try {
+            BasicDBObject thisDoc = new BasicDBObject();
+            ObjectId theId = new ObjectId(id);
+            thisDoc.put(MongoIdFieldName, theId);
+            DB theDB = MongoDAOFactory.getTheDB();
+            DBCollection theTable = theDB.getCollection(MongoName);
+            DBCursor cursor = theTable.find(thisDoc);
+            if (cursor.hasNext()) {
+               theSNAInstance = new SNAInstanceTransferObject();
+               DBObject theEntry = cursor.next();
+               theSNAInstance.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
+               theSNAInstance.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
+               theSNAInstance.setNameSpace((String)theEntry.get("nameSpace"));
+               theSNAInstance.setClassName((String)theEntry.get("className"));
+               theSNAInstance.setMethod((String)theEntry.get("method"));
+               theSNAInstance.setSimilarityInstanceId((String)theEntry.get("similarityInstanceId"));
+               theSNAInstance.setVersion((int)theEntry.get("version"));
+               theSNAInstance.setNResultingClusters((String)theEntry.get("nResultingClusters"));
+            }
+        } catch (MongoException e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace();
+        }
+
+        return theSNAInstance;
+    }
 
     /** 
      * delete the specified SNAInstance object from mongo. Note that this API deletes whatever matches

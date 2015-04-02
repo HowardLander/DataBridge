@@ -353,6 +353,13 @@ public class MetadataTest {
          System.out.println("inserted Id is: " + theSNAInstance.getDataStoreId());
          System.out.println("testing get");
 
+         // Lets test the getByID
+         System.out.println("testing getById");
+         SNAInstanceTransferObject byIdObject = 
+            theSNAInstanceDAO.getSNAInstanceById(theSNAInstance.getDataStoreId());
+         TestCase.assertTrue("DataStoreId returned from getById does not match",
+            theSNAInstance.getDataStoreId().compareTo(byIdObject.getDataStoreId()) == 0);
+
          HashMap<String, String> searchMap = new HashMap<String, String>();
          searchMap.put("nameSpace", "junit_test");
          searchMap.put("similarityInstanceId", "instance1");
