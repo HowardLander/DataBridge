@@ -45,6 +45,26 @@ public class MessageTest {
      System.out.println("headers are: " + headers);
      TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
 
+     return1 = "type:databridge;subtype:ingestlistener;x-match:all;name:Processed.Metadata.To.MetadataDB;nameSpace:systemTest";
+     headers = ProcessedMetadataToMetadataDB.getSendHeaders("systemTest");
+     System.out.println("headers are: " + headers);
+     TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
+
+     return1 = "type:databridge;subtype:networklistener;x-match:all;name:Processed.Metadata.To.NetworkFile;nameSpace:systemTest;similarityId:sim1";
+     headers = ProcessedMetadataToNetworkFile.getSendHeaders("systemTest", "sim1");
+     System.out.println("headers are: " + headers);
+     TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
+
+     return1 = "type:databridge;subtype:networklistener;x-match:all;name:Added.Metadata.To.NetworkDB;nameSpace:systemTest;similarityId:sim1";
+     headers = AddedMetadataToNetworkDB.getSendHeaders("systemTest", "sim1");
+     System.out.println("headers are: " + headers);
+     TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
+
+     return1 = "type:databridge;subtype:networklistener;x-match:all;name:Added.SNA.To.NetworkDB;nameSpace:systemTest;snaId:sna1";
+     headers = AddedSNAToNetworkDB.getSendHeaders("systemTest", "sna1");
+     System.out.println("headers are: " + headers);
+     TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
+
      return1 = "type:databridge;subtype:relevance;x-match:all;name:Create.SimilarityMatrix.Java.MetadataDB.URI;className:class1;nameSpace:systemTest;outputFile:file1";
      headers = CreateSimilarityMatrixJavaMetadataDBURI.getSendHeaders("class1","systemTest", "file1");
      System.out.println("headers are: " + headers);
