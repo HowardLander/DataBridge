@@ -14,8 +14,9 @@ import java.net.URLConnection;
 
 import javax.xml.bind.JAXBException;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
+//import com.rabbitmq.client.AMQP.BasicProperties;
 
+import org.renci.databridge.util.AMQPComms;
 import org.renci.databridge.util.AMQPMessage;
 import org.renci.databridge.util.AMQPMessageHandler;
 import org.renci.databridge.formatter.MetadataFormatter;
@@ -28,6 +29,7 @@ import org.renci.databridge.persistence.metadata.FileTransferObject;
 import org.renci.databridge.persistence.metadata.VariableDAO;
 import org.renci.databridge.persistence.metadata.VariableTransferObject;
 import org.renci.databridge.message.IngestMetadataMessage;
+import org.renci.databridge.message.ProcessedMetadataToMetadataDB;
 
 /**
  * Handles "ingest metadata" DataBridge message by calling relevant third-party metadata formatter and persisting it. 
@@ -40,11 +42,13 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
   private Logger logger = Logger.getLogger ("org.renci.databridge.engines.ingest");
 
   protected MetadataDAOFactory metadataDAOFactory;
+  protected String pathToAmqpPropsFile;
 
-  public IngestMetadataAMQPMessageHandler (int dbType, String dbName, String dbHost, int dbPort) { 
+  public IngestMetadataAMQPMessageHandler (int dbType, String dbName, String dbHost, int dbPort, String pathToAmqpPropsFile) { 
 
     MetadataDAOFactory mdf = MetadataDAOFactory.getMetadataDAOFactory (dbType, dbName, dbHost, dbPort);
     this.metadataDAOFactory = mdf;
+    this.pathToAmqpPropsFile = pathToAmqpPropsFile;
 
   }
 
@@ -73,6 +77,14 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
       persist (mo, nameSpace);
       this.logger.log (Level.FINE, "Inserted MetadataObject.");
     }
+
+    // send ProcessedMetadataToMetadataDB message 
+    AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
+    String headers = ProcessedMetadataToMetadataDB.getSendHeaders (nameSpace);
+    this.logger.log (Level.FINER, "Send headers: " + headers);
+    ac.publishMessage (new AMQPMessage (), headers, true);
+    ac.shutdownConnection ();     
+    this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
 
   }
 

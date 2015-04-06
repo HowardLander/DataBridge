@@ -2,8 +2,11 @@ package org.renci.databridge.engines.ingest;
 
 import java.util.List;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.net.URL;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -38,7 +41,13 @@ public class IngestEngineTest {
         }
       }
 
-      IngestMetadataAMQPMessageHandler imamh = new IngestMetadataAMQPMessageHandler (MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+      URL u = getClass ().getResource ("/DataBridge.conf");
+      Path p = Paths.get (u.toURI ());
+      p = p.toRealPath ();
+      File f = p.toFile ();
+      String absPathToConfigFile = f.getAbsolutePath ();
+
+      IngestMetadataAMQPMessageHandler imamh = new IngestMetadataAMQPMessageHandler (MetadataDAOFactory.MONGODB, "test", "localhost", 27017, absPathToConfigFile);
 
       // @todo create an ingest message and send it in
 
@@ -61,7 +70,7 @@ public class IngestEngineTest {
     }
 
     @Rule
-    public ExpectedException thrown = ExpectedException.none();
+    public ExpectedException thrown = ExpectedException.none ();
 
 }
 
