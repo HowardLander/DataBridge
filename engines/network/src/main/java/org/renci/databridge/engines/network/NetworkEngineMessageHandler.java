@@ -170,8 +170,249 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          processRunSnaAlgorithmJavaMessage(stringHeaders, extra);
       } else if (messageName.compareTo(NetworkEngineMessage.CREATE_JSON_FILE_NETWORKDB_URI) == 0) {
          processCreateJSONFileMessage(stringHeaders, extra);
+      } else if (messageName.compareTo(NetworkListenerMessage.PROCESSED_METADATA_TO_NETWORKFILE) == 0) {
+         processMetadataToNetworkFileMessage(stringHeaders, extra);
+      } else if (messageName.compareTo(NetworkListenerMessage.ADDED_METADATA_TO_NETWORKDB) == 0) {
+         processAddedMetadataToNetworkDBMessage(stringHeaders, extra);
+      } else if (messageName.compareTo(NetworkListenerMessage.ADDED_SNA_TO_NETWORKDB) == 0) {
+         processAddedSNAToNetworkDBMessage(stringHeaders, extra);
       } else {
          System.out.println("unimplemented messageName: " + messageName);
+      }
+  }
+
+
+    /**
+     * Handle the PROCESSED_METADATA_TO_NETWORKFILE message.  Primarily, we are going to search
+     * the action table and call the processInsertSimilarityMatrixJavaMessage code for each matching
+     * action. There is some remapping of the headers involved as well.
+     * @param stringHeaders A map of the headers provided in the message
+     * @param extra An object containing the needed DAO objects
+     */
+  public void processMetadataToNetworkFileMessage( Map<String, String> stringHeaders, Object extra) {
+
+      // We need several pieces of information before we can continue.  This info has to 
+      // all be in the headers or we are toast.
+
+      // 1) the nameSpace
+      String nameSpace = stringHeaders.get(NetworkEngineMessage.NAME_SPACE);    
+      if (null == nameSpace) {
+         this.logger.log (Level.SEVERE, "No nameSpace in message");
+         return;
+      }
+
+      // 2) the similarity_id
+      String similarityId = stringHeaders.get(NetworkEngineMessage.SIMILARITY_ID);    
+      if (null == similarityId) {
+         this.logger.log (Level.SEVERE, "No similarityId in message");
+         return;
+      }
+
+      // In this case the extra parameter is an array of 2 objects, which are the metadata and
+      // network factories.
+      Object factoryArray[] = (Object[]) extra;
+
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) factoryArray[0];
+      if (null == theFactory) {
+         this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
+         return;
+      } 
+
+      // Preliminaries are out of the way. We can proceed to the main algorithm
+      // Our task is to find the the action tasks corresponding to this message. If there
+      // are, we find the file name, and re-transmit the rquired headers to the appropriate
+      // lower level call.
+          // Get the list of needed actions
+     ActionTransferObject theAction = new ActionTransferObject();
+     ActionDAO theActionDAO = theFactory.getActionDAO();
+
+     Iterator<ActionTransferObject> actionIt =
+            theActionDAO.getActions(NetworkListenerMessage.PROCESSED_METADATA_TO_NETWORKFILE, nameSpace);
+
+        String outputFile = null;
+     while (actionIt.hasNext()) {
+        // At the moment, we really aren't expecting there to be more than one entry for
+        // the combination of nameSpace and action.  Not only that, but we don't currently need
+        // anything out of the action table for this op. But we still need to make a call to next
+        // or else we get stuck in an infinite loop.
+        theAction = actionIt.next();
+        HashMap<String, String> passedHeaders = new HashMap<String, String>();
+        SimilarityInstanceDAO theSimilarityInstanceDAO = theFactory.getSimilarityInstanceDAO();
+        SimilarityInstanceTransferObject theSimilarity =
+             theSimilarityInstanceDAO.getSimilarityInstanceById(similarityId);
+        outputFile = theSimilarity.getOutput();
+
+        passedHeaders.put(NetworkEngineMessage.INPUT_URI, outputFile);
+        System.out.println( "passing headers to processInsertSimilarityMatrixJavaMessage: " + passedHeaders);
+        processInsertSimilarityMatrixJavaMessage(passedHeaders, extra);
+     }
+  }
+
+
+    /**
+     * Handle the ADDED_METADATA_TO_NETWORKDB message.  Primarily, we are going to search
+     * the action table and call the processRunSnaAlgorithmJavaMessage code for each matching
+     * action. There is some remapping of the headers involved as well.
+     * @param stringHeaders A map of the headers provided in the message
+     * @param extra An object containing the needed DAO objects
+     */
+  public void processAddedMetadataToNetworkDBMessage( Map<String, String> stringHeaders, Object extra) {
+
+      // We need several pieces of information before we can continue.  This info has to 
+      // all be in the headers or we are toast.
+
+      // 1) the nameSpace
+      String nameSpace = stringHeaders.get(NetworkEngineMessage.NAME_SPACE);    
+      if (null == nameSpace) {
+         this.logger.log (Level.SEVERE, "No nameSpace in message");
+         return;
+      }
+
+      // 2) the similarity_id
+      String similarityId = stringHeaders.get(NetworkEngineMessage.SIMILARITY_ID);    
+      if (null == similarityId) {
+         this.logger.log (Level.SEVERE, "No similarityId in message");
+         return;
+      }
+
+      // In this case the extra parameter is an array of 2 objects, which are the metadata and
+      // network factories.
+      Object factoryArray[] = (Object[]) extra;
+
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) factoryArray[0];
+      if (null == theFactory) {
+         this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
+         return;
+      } 
+
+      // Preliminaries are out of the way. We can proceed to the main algorithm
+      // Our task is to find the the action tasks corresponding to this message. If there
+      // are, we find the file name, and re-transmit the rquired headers to the appropriate
+      // lower level call.
+          // Get the list of needed actions
+     ActionTransferObject actionObject = new ActionTransferObject();
+     ActionDAO theActionDAO = theFactory.getActionDAO();
+
+     Iterator<ActionTransferObject> actionIt =
+            theActionDAO.getActions(NetworkListenerMessage.ADDED_METADATA_TO_NETWORKDB, nameSpace);
+
+        String outputFile = null;
+     while (actionIt.hasNext()) {
+        // For each of the actions we find we want to retrieve the className so we can pass it along.
+        actionObject = actionIt.next();
+
+        // Headers to pass forward
+        HashMap<String, String> passedHeaders = new HashMap<String, String>();
+
+        // Get the class from the action object
+        HashMap<String, String> actionHeaders = actionObject.getHeaders();
+        passedHeaders.put(RelevanceEngineMessage.CLASS,
+                          (String) actionHeaders.get(RelevanceEngineMessage.CLASS));
+
+        passedHeaders.put(NetworkListenerMessage.NAME_SPACE, nameSpace);
+        passedHeaders.put(NetworkListenerMessage.SIMILARITY_ID, similarityId);
+        System.out.println( "passing headers to processRunSnaAlgorithmJavaMessage: " + passedHeaders);
+        processRunSnaAlgorithmJavaMessage(passedHeaders, extra);
+     }
+  }
+
+
+    /**
+     * Handle the ADDED_SNA_TO_NETWORKDB message.  Primarily, we are going to search
+     * the action table and call the processCreateJSONFileMessage code for each matching
+     * action. There is some remapping of the headers involved as well.
+     * @param stringHeaders A map of the headers provided in the message
+     * @param extra An object containing the needed DAO objects
+     */
+  public void processAddedSNAToNetworkDBMessage( Map<String, String> stringHeaders, Object extra) {
+
+      // We need several pieces of information before we can continue.  This info has to 
+      // all be in the headers or we are toast.
+
+      // 1) the nameSpace
+      String nameSpace = stringHeaders.get(NetworkListenerMessage.NAME_SPACE);    
+      if (null == nameSpace) {
+         this.logger.log (Level.SEVERE, "No nameSpace in message");
+         return;
+      }
+
+      // 2) the sna_id
+      String snaId = stringHeaders.get(NetworkListenerMessage.SNA_ID);    
+      if (null == snaId) {
+         this.logger.log (Level.SEVERE, "No snaId in message");
+         return;
+      }
+
+      // In this case the extra parameter is an array of 2 objects, which are the metadata and
+      // network factories.
+      Object factoryArray[] = (Object[]) extra;
+
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) factoryArray[0];
+      if (null == theFactory) {
+         this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
+         return;
+      } 
+
+      // Preliminaries are out of the way. We can proceed to the main algorithm
+      // Our task is to find the the action tasks corresponding to this message. If there
+      // are, we find the file name, and re-transmit the rquired headers to the appropriate
+      // lower level call.
+      // Get the list of needed actions
+      ActionTransferObject actionObject = new ActionTransferObject();
+      ActionDAO theActionDAO = theFactory.getActionDAO();
+
+      Iterator<ActionTransferObject> actionIt =
+            theActionDAO.getActions(NetworkListenerMessage.ADDED_SNA_TO_NETWORKDB, nameSpace);
+
+      String outputFile = null;
+      while (actionIt.hasNext()) {
+         // For each of the actions we find we want to retrieve the similarityId so we can pass it along.
+         actionObject = actionIt.next();
+
+         // Headers to pass forward
+         HashMap<String, String> passedHeaders = new HashMap<String, String>();
+
+         // We need the SNA instance to retrieve the similarity id.
+         SNAInstanceDAO theSNAInstanceDAO = theFactory.getSNAInstanceDAO();
+         SNAInstanceTransferObject snaObject = theSNAInstanceDAO.getSNAInstanceById(snaId);
+
+         // Get the class from the action object
+         HashMap<String, String> actionHeaders = actionObject.getHeaders();
+         outputFile = (String) actionHeaders.get(NetworkListenerMessage.OUTPUT_FILE);
+         // If the outputFile specified is a file, we pass it on. If it's a directory, we generate
+         // a file name in that directory and pass that on.
+         String lastChar = outputFile.substring(outputFile.length() - 1);
+         String fileName = null;
+         if (lastChar.compareTo("/") == 0) {
+            // The user has given us a directory, so we need to append a fileName
+            // We'll let java create the tmp file name, then delete the file.
+            try {
+               File outFileObject = new File(outputFile);
+   
+               // Create the directory if it does not already exist
+               if (outFileObject.exists() == false) {
+                   boolean result = outFileObject.mkdirs();
+                   if (false == result) {
+                       System.out.println("can't create path: " + outputFile);
+                   }
+               }
+               File tmpFile = File.createTempFile(nameSpace + "-", ".json", outFileObject);
+               fileName = new StringBuilder(outputFile).append(tmpFile.getName()).toString();
+               tmpFile.delete();
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+         } else {
+            // the user has given us a path
+            fileName = outputFile;
+         } 
+
+         passedHeaders.put(NetworkListenerMessage.NAME_SPACE, nameSpace);
+         passedHeaders.put(NetworkListenerMessage.SIMILARITY_ID, snaObject.getSimilarityInstanceId());
+         passedHeaders.put(NetworkListenerMessage.SNA_ID, snaId);
+         passedHeaders.put(NetworkListenerMessage.OUTPUT_FILE, fileName);
+         System.out.println( "passing headers to processCreateJSONFileMessage: " + passedHeaders);
+         processCreateJSONFileMessage(passedHeaders, extra);
       }
   }
 
@@ -277,7 +518,6 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
             // Now we can add the first node to the file
             JsonNode jNode = new JsonNode(id1, node1Collection.getTitle(), clusterString,
                                           node1Collection.getURL(), node1Collection.getDescription());
-            System.out.println("Description: " + node1Collection.getDescription());
             theJson.addNode(jNode);
          }
 

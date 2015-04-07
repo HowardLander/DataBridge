@@ -103,6 +103,10 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
           if (neo4jNodeList.hasNext()) {
               // this node is already in the database.  So be it.
               this.logger.log (Level.INFO, "node " + transferNode.getNodeId() + " is already in the database");
+              // Make sure the transfer node has the data store id
+              this.logger.log (Level.INFO, "adding nodeId to the transferNode");
+              Node existingNode = neo4jNodeList.next();
+              transferNode.setDataStoreId(Long.toString(existingNode.getId()));
           } else {
               // We need to insert the node, its label and it's associated properties
               Node newNode = theDB.createNode();

@@ -24,11 +24,14 @@ public class RelevanceEngine {
      */
     public static void main(String[] args ) {
         String propFileName = null;
+        String ingestProps = null;
 
-        if (args.length > 0) {
+        if (args.length > 1) {
             propFileName = args[0];
+            ingestProps = args[1];
         } else {
             propFileName = new String("relevance.conf");
+            ingestProps = new String("ingest.conf");
         }    
         try {
             RelevanceEngineMessageListener aml = 
@@ -37,7 +40,17 @@ public class RelevanceEngine {
                                          new RelevanceEngineMessageHandler(), logger);
 
             aml.start ();
-            aml.join (); // keeps main thread from exiting 
+
+            // Start a second thread to listen for messages from the ingester
+            RelevanceEngineMessageListener ingestListener = 
+                new RelevanceEngineMessageListener (ingestProps, 
+                                         new IngestListenerMessage(), 
+                                         new RelevanceEngineMessageHandler(), logger);
+
+            ingestListener.start ();
+
+            aml.join ();
+            ingestListener.join (); // keeps main thread from exiting 
         } catch (Exception ex) {
             System.out.println(ex.toString());
             System.exit(1);

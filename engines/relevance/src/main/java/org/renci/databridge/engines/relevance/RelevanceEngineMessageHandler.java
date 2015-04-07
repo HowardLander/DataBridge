@@ -10,6 +10,7 @@ import java.lang.InterruptedException;
 import java.io.IOException;
 import org.renci.databridge.message.*;
 import java.util.*;
+import java.io.*;
 import java.lang.reflect.*;
 
 
@@ -47,6 +48,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       stringHeaders = amqpMessage.getStringHeaders();
       bytes = amqpMessage.getBytes();
       System.out.println("headers: " + stringHeaders);
+      System.out.println("Hello from RelevanceEngineMessageHandler");
 
       // get the message name
       String messageName = stringHeaders.get(RelevanceEngineMessage.NAME);
@@ -54,13 +56,87 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       // Call the function appropriate for the message
       if (null == messageName) {
          System.out.println("messageName is missing");
-      } else if (messageName.compareTo(RelevanceEngineMessage.CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI) == 0) {
+      } else if 
+          (messageName.compareTo(RelevanceEngineMessage.CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI) == 0) {
          processCreateSimilarityMessage(stringHeaders, extra);
+      } else if (messageName.compareTo(IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB) == 0) {
+         processMetadataToMetadataDBMessage(stringHeaders, extra);
       } else {
          System.out.println("unimplemented messageName: " + messageName);
       }
   }
 
+  public void processMetadataToMetadataDBMessage( Map<String, String> stringHeaders, Object extra) {
+      System.out.println("Hello from processProcessedMetadataMessage");
+
+      // We need several pieces of information before we can continue.  This info has to 
+      // all be in the headers or we are toast.
+
+      // 1) the name space
+      String nameSpace = stringHeaders.get(RelevanceEngineMessage.NAME_SPACE);    
+      if (null == nameSpace) {
+         this.logger.log (Level.SEVERE, "No name space in message");
+         return;
+      }
+
+      // The "extra" parameter in this case must be of type MetadataDAOFactory
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) extra;
+      if (null == theFactory) {
+         this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
+         return;
+      }
+
+     // Get the list of needed actions
+     ActionTransferObject theAction = new ActionTransferObject();
+     ActionDAO theActionDAO = theFactory.getActionDAO();
+ 
+     Iterator<ActionTransferObject> actionIt =
+            theActionDAO.getActions(IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB, nameSpace);
+
+        String outputFile = null;
+     while (actionIt.hasNext()) {
+        ActionTransferObject returnedObject = actionIt.next();
+        HashMap<String, String> passedHeaders = new HashMap<String, String>();
+
+        // Get the class and outputFile from the action object
+        HashMap<String, String> actionHeaders = returnedObject.getHeaders();
+        passedHeaders.put(RelevanceEngineMessage.CLASS, 
+                          (String) actionHeaders.get(RelevanceEngineMessage.CLASS));
+        outputFile = (String) actionHeaders.get(RelevanceEngineMessage.OUTPUT_FILE);
+        passedHeaders.put(RelevanceEngineMessage.NAME_SPACE, nameSpace);
+
+        // If the outputFile specified is a file, we pass it on. If it's a directory, we generate
+        // a file name in that directory and pass that on.
+        String lastChar = outputFile.substring(outputFile.length() - 1);
+        String fileName = null;
+        if (lastChar.compareTo("/") == 0) {
+           // The user has given us a directory, so we need to append a fileName
+           // We'll let java create the tmp file name, then delete the file.
+           try {
+              File outFileObject = new File(outputFile);
+    
+              // Create the directory if it does not already exist
+              if (outFileObject.exists() == false) {
+                  boolean result = outFileObject.mkdirs();
+                  if (false == result) {
+                      System.out.println("can't create path: " + outputFile);
+                  }
+              }
+              File tmpFile = File.createTempFile(nameSpace + "-", ".net", outFileObject);
+              fileName = new StringBuilder(outputFile).append(tmpFile.getName()).toString();
+              tmpFile.delete();
+           } catch (Exception e) {
+              e.printStackTrace();
+           }
+        } else {
+          // the user has given us a path
+          fileName = outputFile;
+        } 
+        passedHeaders.put(RelevanceEngineMessage.OUTPUT_FILE, fileName);
+        System.out.println ("passing headers to processCreateSimilarityMessage: " + passedHeaders);
+        processCreateSimilarityMessage(passedHeaders, extra);
+     }
+  }
 
   public void processCreateSimilarityMessage( Map<String, String> stringHeaders, Object extra) {
       // We need several pieces of information before we can continue.  This info has to 
@@ -137,7 +213,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       theSimilarityInstance.setNameSpace(nameSpace);
       theSimilarityInstance.setClassName(className);
       theSimilarityInstance.setMethod("compareCollections");
-      theSimilarityInstance.setOutput(outputFile);
+      theSimilarityInstance.setOutput("file://" + outputFile);
 
       // let's find the highest version for this combination of nameSpace, className and method (if any)
       HashMap<String, String> versionMap = new HashMap<String, String>();
