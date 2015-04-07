@@ -1,0 +1,66 @@
+{
+	"nodes":[
+		{
+			"name":"record0",
+			"title":"Harris 1986 Black Women Leadership Survey",
+			"group":"1, 4"
+		},
+		{
+			"name":"record1",
+			"title":"Harris National Study",
+			"group":"2, 1"
+		},
+		{
+			"name":"record2",
+			"title":"Harris 1978 transportation and train telephone survey",
+			"group":"4"
+		},
+		{
+			"name":"record3",
+			"title":"Harris Study No. 22555",
+			"group":"0"
+		},
+		{
+			"name":"record4",
+			"title":"Business Week/Harris Poll 1996 National Issues Survey Among Senior Executives",
+			"group":"1"
+		},
+		{
+			"name":"record5",
+			"title":"Harris 1972 presidential election survey",
+			"group":"0"
+		},
+		{
+			"name":"record6",
+			"title":"Harris Generation 2001 World Trade Center Survey",
+			"group":"0"
+		},
+		{
+			"name":"record7",
+			"title":"Harris 1972 presidential election and economic outlook survey",
+			"group":"1"
+		},
+		{
+			"name":"record8",
+			"title":"Harris 1985 Business-Week survey on computer and office automation purchases",
+			"group":"0"
+		},
+		{
+			"name":"record9",
+			"title":"Harris 1975 survey on aging",
+			"group":"1"
+		}
+	],
+	"links":[
+		{
+			"source":6,
+			"target":3,
+			"value":0.53333
+		},
+		{
+			"source":9,
+			"target":1,
+			"value":0.625
+		}
+	]
+}

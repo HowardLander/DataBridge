@@ -1,0 +1,136 @@
+{
+  "nodes": [
+    {
+      "name": "54ef9c11e4b0dd9471fdc2cf",
+      "title": "Harris Study No. 22555",
+      "group": ""
+    },
+    {
+      "name": "54ef9c11e4b0dd9471fdc2d2",
+      "title": "Business Week/Harris Poll 1996 National Issues Survey Among Senior Executives, study no. 961202",
+      "group": ""
+    },
+    {
+      "name": "54ef9c11e4b0dd9471fdc2cc",
+      "title": "Harris Generation 2001 World Trade Center Survey",
+      "group": ""
+    },
+    {
+      "name": "54ef9c11e4b0dd9471fdc2e7",
+      "title": "Harris 1986 Black Women Leadership Survey, Study no. 864010",
+      "group": ""
+    },
+    {
+      "name": "54ef9c11e4b0dd9471fdc2db",
+      "title": "Harris 1985 Business-Week survey on computer and office automation purchases, no. 851207",
+      "group": ""
+    },
+    {
+      "name": "54ef9c11e4b0dd9471fdc2d5",
+      "title": "Harris National Study",
+      "group": ""
+    },
+    {
+      "name": "54ef9c11e4b0dd9471fdc2e4",
+      "title": "Harris 1972 presidential election and economic outlook survey, no. 2235",
+      "group": ""
+    },
+    {
+      "name": "54ef9c11e4b0dd9471fdc2e1",
+      "title": "Harris 1972 presidential election survey, no. 2240",
+      "group": ""
+    },
+    {
+      "name": "54ef9c11e4b0dd9471fdc2de",
+      "title": "Harris 1975 survey on aging, study no. A016",
+      "group": ""
+    },
+    {
+      "name": "54ef9c11e4b0dd9471fdc2d8",
+      "title": "Harris 1978 transportation and train telephone survey, no. P2814T",
+      "group": ""
+    }
+  ],
+  "links": [
+    {
+      "source": 0,
+      "target": 1,
+      "value": 0.25
+    },
+    {
+      "source": 2,
+      "target": 1,
+      "value": 0.25
+    },
+    {
+      "source": 2,
+      "target": 0,
+      "value": 0.5333333333333333
+    },
+    {
+      "source": 1,
+      "target": 3,
+      "value": 0.5
+    },
+    {
+      "source": 1,
+      "target": 4,
+      "value": 0.5
+    },
+    {
+      "source": 5,
+      "target": 6,
+      "value": 0.5
+    },
+    {
+      "source": 5,
+      "target": 7,
+      "value": 0.5
+    },
+    {
+      "source": 5,
+      "target": 8,
+      "value": 0.625
+    },
+    {
+      "source": 5,
+      "target": 9,
+      "value": 0.5
+    },
+    {
+      "source": 9,
+      "target": 6,
+      "value": 0.5
+    },
+    {
+      "source": 9,
+      "target": 7,
+      "value": 0.5
+    },
+    {
+      "source": 9,
+      "target": 8,
+      "value": 0.5
+    },
+    {
+      "source": 4,
+      "target": 3,
+      "value": 0.5
+    },
+    {
+      "source": 8,
+      "target": 6,
+      "value": 0.5
+    },
+    {
+      "source": 8,
+      "target": 7,
+      "value": 0.5
+    },
+    {
+      "source": 7,
+      "target": 6,
+      "value": 1.0
+    }
+  ]
+}
