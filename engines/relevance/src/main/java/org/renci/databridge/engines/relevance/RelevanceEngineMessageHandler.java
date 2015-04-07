@@ -40,6 +40,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
   // The byte array for the contents of the message.
   private byte[] bytes;
   
+  /**
+   * This function essentially de-multiplexes the message by calling the 
+   * appropriate lower level handler based on the headers.
+   *
+   * @param amqpMessage The message to handle.
+   * @param extra An object containing the needed DAO objects
+   */
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
       // Get the individual components of the the message and store
       // them in the fields
@@ -66,6 +73,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       }
   }
 
+  /**
+   * Handle the PROCESSED_METADATA_TO_METADATADB message.  Primarily, we are going to search
+   * the action table and call the processCreateSimilarityMessage code for each matching
+   * action. There is some remapping of the headers involved as well.
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects
+   */
   public void processMetadataToMetadataDBMessage( Map<String, String> stringHeaders, Object extra) {
       System.out.println("Hello from processProcessedMetadataMessage");
 
@@ -138,6 +152,12 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
      }
   }
 
+
+  /**
+   * Handle the CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI message.  
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects
+   */
   public void processCreateSimilarityMessage( Map<String, String> stringHeaders, Object extra) {
       // We need several pieces of information before we can continue.  This info has to 
       // all be in the headers or we are toast.

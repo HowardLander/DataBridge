@@ -147,6 +147,14 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
      }
   }
   
+
+  /**
+   * Handle the PROCESSED_METADATA_TO_NETWORKFILE message.  Primarily, we are going to search
+   * the action table and call the processInsertSimilarityMatrixJavaMessage code for each matching
+   * action. There is some remapping of the headers involved as well.
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects
+   */
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
       // Get the individual components of the the message and store
       // them in the fields
@@ -180,7 +188,6 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          System.out.println("unimplemented messageName: " + messageName);
       }
   }
-
 
     /**
      * Handle the PROCESSED_METADATA_TO_NETWORKFILE message.  Primarily, we are going to search
