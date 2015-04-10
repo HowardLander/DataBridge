@@ -24,26 +24,37 @@ public class RelevanceEngine {
      */
     public static void main(String[] args ) {
         String propFileName = null;
-        String ingestProps = null;
 
-        if (args.length > 1) {
+        if (args.length > 0) {
             propFileName = args[0];
-            ingestProps = args[1];
         } else {
             propFileName = new String("relevance.conf");
-            ingestProps = new String("ingest.conf");
         }    
+
+        System.out.println("propFileName: " + propFileName);
         try {
+            // Make props from the config file to pass to AMQPComms
+            Properties props= new Properties();
+            props.load(new FileInputStream(propFileName));
+            props.setProperty("org.renci.databridge.primaryQueue", 
+                              props.getProperty("org.renci.databridge.relevanceEngine.primaryQueue"));
+            System.out.println("org.renci.databridge.primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+     
             RelevanceEngineMessageListener aml = 
-                new RelevanceEngineMessageListener (propFileName, 
+                new RelevanceEngineMessageListener (props, 
                                          new RelevanceEngineMessage(), 
                                          new RelevanceEngineMessageHandler(), logger);
 
             aml.start ();
 
-            // Start a second thread to listen for messages from the ingester
+            // Start a second thread to listen for actionable messages.
+            // We need to reset the org.renci.databridge.primaryQueue property. This is the queue
+            // this listener will listen to.
+            props.setProperty("org.renci.databridge.primaryQueue", 
+                              props.getProperty("org.renci.databridge.relevanceEngine.ingestQueue"));
+            System.out.println("org.renci.databridge.primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
             RelevanceEngineMessageListener ingestListener = 
-                new RelevanceEngineMessageListener (ingestProps, 
+                new RelevanceEngineMessageListener (props, 
                                          new IngestListenerMessage(), 
                                          new RelevanceEngineMessageHandler(), logger);
 

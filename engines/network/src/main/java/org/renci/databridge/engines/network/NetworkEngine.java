@@ -17,23 +17,32 @@ public class NetworkEngine {
     protected static Logger logger = Logger.getLogger ("org.renci.databridge.engines.network");
     public static void main(String[] args ) {
         String propFileName = null;
-        String listenerProps = null;
 
-        if (args.length > 1) {
+        if (args.length > 0) {
             propFileName = args[0];
-            listenerProps = args[1];
         } else {
             propFileName = new String("network.conf");
-            listenerProps = new String("networkListener.conf");
         }    
         try {
+            Properties props= new Properties();
+            props.load(new FileInputStream(propFileName));
+            props.setProperty("org.renci.databridge.primaryQueue",
+                              props.getProperty("org.renci.databridge.networkEngine.primaryQueue"));
+            System.out.println("org.renci.databridge.primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
             NetworkEngineMessageListener aml = 
-                new NetworkEngineMessageListener (propFileName, new NetworkEngineMessage(), 
+                new NetworkEngineMessageListener (props, new NetworkEngineMessage(), 
                                                   new NetworkEngineMessageHandler(), logger);
             aml.start ();
 
+            // Start a second thread to listen for actionable messages.
+            // We need to reset the org.renci.databridge.primaryQueue property. This is the queue
+            // this listener will listen to.
+            props.setProperty("org.renci.databridge.primaryQueue",
+                              props.getProperty("org.renci.databridge.networkEngine.ingestQueue"));
+            System.out.println("org.renci.databridge.primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+
             NetworkEngineMessageListener networkListener = 
-                new NetworkEngineMessageListener (listenerProps, new NetworkListenerMessage(), 
+                new NetworkEngineMessageListener (props, new NetworkListenerMessage(), 
                                                   new NetworkEngineMessageHandler(), logger);
             networkListener.start ();
             networkListener.join (); // keeps main thread from exiting 

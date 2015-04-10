@@ -146,7 +146,7 @@ public class AMQPComms {
       * AMQPComms constructor with a properties file to read.
       *
       *  @param  prop  The prop file to read to configure the communication channel. The property
-      *                    file has to define at least the following properties: 
+      *                    object has to define at least the following properties: 
       *                    org.renci.databridge.primaryQueue, org.renci.databridge.exchange and
       *                    org.renci.databridge.queueHost.  Other relevant properties are
       *                    org.renci.databridge.queueDurability and org.renci.databridge.logLevel

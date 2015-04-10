@@ -43,6 +43,9 @@ System.out.println ("pathToAmqpPropsFile: " + pathToAmqpPropsFile);
     String dbHost = p.getProperty ("org.renci.databridge.relevancedb.dbHost", "localhost");
     int dbPort = Integer.parseInt (p.getProperty ("org.renci.databridge.relevancedb.dbPort", "27017"));
 
+    p.setProperty("org.renci.databridge.primaryQueue",
+                  p.getProperty("org.renci.databridge.ingestEngine.primaryQueue"));
+
     int dbType = -1; 
     if (dbTypeProp.compareToIgnoreCase ("mongo") != 0) {
       throw new RuntimeException ("Unsupported database type: " + dbTypeProp);
@@ -50,7 +53,7 @@ System.out.println ("pathToAmqpPropsFile: " + pathToAmqpPropsFile);
       dbType = MetadataDAOFactory.MONGODB;
     }
 
-    AMQPMessageListener aml = new AMQPMessageListener (pathToAmqpPropsFile, new IngestMetadataMessage (), new IngestMetadataAMQPMessageHandler (dbType, dbName, dbHost, dbPort, pathToAmqpPropsFile), logger);
+    AMQPMessageListener aml = new AMQPMessageListener (p, new IngestMetadataMessage (), new IngestMetadataAMQPMessageHandler (dbType, dbName, dbHost, dbPort, pathToAmqpPropsFile), logger);
 
     aml.start ();
     aml.join (); // keeps main thread from exiting
