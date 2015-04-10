@@ -1,0 +1,66 @@
+#
+## United configuration file for the DataBridge system. Configs are set for a production system
+#
+
+###############################################################################
+# Network database section
+###############################################################################
+# The type of the network database. Currently either Neo4j or Titan
+org.renci.databridge.databaseType=Neo4j
+
+# The location of the physical database files
+org.renci.databridge.networkdb.location=/projects/databridge/persistence/testData
+
+###############################################################################
+# Persistence database section
+###############################################################################
+# The type of the database
+org.renci.databridge.relevancedb.dbType=mongo
+
+# The name of the database
+org.renci.databridge.relevancedb.dbName=production
+
+# The host for the database
+org.renci.databridge.relevancedb.dbHost=localhost
+
+# The port for the database
+org.renci.databridge.relevancedb.dbPort=27017
+
+###############################################################################
+# Communication section
+###############################################################################
+# The communication host
+org.renci.databridge.queueHost=localhost
+
+# the exchange
+org.renci.databridge.exchange=databridge-production-exchange
+
+# The durability for the primary communication queue.
+org.renci.databridge.queueDurability=false
+
+###############################################################################
+# Ingest engine section
+###############################################################################
+
+# The primary communication queue.
+org.renci.databridge.ingestEngine.primaryQueue=databridge-ingest-engine-production-primary
+
+###############################################################################
+# Relevance engine section
+###############################################################################
+
+# The primary communication queue.
+org.renci.databridge.relevanceEngine.primaryQueue=databridge-relevance-engine-production-primary
+
+# The secondary "ingestlister" communication queue.
+org.renci.databridge.relevanceEngine.ingestQueue=databridge-relevance-engine-production-ingest
+
+###############################################################################
+# Network engine section
+###############################################################################
+
+# The primary communication queue.
+org.renci.databridge.networkEngine.primaryQueue=databridge-network-engine-production-primary
+
+# The secondary "ingestlister" communication queue.
+org.renci.databridge.networkEngine.ingestQueue=databridge-action-engine-production-ingest
