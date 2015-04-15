@@ -215,7 +215,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
-      // In this case the extra parameter is an array of 2 objects, which are the metadata and
+      // In this case the extra parameter is an array of 3 objects, which are the metadata and
       // network factories.
       Object factoryArray[] = (Object[]) extra;
 
@@ -639,10 +639,10 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       }
 
       // In this case the extra parameter is an array of 2 objects, which are the metadata and
-      // network factories.
-      Object factoryArray[] = (Object[]) extra;
+      // network factories plus the Properties object used to send the next message.
+      Object extraArray[] = (Object[]) extra;
 
-      MetadataDAOFactory metadataFactory = (MetadataDAOFactory) factoryArray[0];
+      MetadataDAOFactory metadataFactory = (MetadataDAOFactory) extraArray[0];
       if (null == metadataFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
@@ -653,11 +653,17 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          return;
       } 
 
-      NetworkDAOFactory networkFactory = (NetworkDAOFactory) factoryArray[1];
+      NetworkDAOFactory networkFactory = (NetworkDAOFactory) extraArray[1];
       if (null == networkFactory) {
          this.logger.log (Level.SEVERE, "NetworkDAOFactory is null");
          return;
       } 
+
+      Properties theProps = (Properties) extraArray[2];
+      if (null == theProps) {
+         this.logger.log (Level.SEVERE, "Properties object is null");
+         return;
+      }
 
       // We'll need a DAO
       NetworkNodeDAO theNetworkNodeDAO = networkFactory.getNetworkNodeDAO();
@@ -704,6 +710,22 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
           new RelationshipInserter(nodeList, theNetworkRelationshipDAO, theFile.getSimilarityInstanceId());
       theMatrix.eachNonZero(theInserter);
  
+      // Assuming we get this far, we want to send out the next message
+      AMQPComms ac = null;
+      try {
+         ac = new AMQPComms (theProps);
+         String headers = AddedMetadataToNetworkDB.getSendHeaders (
+                             nameSpace, theFile.getSimilarityInstanceId());
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         this.logger.log (Level.FINE, "Sent AddedMetadataToNetworkDB message.");
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
+      } finally {
+         if (null != ac) {
+             ac.shutdownConnection ();
+         }
+      }
   }
 
     /**
@@ -764,10 +786,10 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       String params = stringHeaders.get(NetworkEngineMessage.PARAMS);    
 
       // In this case the extra parameter is an array of 2 objects, which are the metadata and
-      // network factories.
-      Object[] factoryArray = (Object[]) extra;
+      // network factories plus the Properties object used to send the next message.
+      Object[] extraArray = (Object[]) extra;
 
-      MetadataDAOFactory metadataFactory = (MetadataDAOFactory) factoryArray[0];
+      MetadataDAOFactory metadataFactory = (MetadataDAOFactory) extraArray[0];
       if (null == metadataFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
@@ -778,11 +800,17 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          return;
       } 
 
-      NetworkDAOFactory networkFactory = (NetworkDAOFactory) factoryArray[1];
+      NetworkDAOFactory networkFactory = (NetworkDAOFactory) extraArray[1];
       if (null == networkFactory) {
          this.logger.log (Level.SEVERE, "NetworkDAOFactory is null");
          return;
       } 
+
+      Properties theProps = (Properties) extraArray[2];
+      if (null == theProps) {
+         this.logger.log (Level.SEVERE, "Properties object is null");
+         return;
+      }
 
       SNAInstanceDAO theSNAInstanceDAO = metadataFactory.getSNAInstanceDAO();
       if (null == theSNAInstanceDAO) {
@@ -872,6 +900,22 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
           return;
       }
 
+      // Assuming we get this far, we want to send out the next message
+      AMQPComms ac = null;
+      try {
+         ac = new AMQPComms (theProps);
+         String headers = AddedSNAToNetworkDB.getSendHeaders (
+                             nameSpace, theSNAInstance.getDataStoreId());
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         this.logger.log (Level.FINE, "Sent AddedSNAToNetworkDB message.");
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
+      } finally {
+         if (null != ac) {
+             ac.shutdownConnection ();
+         }
+      }
   }
  
   public void handleException (Exception exception) {

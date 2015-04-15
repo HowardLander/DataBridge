@@ -135,10 +135,13 @@ public class NetworkEngineMessageListener extends Thread {
               this.logger.log (Level.SEVERE, "metadataFactory is null");
               return;
            } 
-          // Need to pass both factories, so we will store them in array.
-          Object theFactories[] = new Object[2];
+          // Need to pass both factories, so we will store them in array. The message 
+          // handler also needs the property file so it can send action messages, so we
+          // store it in an array of Objects along with the needed factories.
+          Object theFactories[] = new Object[3];
           theFactories[0] = (Object) metadataFactory;
           theFactories[1] = (Object) networkFactory;
+          theFactories[2] = (Object) theProps;
           this.amqpMessageHandler.handle (am, (Object) theFactories);
         }
 

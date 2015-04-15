@@ -39,13 +39,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
   // The byte array for the contents of the message.
   private byte[] bytes;
-  
+
   /**
    * This function essentially de-multiplexes the message by calling the 
    * appropriate lower level handler based on the headers.
    *
    * @param amqpMessage The message to handle.
-   * @param extra An object containing the needed DAO objects
+   * @param extra An object containing the needed DAO objects plus the Properties object
    */
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
       // Get the individual components of the the message and store
@@ -81,7 +81,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
    * @param extra An object containing the needed DAO objects
    */
   public void processMetadataToMetadataDBMessage( Map<String, String> stringHeaders, Object extra) {
-      System.out.println("Hello from processProcessedMetadataMessage");
+      System.out.println("Hello from processMetadataToMetadataDBMessage");
 
       // We need several pieces of information before we can continue.  This info has to 
       // all be in the headers or we are toast.
@@ -93,12 +93,23 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
-      // The "extra" parameter in this case must be of type MetadataDAOFactory
-      MetadataDAOFactory theFactory = (MetadataDAOFactory) extra;
+      // Process the array of extra objects
+      Object extraArray[] = (Object[]) extra;
+
+      // The extra parameter in this case is the MetadataDAOFactory followed by the Properties object.
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
       if (null == theFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
       }
+
+      Properties theProps = (Properties) extraArray[1];
+      if (null == theProps) {
+         this.logger.log (Level.SEVERE, "Properties object is null");
+         return;
+      }
+      String dbType = theProps.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
+      System.out.println("dbType: " + dbType);
 
      // Get the list of needed actions
      ActionTransferObject theAction = new ActionTransferObject();
@@ -106,10 +117,11 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
  
      Iterator<ActionTransferObject> actionIt =
             theActionDAO.getActions(IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB, nameSpace);
-
-        String outputFile = null;
+     System.out.println("Searching action table for: " + IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB + " nameSpace: " + nameSpace);
+     String outputFile = null;
      while (actionIt.hasNext()) {
         ActionTransferObject returnedObject = actionIt.next();
+        System.out.println("Found action: " + returnedObject.getDataStoreId());
         HashMap<String, String> passedHeaders = new HashMap<String, String>();
 
         // Get the class and outputFile from the action object
@@ -156,7 +168,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
   /**
    * Handle the CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI message.  
    * @param stringHeaders A map of the headers provided in the message
-   * @param extra An object containing the needed DAO objects
+   * @param extra An object containing the needed DAO objects plus a properties
    */
   public void processCreateSimilarityMessage( Map<String, String> stringHeaders, Object extra) {
       // We need several pieces of information before we can continue.  This info has to 
@@ -210,12 +222,22 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
-      // The "extra" parameter in this case must be of type MetadataDAOFactory
-      MetadataDAOFactory theFactory = (MetadataDAOFactory) extra;
+      // Process the array of extra objects
+      Object extraArray[] = (Object[]) extra;
+
+      // The extra parameter in this case is the MetadataDAOFactory followed by the Properties object.
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
       if (null == theFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
-      } 
+      }
+
+      Properties theProps = (Properties) extraArray[1];
+      if (null == theProps) {
+         this.logger.log (Level.SEVERE, "Properties object is null");
+         return;
+      }
+
       CollectionDAO theCollectionDAO = theFactory.getCollectionDAO();
       if (null == theCollectionDAO) {
          this.logger.log (Level.SEVERE, "CollectionDAO is null");
@@ -338,6 +360,23 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Caught Exception writing to disk: " + e.getMessage());
          return;
+      }
+
+      // Assuming we get this far, we want to send out the next message
+      AMQPComms ac = null;
+      try {
+         ac = new AMQPComms (theProps);
+         String headers = ProcessedMetadataToNetworkFile.getSendHeaders (
+                             nameSpace, theSimilarityInstance.getDataStoreId());
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
+      } finally {
+         if (null != ac) {
+             ac.shutdownConnection ();
+         }
       }
   }
  

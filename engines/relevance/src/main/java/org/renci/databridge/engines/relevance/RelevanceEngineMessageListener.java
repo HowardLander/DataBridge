@@ -114,7 +114,13 @@ public class RelevanceEngineMessageListener extends Thread {
               this.logger.log (Level.SEVERE, "theFactory is null");
               return;
            } 
-          this.amqpMessageHandler.handle (am, (Object) theFactory);
+          
+          // The message handler needs the property file so it can send action messages, so we 
+          // store it in an array of Objects along with the needed factory.
+          Object thePassedObjects[] = new Object[2];
+          thePassedObjects[0] = (Object) theFactory;
+          thePassedObjects[1] = (Object) theProps;
+          this.amqpMessageHandler.handle (am, (Object) thePassedObjects);
         }
 
       } catch (Exception e) {
