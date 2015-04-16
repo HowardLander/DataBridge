@@ -209,9 +209,11 @@ function cluster(alpha) {
 
 // Resolves collisions between d and all other circles.
 function collide(alpha) {
-	var quadtree = d3.geom.quadtree(oriData.nodes);
-	if(typeof quadtree == "undefined")
-		return true;
+    if(typeof oriData.nodes === "undefined")
+        return true; 
+    var quadtree = d3.geom.quadtree(oriData.nodes);
+    if(typeof quadtree === "undefined")
+        return true;
 	return function(d) {
 		//var r = d.radius + radius.domain()[1] + padding,
 		var r = maxRadius + maxRadius,
@@ -558,14 +560,14 @@ function FileChange() {
 	curFileName = fname;
 	if(fname=="") 
 		return;
-	oriData = {};
-	filterData = [];
 	$("#data-desc").html("This network shows the data-to-data relationship in Harris surveys extracted from <a href=\"http://arc.irss.unc.edu/dvn/\">Odum Institute Dataverse Network</a> at UNC-Chapel Hill. A categorical data similarity measurement algorithm was used to extract a similarity adjancey matrix that was then used to create this data-to-data relationship graph. Each node represents a Harris survey data record; each edge links the pair of nodes based on their similarity measurement --- the darker the edge, the more similar the linked nodes.");
 	d3.json(fname, function(error, data) {
 		var i;
 		
 	    force.stop(); // stops the force auto positioning before changing data
 		bDragOn = true;
+		oriData = {};
+		filterData = [];
 		for(i = data.links.length-1; i >= 0; i--){
 			for(var j=i-1; j>=0; j--) {
 				if(checkDuplicateEdge(data.links[i],data.links[j])) {
