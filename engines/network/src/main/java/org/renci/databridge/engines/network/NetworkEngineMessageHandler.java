@@ -17,6 +17,7 @@ import java.util.*;
 import java.net.*;
 import java.io.*;
 import com.google.gson.*;
+import java.nio.file.*;
 
 
 /**
@@ -149,11 +150,11 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
   
 
   /**
-   * Handle the PROCESSED_METADATA_TO_NETWORKFILE message.  Primarily, we are going to search
-   * the action table and call the processInsertSimilarityMatrixJavaMessage code for each matching
-   * action. There is some remapping of the headers involved as well.
-   * @param stringHeaders A map of the headers provided in the message
-   * @param extra An object containing the needed DAO objects
+   * This function essentially de-multiplexes the message by calling the
+   * appropriate lower level handler based on the headers.
+   *
+   * @param amqpMessage The message to handle.
+   * @param extra An object containing the needed DAO objects plus the Properties object
    */
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
       // Get the individual components of the the message and store
@@ -184,10 +185,96 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          processAddedMetadataToNetworkDBMessage(stringHeaders, extra);
       } else if (messageName.compareTo(NetworkListenerMessage.ADDED_SNA_TO_NETWORKDB) == 0) {
          processAddedSNAToNetworkDBMessage(stringHeaders, extra);
+      } else if (messageName.compareTo(NetworkListenerMessage.JSON_FILE_CREATED) == 0) {
+         processJSONFileCreated(stringHeaders, extra);
       } else {
          System.out.println("unimplemented messageName: " + messageName);
       }
   }
+
+    /**
+     * Handle the JSON_FILE_CREATED message. The only goal of this message is to take the
+     * existing JSON file, copy it into the correct public_html directory and edit the filelist.txt
+     * file.
+     * @param stringHeaders A map of the headers provided in the message
+     * @param extra An object containing the needed DAO objects
+     */
+  public void processJSONFileCreated( Map<String, String> stringHeaders, Object extra) {
+
+      // We need several pieces of information before we can continue.  This info has to 
+      // all be in the headers or we are toast.
+
+      // 1) the nameSpace
+      String nameSpace = stringHeaders.get(NetworkListenerMessage.NAME_SPACE);    
+      if (null == nameSpace) {
+         this.logger.log (Level.SEVERE, "No nameSpace in message");
+         return;
+      }
+
+      // 2) the json file
+      String jsonFile = stringHeaders.get(NetworkListenerMessage.JSON_FILE);    
+      if (null == jsonFile) {
+         this.logger.log (Level.SEVERE, "No jsonFile in message");
+         return;
+      }
+
+      // In this case the extra parameter is an array of 3 objects, which are the metadata and
+      // network factories.
+      Object factoryArray[] = (Object[]) extra;
+
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) factoryArray[0];
+      if (null == theFactory) {
+         this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
+         return;
+      } 
+
+      // Preliminaries are out of the way. We can proceed to the main algorithm
+      // Our task is to find the the action tasks corresponding to this message. If there
+      // are any, we are going to copy the specfied json file to the required directory and add the
+      // file name to the list of file names.  Note that this is HIGHLY specific to out current viz
+      // application.
+      // Get the list of needed actions
+      ActionTransferObject theAction = new ActionTransferObject();
+      ActionDAO theActionDAO = theFactory.getActionDAO();
+
+      System.out.println("Searching for message: " + NetworkListenerMessage.JSON_FILE_CREATED + " and nameSpace " + nameSpace);
+      Iterator<ActionTransferObject> actionIt =
+             theActionDAO.getActions(NetworkListenerMessage.JSON_FILE_CREATED, nameSpace);
+
+      String outputFile = null;
+      while (actionIt.hasNext()) {
+         theAction = actionIt.next();
+         System.out.println("Found action: " + theAction.getDataStoreId());
+         HashMap<String, String> actionHeaders = theAction.getHeaders();
+         String vizTargetDir = (String) actionHeaders.get(NetworkListenerMessage.VIZ_TARGET_DIR); 
+         String vizListFile = (String) actionHeaders.get(NetworkListenerMessage.VIZ_LIST_FILE); 
+
+         // Copy the file into the correct directory
+         try {
+            Path existingPath = FileSystems.getDefault().getPath(jsonFile);
+            Path newPath = FileSystems.getDefault().getPath(vizTargetDir + 
+                           System.getProperty("file.separator") + 
+                           "data" + System.getProperty("file.separator") +
+                            existingPath.getFileName().toString());
+            Files.copy(existingPath, newPath, java.nio.file.StandardCopyOption.COPY_ATTRIBUTES);
+
+            // Now add the file name to the "filelist.txt" (I told you this was specific!).
+            File fileList = new File(vizTargetDir + System.getProperty("file.separator") + "filelist.txt");
+            Writer output = new BufferedWriter(new FileWriter(fileList, true));
+
+            // The file names have a .json extension, but the filelist.txt wants the name without the 
+            // extension
+            String completeFileName = existingPath.getFileName().toString();
+            String fileNameWithoutExtension = 
+                completeFileName.substring(0, completeFileName.lastIndexOf("."));
+            output.append(fileNameWithoutExtension);
+            output.close();
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+      }
+  }
+
 
     /**
      * Handle the PROCESSED_METADATA_TO_NETWORKFILE message.  Primarily, we are going to search
