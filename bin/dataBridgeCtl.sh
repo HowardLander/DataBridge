@@ -273,14 +273,3 @@ case "$1" in
 esac
 
 exit 0
-
-# Start the ingest engine
-$JAVA -cp ${INGEST_ENGINE_CLASS_PATH} org.renci.databridge.engines.ingest.IngestEngine /projects/databridge/howard/DataBridge/config/DataBridge.conf > ingest_log.out 2>&1
-
-# Start the network engine
-#$JAVA -cp ${NETWORK_ENGINE_CLASS_PATH} org.renci.databridge.engines.network.NetworkEngine /projects/databridge/howard/DataBridge/engines/network/network.conf > network_log.out 2>&1
-
-# Start the network engine
-#$JAVA -cp ${RELEVANCE_ENGINE_CLASS_PATH} org.renci.databridge.engines.relevance.RelevanceEngine ${DATABRIDGE_CONFIG_DIR}/DataBridge.conf > log.out 2>&1 
-#echo ${RELEVANCE_ENGINE_CLASS_PATH}
-#$JAVA -cp ${RELEVANCE_ENGINE_CLASS_PATH} org.renci.databridge.engines.relevance.RelevanceEngine /projects/databridge/howard/DataBridge/engines/relevance/relevance.conf > log.out 2>&1 

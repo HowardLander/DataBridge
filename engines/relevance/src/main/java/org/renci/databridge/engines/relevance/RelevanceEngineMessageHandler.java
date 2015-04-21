@@ -370,7 +370,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
                              nameSpace, theSimilarityInstance.getDataStoreId());
          this.logger.log (Level.FINER, "Send headers: " + headers);
          ac.publishMessage (new AMQPMessage (), headers, true);
-         this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
+         this.logger.log (Level.FINE, "Sent ProcessedMetadataToNetworkFile message.");
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
       } finally {
