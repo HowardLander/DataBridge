@@ -42,9 +42,9 @@ ingest_stdout_file=${DATABRIDGE_LOG_DIR}/ingest.log
 relevance_stdout_file=${DATABRIDGE_LOG_DIR}/relevance.log
 network_stdout_file=${DATABRIDGE_LOG_DIR}/network.log
 
-ingest_stderr_file=${DATABRIDGE_LOG_DIR}/ingest.err
-relevance_stderr_file=${DATABRIDGE_LOG_DIR}/relevance.err
-network_stderr_file=${DATABRIDGE_LOG_DIR}/network.err
+ingest_stderr_file=${DATABRIDGE_LOG_DIR}/ingest.log
+relevance_stderr_file=${DATABRIDGE_LOG_DIR}/relevance.log
+network_stderr_file=${DATABRIDGE_LOG_DIR}/network.log
 
 get_ingest_pid() {
    cat ${ingest_pid_file}
