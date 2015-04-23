@@ -27,7 +27,17 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
         */
        @Override
        public boolean hasNext() {
-           return (relationshipIterator.hasNext() || nodeIterator.hasNext());
+           GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
+           Transaction tx = theDB.beginTx();
+           try {
+               return (relationshipIterator.hasNext() || nodeIterator.hasNext());
+           } catch (Exception e) {
+               // should send this back using the message logs eventually
+               this.logger.log (Level.SEVERE, "exception in hasNext function: " + e.getMessage(), e);
+           } finally {
+               tx.close();
+           }
+           return false;
        }
 
        /**

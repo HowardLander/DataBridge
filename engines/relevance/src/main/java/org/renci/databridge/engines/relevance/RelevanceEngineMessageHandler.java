@@ -148,7 +148,11 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
                       System.out.println("can't create path: " + outputFile);
                   }
               }
-              File tmpFile = File.createTempFile(nameSpace + "-", ".net", outFileObject);
+              // Let's add the last element of the class name to the file name
+              String fullClassName = (String) actionHeaders.get(RelevanceEngineMessage.CLASS);
+              String lastClass = fullClassName.substring(fullClassName.lastIndexOf('.') + 1);
+              File tmpFile = 
+                 File.createTempFile(nameSpace + "-" + lastClass + "-", ".net", outFileObject);
               fileName = new StringBuilder(outputFile).append(tmpFile.getName()).toString();
               tmpFile.delete();
            } catch (Exception e) {
@@ -347,7 +351,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
                theSimFile.setSimilarityValue(rowCounter, colCounter, similarity);
                colCounter++;
             } catch (Exception e) {
-               this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" );
+               this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" + e.getMessage(), e);
                return;
             }
          }

@@ -220,9 +220,9 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
       // In this case the extra parameter is an array of 3 objects, which are the metadata and
       // network factories.
-      Object factoryArray[] = (Object[]) extra;
+      Object extraArray[] = (Object[]) extra;
 
-      MetadataDAOFactory theFactory = (MetadataDAOFactory) factoryArray[0];
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
       if (null == theFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
@@ -267,7 +267,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
             String completeFileName = existingPath.getFileName().toString();
             String fileNameWithoutExtension = 
                 completeFileName.substring(0, completeFileName.lastIndexOf("."));
-            output.append(fileNameWithoutExtension);
+            output.append(fileNameWithoutExtension + System.getProperty("line.separator"));
             output.close();
          } catch (Exception e) {
             e.printStackTrace();
@@ -304,9 +304,9 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
       // In this case the extra parameter is an array of 3 objects, which are the metadata and
       // network factories.
-      Object factoryArray[] = (Object[]) extra;
+      Object extraArray[] = (Object[]) extra;
 
-      MetadataDAOFactory theFactory = (MetadataDAOFactory) factoryArray[0];
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
       if (null == theFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
@@ -371,9 +371,9 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
       // In this case the extra parameter is an array of 2 objects, which are the metadata and
       // network factories.
-      Object factoryArray[] = (Object[]) extra;
+      Object extraArray[] = (Object[]) extra;
 
-      MetadataDAOFactory theFactory = (MetadataDAOFactory) factoryArray[0];
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
       if (null == theFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
@@ -439,9 +439,9 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
       // In this case the extra parameter is an array of 2 objects, which are the metadata and
       // network factories.
-      Object factoryArray[] = (Object[]) extra;
+      Object extraArray[] = (Object[]) extra;
 
-      MetadataDAOFactory theFactory = (MetadataDAOFactory) factoryArray[0];
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
       if (null == theFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
@@ -470,6 +470,20 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          SNAInstanceDAO theSNAInstanceDAO = theFactory.getSNAInstanceDAO();
          SNAInstanceTransferObject snaObject = theSNAInstanceDAO.getSNAInstanceById(snaId);
 
+         // We want to add the class name that generated the similarity to the fileName
+         // We can retrieve this from the similarity instance
+         SimilarityInstanceDAO theSimilarityInstanceDAO = theFactory.getSimilarityInstanceDAO();
+         SimilarityInstanceTransferObject similarityObject = 
+            theSimilarityInstanceDAO.getSimilarityInstanceById(snaObject.getSimilarityInstanceId());
+
+         // Let's get the last element of the similarity class name for the file name
+         String fullSimClassName = similarityObject.getClassName();
+         String simClass = fullSimClassName.substring(fullSimClassName.lastIndexOf('.') + 1); 
+
+         // Let's get the last element of the sna class name for the file name
+         String fullSNAClassName = snaObject.getClassName();
+         String SNAClass = fullSNAClassName.substring(fullSNAClassName.lastIndexOf('.') + 1); 
+
          // Get the class from the action object
          HashMap<String, String> actionHeaders = actionObject.getHeaders();
          outputFile = (String) actionHeaders.get(NetworkListenerMessage.OUTPUT_FILE);
@@ -490,7 +504,8 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
                        System.out.println("can't create path: " + outputFile);
                    }
                }
-               File tmpFile = File.createTempFile(nameSpace + "-", ".json", outFileObject);
+               File tmpFile = File.createTempFile(nameSpace + "-" + simClass + "-" + SNAClass + "-", 
+                                                  ".json", outFileObject);
                fileName = new StringBuilder(outputFile).append(tmpFile.getName()).toString();
                tmpFile.delete();
             } catch (Exception e) {
@@ -549,9 +564,9 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
       // In this case the extra parameter is an array of 2 objects, which are the metadata and
       // network factories.
-      Object factoryArray[] = (Object[]) extra;
+      Object extraArray[] = (Object[]) extra;
 
-      MetadataDAOFactory metadataFactory = (MetadataDAOFactory) factoryArray[0];
+      MetadataDAOFactory metadataFactory = (MetadataDAOFactory) extraArray[0];
       if (null == metadataFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
@@ -562,7 +577,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          return;
       } 
 
-      NetworkDAOFactory networkFactory = (NetworkDAOFactory) factoryArray[1];
+      NetworkDAOFactory networkFactory = (NetworkDAOFactory) extraArray[1];
       if (null == networkFactory) {
          this.logger.log (Level.SEVERE, "NetworkDAOFactory is null");
          return;
@@ -579,6 +594,12 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          this.logger.log (Level.SEVERE, "theNodeDAO is null");
          return;
       } 
+
+      Properties theProps = (Properties) extraArray[2];
+      if (null == theProps) {
+         this.logger.log (Level.SEVERE, "Properties object is null");
+         return;
+      }
 
       // Preliminaries are out of the way. We can proceed to the main algorithm
       // Used to assure that we only add each node to the file once.  
@@ -651,6 +672,23 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "exception in processCreateJSONFileMessage: "+ e.getMessage(), e);
          return;
+      }
+
+      // Assuming we get this far, we want to send out the next message
+      AMQPComms ac = null;
+      try {
+         ac = new AMQPComms (theProps);
+         String headers = JSONFileCreated.getSendHeaders (
+                             nameSpace, outputFile);
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         this.logger.log (Level.FINE, "Sent JSONFileCreated message.");
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
+      } finally {
+         if (null != ac) {
+             ac.shutdownConnection ();
+         }
       }
   }
 
