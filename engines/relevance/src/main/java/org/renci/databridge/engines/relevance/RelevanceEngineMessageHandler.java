@@ -10,6 +10,7 @@ import java.lang.InterruptedException;
 import java.io.IOException;
 import org.renci.databridge.message.*;
 import java.util.*;
+import java.text.*;
 import java.io.*;
 import java.lang.reflect.*;
 
@@ -148,9 +149,16 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
                       System.out.println("can't create path: " + outputFile);
                   }
               }
-              File tmpFile = File.createTempFile(nameSpace + "-", ".net", outFileObject);
-              fileName = new StringBuilder(outputFile).append(tmpFile.getName()).toString();
-              tmpFile.delete();
+              // Let's add the last element of the class name to the file name
+              String fullClassName = (String) actionHeaders.get(RelevanceEngineMessage.CLASS);
+              String lastClass = fullClassName.substring(fullClassName.lastIndexOf('.') + 1);
+
+              // Let's add a the date and time as well.
+              Date now = new Date();
+              SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
+              String dateString = format.format(now);
+              String labeledFileName = nameSpace + "-" + lastClass + "-" + dateString + ".net";
+              fileName = outputFile + labeledFileName;
            } catch (Exception e) {
               e.printStackTrace();
            }
@@ -347,7 +355,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
                theSimFile.setSimilarityValue(rowCounter, colCounter, similarity);
                colCounter++;
             } catch (Exception e) {
-               this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" );
+               this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" + e.getMessage(), e);
                return;
             }
          }
