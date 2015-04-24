@@ -18,7 +18,7 @@ import java.net.*;
 import java.io.*;
 import com.google.gson.*;
 import java.nio.file.*;
-
+import java.text.*;
 
 /**
  * This class is executed in a thread of the Network Engine. The Network Engine
@@ -504,10 +504,13 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
                        System.out.println("can't create path: " + outputFile);
                    }
                }
-               File tmpFile = File.createTempFile(nameSpace + "-" + simClass + "-" + SNAClass + "-", 
-                                                  ".json", outFileObject);
-               fileName = new StringBuilder(outputFile).append(tmpFile.getName()).toString();
-               tmpFile.delete();
+
+               // Let's add a the date and time as well.
+               Date now = new Date();
+               SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
+               String dateString = format.format(now);
+               String labeledFileName = nameSpace + "-" + simClass + "-" + SNAClass + "-" + dateString + ".json";
+               fileName = outputFile + labeledFileName;
             } catch (Exception e) {
                e.printStackTrace();
             }

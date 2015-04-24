@@ -10,6 +10,7 @@ import java.lang.InterruptedException;
 import java.io.IOException;
 import org.renci.databridge.message.*;
 import java.util.*;
+import java.text.*;
 import java.io.*;
 import java.lang.reflect.*;
 
@@ -151,10 +152,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
               // Let's add the last element of the class name to the file name
               String fullClassName = (String) actionHeaders.get(RelevanceEngineMessage.CLASS);
               String lastClass = fullClassName.substring(fullClassName.lastIndexOf('.') + 1);
-              File tmpFile = 
-                 File.createTempFile(nameSpace + "-" + lastClass + "-", ".net", outFileObject);
-              fileName = new StringBuilder(outputFile).append(tmpFile.getName()).toString();
-              tmpFile.delete();
+
+              // Let's add a the date and time as well.
+              Date now = new Date();
+              SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
+              String dateString = format.format(now);
+              String labeledFileName = nameSpace + "-" + lastClass + "-" + dateString + ".net";
+              fileName = outputFile + labeledFileName;
            } catch (Exception e) {
               e.printStackTrace();
            }
