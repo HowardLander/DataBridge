@@ -162,15 +162,16 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       routingKey = amqpMessage.getRoutingKey();
       properties = amqpMessage.getProperties();
       stringHeaders = amqpMessage.getStringHeaders();
-      System.out.println("headers: " + stringHeaders);
+      this.logger.log (Level.INFO, "headers: " + stringHeaders);
       bytes = amqpMessage.getBytes();
 
       // get the message name
       String messageName = stringHeaders.get(NetworkEngineMessage.NAME);
       if (null == messageName) {
-         System.out.println("messageName is missing");
+         this.logger.log (Level.WARNING, "messageName is missing");
+         return;
       }
-      System.out.println("messageName: " + messageName);
+      this.logger.log (Level.INFO, "messageName: " + messageName);
 
       // Call the function appropriate for the message
       if (messageName.compareTo(NetworkEngineMessage.INSERT_SIMILARITYMATRIX_JAVA_URI_NETWORKDB) == 0) {
@@ -188,7 +189,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       } else if (messageName.compareTo(NetworkListenerMessage.JSON_FILE_CREATED) == 0) {
          processJSONFileCreated(stringHeaders, extra);
       } else {
-         System.out.println("unimplemented messageName: " + messageName);
+         this.logger.log (Level.WARNING, "unimplemented messageName: " + messageName);
       }
   }
 
@@ -237,14 +238,14 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       ActionTransferObject theAction = new ActionTransferObject();
       ActionDAO theActionDAO = theFactory.getActionDAO();
 
-      System.out.println("Searching for message: " + NetworkListenerMessage.JSON_FILE_CREATED + " and nameSpace " + nameSpace);
+      this.logger.log (Level.INFO, "Searching for message: " + NetworkListenerMessage.JSON_FILE_CREATED + " and nameSpace " + nameSpace);
       Iterator<ActionTransferObject> actionIt =
              theActionDAO.getActions(NetworkListenerMessage.JSON_FILE_CREATED, nameSpace);
 
       String outputFile = null;
       while (actionIt.hasNext()) {
          theAction = actionIt.next();
-         System.out.println("Found action: " + theAction.getDataStoreId());
+         this.logger.log (Level.INFO, "Found action: " + theAction.getDataStoreId());
          HashMap<String, String> actionHeaders = theAction.getHeaders();
          String vizTargetDir = (String) actionHeaders.get(NetworkListenerMessage.VIZ_TARGET_DIR); 
          String vizListFile = (String) actionHeaders.get(NetworkListenerMessage.VIZ_LIST_FILE); 
@@ -337,7 +338,8 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
         outputFile = theSimilarity.getOutput();
 
         passedHeaders.put(NetworkEngineMessage.INPUT_URI, outputFile);
-        System.out.println( "passing headers to processInsertSimilarityMatrixJavaMessage: " + passedHeaders);
+        this.logger.log(Level.INFO, 
+            "passing headers to processInsertSimilarityMatrixJavaMessage: " + passedHeaders);
         processInsertSimilarityMatrixJavaMessage(passedHeaders, extra);
      }
   }
@@ -405,7 +407,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
         passedHeaders.put(NetworkListenerMessage.NAME_SPACE, nameSpace);
         passedHeaders.put(NetworkListenerMessage.SIMILARITY_ID, similarityId);
-        System.out.println( "passing headers to processRunSnaAlgorithmJavaMessage: " + passedHeaders);
+        this.logger.log(Level.INFO, "passing headers to processRunSnaAlgorithmJavaMessage: " + passedHeaders);
         processRunSnaAlgorithmJavaMessage(passedHeaders, extra);
      }
   }
@@ -501,7 +503,8 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
                if (outFileObject.exists() == false) {
                    boolean result = outFileObject.mkdirs();
                    if (false == result) {
-                       System.out.println("can't create path: " + outputFile);
+                       this.logger.log (Level.WARNING, "can't create path: " + outputFile);
+                       return;
                    }
                }
 
@@ -523,7 +526,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          passedHeaders.put(NetworkListenerMessage.SIMILARITY_ID, snaObject.getSimilarityInstanceId());
          passedHeaders.put(NetworkListenerMessage.SNA_ID, snaId);
          passedHeaders.put(NetworkListenerMessage.OUTPUT_FILE, fileName);
-         System.out.println( "passing headers to processCreateJSONFileMessage: " + passedHeaders);
+         this.logger.log (Level.INFO, "passing headers to processCreateJSONFileMessage: " + passedHeaders);
          processCreateJSONFileMessage(passedHeaders, extra);
       }
   }
@@ -750,9 +753,8 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
               // Should eventually log the result
               boolean result = this.theNetworkRelationshipDAO.insertNetworkRelationship(theNetworkTransfer, 
-                                                                                        this.nodeList.get(i), 
+                                                                                        this.nodeList.get(i),
                                                                                         this.nodeList.get(j));
-              System.out.println("result in apply is: " + result);
           }
       }
 
@@ -796,7 +798,6 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
       // We'll need a DAO
       NetworkNodeDAO theNetworkNodeDAO = networkFactory.getNetworkNodeDAO();
       NetworkRelationshipDAO theNetworkRelationshipDAO = networkFactory.getNetworkRelationshipDAO();
-
       // Let's start by reading in the URI/file. If the first character is a slash
       // then we'll assume it's a file, otherwise we'll assume it's a URI. Note, this may not
       // work on windows.
@@ -807,15 +808,36 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
           this.logger.log (Level.SEVERE, "exception in processInsertSimilarityMatrixJavaMessage: "+ e.getMessage(), e);
           e.printStackTrace();
       }
+
+      // First things first: if a matrix with this similariId is already in the network database, we
+      // are done.  The Id's are unique for every run, so the only thing we would be doing is mucking
+      // up the network database with duplicate relationships.  Nobody wants that ...
+      String theSimId = theFile.getSimilarityInstanceId();
       String nameSpace = theFile.getNameSpace();
+
+      Iterator<NetworkNodeTransferObject> theNodes = theNetworkNodeDAO.getNetworkNodesForNameSpace(nameSpace);
+      if (theNodes.hasNext()) {
+         // This nameSpace has been inserted, how about the unique combo of nameSpace and similarityInstance
+         // Because each node in the nameSpace gets the similarityId whether or not it has any non-zero
+         // similarities, we only need to check the first node. Also, if there are no nodes, than certainly
+         // the similarity id has not been inserted.
+         NetworkNodeTransferObject firstNode = theNodes.next();
+         Object value = theNetworkNodeDAO.getPropertyFromNetworkNode(firstNode, theSimId);
+         if (null != value) {
+             // similarity matrix has already been inserted.
+             this.logger.log (Level.INFO, "similarityId " + theSimId + " already inserted" );
+             return;
+         }
+      } 
 
       // Here is a classic space vs time tradeoff: we are going to keep all of the Node
       // structures in memory because we will need them later to insert the relationships. The 
       // alternative would be lots of search and retrieve.
       ArrayList<NetworkNodeTransferObject> nodeList = new ArrayList<NetworkNodeTransferObject>();
 
-      //System.out.println("\tnameSpace: " + theFile.getNameSpace());
-      // Now we'll add all of the nodes.
+      // Now we'll add all of the nodes. Note that is all of the nodes in the file, not just the
+      // ones with non-zero values.
+      int indexInMatrix = 0;
       for (String theId: theFile.getCollectionIds()) {
           NetworkNodeTransferObject theNode = new NetworkNodeTransferObject();
           theNode.setNameSpace(nameSpace);
@@ -823,20 +845,36 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
           // Save for later
           theNode.setNodeId(theId);
           nodeList.add(theNode);
+          // If a node is already in the database, this is not a failure
           int result = theNetworkNodeDAO.insertNetworkNode(theNode);
           if (result < 0) {
              this.logger.log (Level.SEVERE, "failure on insertNetworkNode");
              return;
           }
+
+          // Store the index in the original matrix of this node for this similarity.  This
+          // will be used later on to reconstruct the original matrix. Note that the matrix
+          // is symetric, so we only need to store one index.
+          theNetworkNodeDAO.addPropertyToNetworkNode(theNode, theFile.getSimilarityInstanceId(), indexInMatrix);
+          indexInMatrix ++;
       }
 
       // Add the similarity matrix as relationships between nodes.
       org.la4j.matrix.sparse.CRSMatrix theMatrix = theFile.getSimilarityMatrix();
 
       // Create an instance of the inserter class, which actually does all the work.
+      // note that we were using the eachNonZero call, but it seems to have a bug in it, so 
+      // we essentially wrote our own and called it. Didn't really need a class as it turned out.
+      // Here's the commented out line: theMatrix.eachNonZero(theInserter);
       RelationshipInserter theInserter = 
           new RelationshipInserter(nodeList, theNetworkRelationshipDAO, theFile.getSimilarityInstanceId());
-      theMatrix.eachNonZero(theInserter);
+      for (int i = 0; i < theMatrix.rows(); i++) {
+         for (int j = 0; j < theMatrix.columns(); j++) {
+            if (theMatrix.get(i,j) != 0.) {
+               theInserter.apply(i, j, theMatrix.get(i,j));
+            }
+         }
+      }
  
       // Assuming we get this far, we want to send out the next message
       AMQPComms ac = null;
@@ -982,7 +1020,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
       try {
          boolean result = theSNAInstanceDAO.insertSNAInstance(theSNAInstance);
-         System.out.println("Inserted Instance: " + theSNAInstance.getDataStoreId());
+         this.logger.log(Level.INFO, "Inserted Instance: " + theSNAInstance.getDataStoreId());
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't insert SNA instance");
          return;
@@ -1024,7 +1062,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
           }
           
       } catch (Exception e) {
-          this.logger.log (Level.SEVERE, "Can't invoke method " + "processNetwork" + " " + e.getMessage(), e);
+          this.logger.log (Level.SEVERE, "Can't invoke method " + "processNetwork" + " " + e.getMessage());
           return;
       }
 
