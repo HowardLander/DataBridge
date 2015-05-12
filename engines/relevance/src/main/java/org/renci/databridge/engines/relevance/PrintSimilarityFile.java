@@ -34,7 +34,19 @@ public class PrintSimilarityFile {
         System.out.println("\tnameSpace: " + readData.getNameSpace());
         System.out.println("\tsimilarityInstanceId: " + readData.getSimilarityInstanceId());
         System.out.println("\tMatrix: ");
-        System.out.println(readData.getSimilarityMatrix().toString());
+        org.la4j.matrix.sparse.CRSMatrix theMatrix = readData.getSimilarityMatrix();
+        for (int i = 0; i < theMatrix.rows(); i++) {
+            System.out.println("Row: " + i);
+            if (theMatrix.maxInRow(i) > 0.) {
+               org.la4j.vector.Vector thisRow = theMatrix.getRow(i);
+               System.out.println(thisRow.toString());
+            } else {
+               System.out.println("Skipping empty row");
+            }
+            System.out.println("");
+        }
+
+        //System.out.println(readData.getSimilarityMatrix().toString());
         System.out.println("\tcollectionIds: ");
         for (String theId: readData.getCollectionIds()) {
             System.out.println("\tthisId: " + theId);
