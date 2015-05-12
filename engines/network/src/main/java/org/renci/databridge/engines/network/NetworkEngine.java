@@ -28,7 +28,8 @@ public class NetworkEngine {
             props.load(new FileInputStream(propFileName));
             props.setProperty("org.renci.databridge.primaryQueue",
                               props.getProperty("org.renci.databridge.networkEngine.primaryQueue"));
-            System.out.println("org.renci.databridge.primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+            logger.log(Level.INFO, 
+                "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
             NetworkEngineMessageListener aml = 
                 new NetworkEngineMessageListener (props, new NetworkEngineMessage(), 
                                                   new NetworkEngineMessageHandler(), logger);
@@ -39,7 +40,8 @@ public class NetworkEngine {
             // this listener will listen to.
             props.setProperty("org.renci.databridge.primaryQueue",
                               props.getProperty("org.renci.databridge.networkEngine.ingestQueue"));
-            System.out.println("org.renci.databridge.primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+            logger.log(Level.INFO, 
+                "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
 
             NetworkEngineMessageListener networkListener = 
                 new NetworkEngineMessageListener (props, new NetworkListenerMessage(), 
