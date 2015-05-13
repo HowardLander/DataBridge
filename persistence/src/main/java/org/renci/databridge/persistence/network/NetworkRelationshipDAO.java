@@ -71,4 +71,6 @@ public interface NetworkRelationshipDAO {
         String key);
 
     public static final String METADATA_SIMILARITY_PROPERTY_NAME = "value";
+    public static final String METADATA_I_PROPERTY_NAME = "i";
+    public static final String METADATA_J_PROPERTY_NAME = "j";
 }

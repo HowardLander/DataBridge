@@ -12,6 +12,8 @@ public class NetworkDyadTransferObject {
     private String node2DataStoreId; // Second node id the network database. null if the node is isolated
     private String node1MetadataId;  // Id of node 1 in the metadata database
     private String node2MetadataId;  // Id of node 2 in the metadata database, null if the node is isolated
+    private int i; // The i value of the first node in the original similarity matrix. origMatrix(i,j) = similarity
+    private int j; // The j value of the second node in the original similarity matrix
     private double similarity; // The similarity between these to nodes.
     
     
@@ -130,6 +132,46 @@ public class NetworkDyadTransferObject {
     public void setNode2MetadataId(String node2MetadataId)
     {
         this.node2MetadataId = node2MetadataId;
+    }
+    
+    /**
+     * Get i.
+     *
+     * @return i as int.
+     */
+    public int getI()
+    {
+        return i;
+    }
+    
+    /**
+     * Set i.
+     *
+     * @param i the value to set.
+     */
+    public void setI(int i)
+    {
+        this.i = i;
+    }
+    
+    /**
+     * Get j.
+     *
+     * @return j as int.
+     */
+    public int getJ()
+    {
+        return j;
+    }
+    
+    /**
+     * Set j.
+     *
+     * @param j the value to set.
+     */
+    public void setJ(int j)
+    {
+        this.j = j;
     }
 }
 
