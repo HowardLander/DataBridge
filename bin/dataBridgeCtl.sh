@@ -146,7 +146,7 @@ case "$1" in
     else
         echo "Starting network engine"
         cd "$DATABRIDGE_BIN"
-        echo "Network engine startup at "`date -u` >> ${relevance_stdout_file}
+        echo "Network engine startup at "`date -u` >> ${network_stdout_file}
 #       sudo -u "$user" $cmd >> "$stdout_log" 2>> "$stderr_log" &
         $JAVA -cp ${NETWORK_ENGINE_CLASS_PATH} org.renci.databridge.engines.network.NetworkEngine ${DATABRIDGE_CONFIG_DIR}/DataBridge.conf >> "$network_stdout_file" 2>> "$network_stderr_file" &
         echo $! > "$network_pid_file"
