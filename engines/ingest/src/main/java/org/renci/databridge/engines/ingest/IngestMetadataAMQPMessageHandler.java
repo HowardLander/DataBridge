@@ -60,6 +60,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
     String className = stringHeaders.get (IngestMetadataMessage.CLASS);
     String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
+    boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
     String inputURI = stringHeaders.get (IngestMetadataMessage.INPUT_URI);
     String messageName = stringHeaders.get(IngestMetadataMessage.NAME);
 
@@ -78,13 +79,15 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
       this.logger.log (Level.FINE, "Inserted MetadataObject.");
     }
 
-    // send ProcessedMetadataToMetadataDB message 
-    AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
-    String headers = ProcessedMetadataToMetadataDB.getSendHeaders (nameSpace);
-    this.logger.log (Level.FINER, "Send headers: " + headers);
-    ac.publishMessage (new AMQPMessage (), headers, true);
-    ac.shutdownConnection ();     
-    this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
+    if (fireEvent) {
+      // send ProcessedMetadataToMetadataDB message 
+      AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
+      String headers = ProcessedMetadataToMetadataDB.getSendHeaders (nameSpace);
+      this.logger.log (Level.FINER, "Send headers: " + headers);
+      ac.publishMessage (new AMQPMessage (), headers, true);
+      ac.shutdownConnection ();     
+      this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
+    }
 
   }
 

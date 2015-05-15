@@ -13,7 +13,6 @@
     <module>persistence</module>
     <module>formatter</module>
     <module>engines</module>
-    <module>gui</module>
   </modules>
 
   <properties>
