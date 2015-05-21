@@ -1,4 +1,4 @@
-package org.renci.databridge.persistence.network;
+package org.renci.databridge.message;
 
 import java.io.*;
 import java.util.*;
@@ -40,8 +40,8 @@ public class MessageTest {
      System.out.println("headers are: " + headers);
      TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
 
-     return1 = "type:databridge;subtype:ingestmetadata;x-match:all;name:Insert.Metadata.Java.URI.MetadataDB;className:class1;nameSpace:systemTest;inputURI:file1";
-     headers = InsertMetadataJavaURIMetadataDB.getSendHeaders("class1", "systemTest", "file1");
+     return1 = "type:databridge;subtype:ingestmetadata;x-match:all;name:Insert.Metadata.Java.URI.MetadataDB;className:class1;nameSpace:systemTest;fireEvent:true;inputURI:file1";
+     headers = InsertMetadataJavaURIMetadataDB.getSendHeaders("class1", "systemTest", "true", "file1");
      System.out.println("headers are: " + headers);
      TestCase.assertTrue("returnedString value incorrect", headers.compareTo(return1) == 0);
 
