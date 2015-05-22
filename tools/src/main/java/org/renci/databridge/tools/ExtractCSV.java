@@ -5,6 +5,7 @@ import java.util.*;
 import com.google.gson.*;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.*;
+import org.renci.databridge.persistence.metadata.*;
 /*
  * Use this to extract two csv files from a "viz" formatted json files. The first CSV
  * file will have the format: 
@@ -18,6 +19,7 @@ import org.apache.commons.io.*;
  * usage: JsonToCsv
  *  -inputFile <fileName>      the json file from which to extract.
  *  -outputDir <outputDir>     the directory to which to write the csv files
+ *  -properties <properties>   properties file
  *  -help                      print this message
  * 
  *  Example mvn command line:
@@ -50,7 +52,7 @@ public class ExtractCSV {
      }
 
      public String toString(int index) {
-         return (index + "," + this.title + "," + this.group + "," + this.URL);
+         return (index + ",\"" + this.title + "\"," + this.group + "," + this.URL);
      }
   }
 
@@ -132,10 +134,12 @@ public class ExtractCSV {
   private static CommandLine processArgs(String[] args) {
       Options options = new Options();
        Option inputFile = OptionBuilder.withArgName("inputFile").hasArg().withDescription("input file").create("inputFile");
+      Option properties = OptionBuilder.withArgName("properties").hasArg().withDescription("properties file").create("properties");
        Option outputDir = OptionBuilder.withArgName("outputDir").hasArg().withDescription("output directory").create("outputDir");
        Option help = new Option("help", "print this message");
        options.addOption(inputFile);
        options.addOption(outputDir);
+       options.addOption(properties);
        options.addOption(help);
 
        // create the parser
@@ -161,10 +165,35 @@ public class ExtractCSV {
 
     String inputFile;
     String outputDir;
+    String dbType;
+    String dbName;
+    String dbHost;
+    int    dbPort;
 
+    MetadataDAOFactory theFactory = null;
 
     try {
         CommandLine theLine = processArgs(args);
+
+        // open the preferences file
+        Properties prop = new Properties();
+        prop.load(new FileInputStream(theLine.getOptionValue("properties")));
+        dbType = prop.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
+        dbName = prop.getProperty("org.renci.databridge.relevancedb.dbName", "test");
+        dbHost = prop.getProperty("org.renci.databridge.relevancedb.dbHost", "localhost");
+        dbPort = Integer.parseInt(prop.getProperty("org.renci.databridge.relevancedb.dbPort", "27017"));
+
+        // Connect to the mongo database
+        if (dbType.compareToIgnoreCase("mongo") == 0) {
+            theFactory = MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB,
+                                                                  dbName, dbHost, dbPort);
+            if (null == theFactory) {
+               System.out.println("Couldn't produce the MetadataDAOFactory");
+               return;
+            }
+        }
+        // We'll need a collection DAO object.
+        CollectionDAO theCollectionDAO = theFactory.getCollectionDAO();
 
         inputFile = theLine.getOptionValue("inputFile");
         outputDir = theLine.getOptionValue("outputDir");
@@ -208,7 +237,19 @@ public class ExtractCSV {
         int i = 0;
         while(itrNodes.hasNext()) {
            JsonNode theNode = itrNodes.next();
-           nodeWriter.write(theNode.toString(i)); 
+           CollectionTransferObject thisCollectionObject = theCollectionDAO.getCollectionById(theNode.name);
+           String keywords = ",\"";
+           boolean notFirst = false;
+           for (String thisKeyword : thisCollectionObject.getKeywords()) {
+              if (notFirst) {
+                 keywords += " " + thisKeyword; 
+              } else {
+                 // don't need the leading space this for the first keyword
+                 keywords += thisKeyword; 
+                 notFirst = true;
+              } 
+           }
+           nodeWriter.write(theNode.toString(i) + keywords + "\""); 
            nodeWriter.write(System.getProperty("line.separator"));
            i++;
         } 
@@ -224,6 +265,8 @@ public class ExtractCSV {
         linkWriter.close();
      }  catch (Exception e) {
          e.printStackTrace();
-     } 
+     } finally {
+         theFactory.closeTheDB();
+     }
   }
 }
