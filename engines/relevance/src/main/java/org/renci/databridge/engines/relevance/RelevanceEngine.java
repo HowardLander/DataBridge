@@ -31,14 +31,16 @@ public class RelevanceEngine {
             propFileName = new String("relevance.conf");
         }    
 
-        System.out.println("propFileName: " + propFileName);
+        logger.log(Level.INFO, "propFileName: " + propFileName);
+
         try {
             // Make props from the config file to pass to AMQPComms
             Properties props= new Properties();
             props.load(new FileInputStream(propFileName));
             props.setProperty("org.renci.databridge.primaryQueue", 
                               props.getProperty("org.renci.databridge.relevanceEngine.primaryQueue"));
-            System.out.println("org.renci.databridge.primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+           logger.log(Level.INFO,
+                "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
      
             RelevanceEngineMessageListener aml = 
                 new RelevanceEngineMessageListener (props, 
@@ -52,7 +54,9 @@ public class RelevanceEngine {
             // this listener will listen to.
             props.setProperty("org.renci.databridge.primaryQueue", 
                               props.getProperty("org.renci.databridge.relevanceEngine.ingestQueue"));
-            System.out.println("org.renci.databridge.primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+           logger.log(Level.INFO,
+                "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+
             RelevanceEngineMessageListener ingestListener = 
                 new RelevanceEngineMessageListener (props, 
                                          new IngestListenerMessage(), 
@@ -63,7 +67,7 @@ public class RelevanceEngine {
             aml.join ();
             ingestListener.join (); // keeps main thread from exiting 
         } catch (Exception ex) {
-            System.out.println(ex.toString());
+            logger.log(Level.SEVERE, "Exception in main: " + ex.toString());
             System.exit(1);
         }
 

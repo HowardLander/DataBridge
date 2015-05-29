@@ -55,22 +55,21 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       properties = amqpMessage.getProperties();
       stringHeaders = amqpMessage.getStringHeaders();
       bytes = amqpMessage.getBytes();
-      System.out.println("headers: " + stringHeaders);
-      System.out.println("Hello from RelevanceEngineMessageHandler");
+      logger.log(Level.INFO, "headers: " + stringHeaders);
 
       // get the message name
       String messageName = stringHeaders.get(RelevanceEngineMessage.NAME);
 
       // Call the function appropriate for the message
       if (null == messageName) {
-         System.out.println("messageName is missing");
+         logger.log(Level.WARNING, "messageName is missing");
       } else if 
           (messageName.compareTo(RelevanceEngineMessage.CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI) == 0) {
          processCreateSimilarityMessage(stringHeaders, extra);
       } else if (messageName.compareTo(IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB) == 0) {
          processMetadataToMetadataDBMessage(stringHeaders, extra);
       } else {
-         System.out.println("unimplemented messageName: " + messageName);
+         logger.log(Level.WARNING, "unimplemented messageName: " + messageName);
       }
   }
 
@@ -82,7 +81,6 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
    * @param extra An object containing the needed DAO objects
    */
   public void processMetadataToMetadataDBMessage( Map<String, String> stringHeaders, Object extra) {
-      System.out.println("Hello from processMetadataToMetadataDBMessage");
 
       // We need several pieces of information before we can continue.  This info has to 
       // all be in the headers or we are toast.
@@ -110,7 +108,6 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
       String dbType = theProps.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
-      System.out.println("dbType: " + dbType);
 
      // Get the list of needed actions
      ActionTransferObject theAction = new ActionTransferObject();
@@ -118,11 +115,12 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
  
      Iterator<ActionTransferObject> actionIt =
             theActionDAO.getActions(IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB, nameSpace);
-     System.out.println("Searching action table for: " + IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB + " nameSpace: " + nameSpace);
+     this.logger.log (Level.INFO, "Searching action table for: " + 
+                      IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB + " nameSpace: " + nameSpace);
      String outputFile = null;
      while (actionIt.hasNext()) {
         ActionTransferObject returnedObject = actionIt.next();
-        System.out.println("Found action: " + returnedObject.getDataStoreId());
+        this.logger.log (Level.INFO, "Found action: " + returnedObject.getDataStoreId());
         HashMap<String, String> passedHeaders = new HashMap<String, String>();
 
         // Get the class and outputFile from the action object
@@ -146,7 +144,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
               if (outFileObject.exists() == false) {
                   boolean result = outFileObject.mkdirs();
                   if (false == result) {
-                      System.out.println("can't create path: " + outputFile);
+                      this.logger.log (Level.WARNING, "can't create path: " + outputFile);
                   }
               }
               // Let's add the last element of the class name to the file name
@@ -167,7 +165,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
           fileName = outputFile;
         } 
         passedHeaders.put(RelevanceEngineMessage.OUTPUT_FILE, fileName);
-        System.out.println ("passing headers to processCreateSimilarityMessage: " + passedHeaders);
+        this.logger.log (Level.INFO, "passing headers to processCreateSimilarityMessage: " + passedHeaders);
         processCreateSimilarityMessage(passedHeaders, extra);
      }
   }
@@ -199,8 +197,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          e.printStackTrace();
          return;
       }
-
-      System.out.println("Loaded class: " + className);
+      this.logger.log (Level.INFO, "Loaded class: " + className);
 
       // We'll need an object of this type as well.
       Constructor<?> cons = null;
