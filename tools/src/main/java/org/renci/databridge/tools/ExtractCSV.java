@@ -52,7 +52,14 @@ public class ExtractCSV {
      }
 
      public String toString(int index) {
-         return (index + ",\"" + this.title + "\"," + this.group + "," + this.URL);
+         // We want to get rid of all of the quotation marks or new lines in the description.
+         String cleanDescription = this.description.replaceAll(System.getProperty("line.separator"), " ");
+         cleanDescription = cleanDescription.replaceAll("\"", " ");
+
+         // Get rid of hrefs, breaks and paragraphs
+         cleanDescription = cleanDescription.replaceAll("<a href= .*>", " ");
+         cleanDescription = cleanDescription.replaceAll("<[/]?[abp]>", " ");
+         return (index + ",\"" + this.title + "\"," + this.group + ",\"" + this.URL + "\",\"" + cleanDescription + "\"");
      }
   }
 
@@ -213,7 +220,7 @@ public class ExtractCSV {
         BufferedWriter nodeWriter = new BufferedWriter(new FileWriter(nodeFile.getAbsoluteFile()));  
 
         // write the header
-        nodeWriter.write("index,title,group,url");
+        nodeWriter.write("index,title,group,url,description,keywords");
         nodeWriter.write(System.getProperty("line.separator"));
 
         // Create the link file and it's writer
