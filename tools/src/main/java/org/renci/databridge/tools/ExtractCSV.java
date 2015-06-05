@@ -66,7 +66,7 @@ public class ExtractCSV {
   /**
    * Private class used to represent links (edges) in the network
    */
-  class JsonLink {
+  class JsonLink implements Comparable<JsonLink>{
      public int source;
      public int target;
      public Double value;
@@ -85,6 +85,27 @@ public class ExtractCSV {
 
      public String toString() {
          return (this.source + "," + this.target + "," + this.value);
+     }
+
+     public int compareTo(JsonLink otherLink) {
+        int retCode = 0;
+        if (this.source < otherLink.source) {
+           retCode = -1;
+        } else if (this.source > otherLink.source) {
+           retCode = 1;
+        } else {
+           if (this.target < otherLink.target) {
+              retCode = -1;
+           } else if (this.target > otherLink.target) {
+              retCode = 1;
+           } else {
+              retCode = 0;
+           }
+        }
+        System.out.println("source: " + this.source + " " + otherLink.source);
+        System.out.println("target: " + this.target + " " + otherLink.target);
+        System.out.println("result: "+ retCode);
+        return retCode;
      }
   }
 
@@ -263,9 +284,13 @@ public class ExtractCSV {
         nodeWriter.close();
 
         // Iterate throught the nodes, writing as we go
-        Iterator<JsonLink> itrLinks = theFile.links.iterator();
-        while(itrLinks.hasNext()) {
-           JsonLink theLink = itrLinks.next();
+        Collections.sort(theFile.links);
+        int nLinks = theFile.links.size();
+        //Iterator<JsonLink> itrLinks = theFile.links.iterator();
+        //while(itrLinks.hasNext()) {
+        for(i = 0; i < nLinks; i ++) {
+           //JsonLink theLink = itrLinks.next();
+           JsonLink theLink = theFile.links.get(i);
            linkWriter.write(theLink.toString()); 
            linkWriter.write(System.getProperty("line.separator"));
         } 
