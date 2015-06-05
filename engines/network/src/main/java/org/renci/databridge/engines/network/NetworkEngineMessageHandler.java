@@ -741,6 +741,13 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
            * @param value The value in the (i,j) entry for the matrix
            */
           public void apply(int i, int j, double value) {
+
+              if (value <= 0.) {
+                 // This is neccesary because we have set some cells to -1 in order to avoid a bug with
+                 // empty rows in the CRS matrix class we are using.
+                 return;
+              }
+
               NetworkRelationshipTransferObject theNetworkTransfer = new NetworkRelationshipTransferObject();
 
               // Set the type using the similarityInstanceId from the metadata database

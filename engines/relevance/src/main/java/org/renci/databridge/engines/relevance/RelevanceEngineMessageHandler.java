@@ -297,6 +297,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       ArrayList<String> collectionIds = new ArrayList<String>();
 
       long nCollections = theCollectionDAO.countCollections(searchMap);
+      this.logger.log (Level.INFO, "number of collections: " + nCollections);
 
       // Here we have a small problem.  Our DB infrastructure supports "long"
       // cardinality for records, but the current similarity file uses a 
@@ -328,7 +329,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          CollectionTransferObject cto1 = iterator1.next();
          CollectionTransferObject cto2 = null;
          collectionIds.add(cto1.getDataStoreId());
-         
+         this.logger.log (Level.INFO, "adding collection id: " + cto1.getDataStoreId());
 
          int colCounter = 0;
          // This is the weird part. Since you can't copy iterators in java
@@ -349,7 +350,16 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
             // Now we have our 2 CollectionTransferObjects, so we want to call the method.
             try {
                similarity =  (double) thisProcessor.compareCollections(cto1, cto2);
-               theSimFile.setSimilarityValue(rowCounter, colCounter, similarity);
+               if (similarity > 0.0) {
+                  this.logger.log (Level.INFO, "adding ids: " + cto1.getDataStoreId() + " " + cto2.getDataStoreId());
+                  this.logger.log (Level.INFO, "rowCounter: " + rowCounter + " colCounter: " + colCounter + " sim: " + similarity);
+                  theSimFile.setSimilarityValue(rowCounter, colCounter, similarity);
+               } else if (colCounter == ((int)nCollections - 1)) {
+                  // this is the last column in the row and it's zero.  Set it to -1 so we avoid a bug in the
+                  // CRSMatrix class.  Of course, we have to remove this when we read the file.
+                  this.logger.log (Level.INFO, "setting (" + rowCounter + "," + colCounter + ") to -1");
+                  theSimFile.setSimilarityValue(rowCounter, colCounter, -1);
+               }
                colCounter++;
             } catch (Exception e) {
                this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" + e.getMessage(), e);
@@ -373,9 +383,9 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          ac = new AMQPComms (theProps);
          String headers = ProcessedMetadataToNetworkFile.getSendHeaders (
                              nameSpace, theSimilarityInstance.getDataStoreId());
-         this.logger.log (Level.FINER, "Send headers: " + headers);
+         this.logger.log (Level.INFO, "Send headers: " + headers);
          ac.publishMessage (new AMQPMessage (), headers, true);
-         this.logger.log (Level.FINE, "Sent ProcessedMetadataToNetworkFile message.");
+         this.logger.log (Level.INFO, "Sent ProcessedMetadataToNetworkFile message.");
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
       } finally {
