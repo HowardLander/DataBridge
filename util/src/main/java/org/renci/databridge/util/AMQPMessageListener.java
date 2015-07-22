@@ -38,18 +38,18 @@ public class AMQPMessageListener extends Thread {
   }
 
   /**
-   * @param pathToPropsFile properties file for AMQPComms object initialization.
+   * @param props properties object
    * @param amqpMessageType
    * @param amqpMessageHandler
    * @param logger can be null.
    */
-  public AMQPMessageListener (String pathToPropsFile, AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) throws IOException {
+  public AMQPMessageListener (Properties props, AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) throws IOException {
 
     this (amqpMessageType, amqpMessageHandler, logger);
 
     // creating AMQPComms here becausec passing it in would enable reusing
     // the same AMQPComms instance, which is not safe across multiple clients
-    this.amqpComms = new AMQPComms (pathToPropsFile);
+    this.amqpComms = new AMQPComms (props);
 
   }
 

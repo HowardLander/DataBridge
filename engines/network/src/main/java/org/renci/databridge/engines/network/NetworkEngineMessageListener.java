@@ -27,15 +27,15 @@ public class NetworkEngineMessageListener extends Thread {
   protected AMQPMessageType amqpMessageType;
   protected AMQPMessageHandler amqpMessageHandler;
   protected Logger logger;
-  protected String pathToPropsFile = null;
+  protected Properties theProps = null;
 
   /**
-   * @param pathToPropsFile properties file for AMQPComms object initialization.
+   * @param props Properties object used for AMQPComms object initialization.
    * @param amqpMessageType
    * @param amqpMessageHandler
    * @param logger can be null.
    */
-  public NetworkEngineMessageListener (String pathToPropsFile, 
+  public NetworkEngineMessageListener (Properties props,
                                        AMQPMessageType amqpMessageType, 
                                        AMQPMessageHandler amqpMessageHandler, 
                                        Logger logger) throws IOException {
@@ -46,8 +46,8 @@ public class NetworkEngineMessageListener extends Thread {
 
     // creating AMQPComms here because passing it in would enable reusing
     // the same AMQPComms instance, which is not safe across multiple clients
-    this.amqpComms = new AMQPComms (pathToPropsFile);
-    this.pathToPropsFile = pathToPropsFile;
+    this.amqpComms = new AMQPComms (props);
+    this.theProps = props;
 
   }
 
@@ -77,16 +77,14 @@ public class NetworkEngineMessageListener extends Thread {
     NetworkDAOFactory  networkFactory = null;
 
     try {
-        Properties prop = new Properties();
-        prop.load(new FileInputStream(this.pathToPropsFile));
-        dbType = prop.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
-        dbName = prop.getProperty("org.renci.databridge.relevancedb.dbName", "test");
-        dbHost = prop.getProperty("org.renci.databridge.relevancedb.dbHost", "localhost");
-        dbPort = Integer.parseInt(prop.getProperty("org.renci.databridge.relevancedb.dbPort", "27017"));
-        networkDBLocation = prop.getProperty("org.renci.databridge.networkdb.location", "testData");
-        networkDBType = prop.getProperty("org.renci.databridge.networkdb.dbType", "neo4j");
-    } catch (IOException ex) { 
-        this.logger.log (Level.SEVERE, "Could not open property file: " + this.pathToPropsFile);
+        dbType = theProps.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
+        dbName = theProps.getProperty("org.renci.databridge.relevancedb.dbName", "test");
+        dbHost = theProps.getProperty("org.renci.databridge.relevancedb.dbHost", "localhost");
+        dbPort = Integer.parseInt(theProps.getProperty("org.renci.databridge.relevancedb.dbPort", "27017"));
+        networkDBLocation = theProps.getProperty("org.renci.databridge.networkdb.location", "testData");
+        networkDBType = theProps.getProperty("org.renci.databridge.networkdb.dbType", "neo4j");
+    } catch (Exception ex) { 
+        this.logger.log (Level.SEVERE, "Could not retrieve needed properties");
         return;
     }
 
@@ -137,10 +135,13 @@ public class NetworkEngineMessageListener extends Thread {
               this.logger.log (Level.SEVERE, "metadataFactory is null");
               return;
            } 
-          // Need to pass both factories, so we will store them in array.
-          Object theFactories[] = new Object[2];
+          // Need to pass both factories, so we will store them in array. The message 
+          // handler also needs the property file so it can send action messages, so we
+          // store it in an array of Objects along with the needed factories.
+          Object theFactories[] = new Object[3];
           theFactories[0] = (Object) metadataFactory;
           theFactories[1] = (Object) networkFactory;
+          theFactories[2] = (Object) theProps;
           this.amqpMessageHandler.handle (am, (Object) theFactories);
         }
 

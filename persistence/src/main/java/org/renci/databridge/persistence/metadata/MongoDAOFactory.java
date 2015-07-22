@@ -40,6 +40,18 @@ public class MongoDAOFactory extends MetadataDAOFactory {
         return theDB;
     }
 
+    public void closeTheDB() {
+        try {
+            if (null != theClient) {
+                theClient.close();
+                theClient = null;
+            }
+        } catch (Exception e) {
+            // should send this back using the message logs eventually
+            e.printStackTrace();
+        }
+    }
+
     public CollectionDAO getCollectionDAO() {
         return new MongoCollectionDAO();
     }

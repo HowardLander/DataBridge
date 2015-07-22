@@ -30,16 +30,44 @@ public class RelevanceEngine {
         } else {
             propFileName = new String("relevance.conf");
         }    
+
+        logger.log(Level.INFO, "propFileName: " + propFileName);
+
         try {
+            // Make props from the config file to pass to AMQPComms
+            Properties props= new Properties();
+            props.load(new FileInputStream(propFileName));
+            props.setProperty("org.renci.databridge.primaryQueue", 
+                              props.getProperty("org.renci.databridge.relevanceEngine.primaryQueue"));
+           logger.log(Level.INFO,
+                "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+     
             RelevanceEngineMessageListener aml = 
-                new RelevanceEngineMessageListener (propFileName, 
+                new RelevanceEngineMessageListener (props, 
                                          new RelevanceEngineMessage(), 
                                          new RelevanceEngineMessageHandler(), logger);
 
             aml.start ();
-            aml.join (); // keeps main thread from exiting 
+
+            // Start a second thread to listen for actionable messages.
+            // We need to reset the org.renci.databridge.primaryQueue property. This is the queue
+            // this listener will listen to.
+            props.setProperty("org.renci.databridge.primaryQueue", 
+                              props.getProperty("org.renci.databridge.relevanceEngine.ingestQueue"));
+           logger.log(Level.INFO,
+                "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+
+            RelevanceEngineMessageListener ingestListener = 
+                new RelevanceEngineMessageListener (props, 
+                                         new IngestListenerMessage(), 
+                                         new RelevanceEngineMessageHandler(), logger);
+
+            ingestListener.start ();
+
+            aml.join ();
+            ingestListener.join (); // keeps main thread from exiting 
         } catch (Exception ex) {
-            System.out.println(ex.toString());
+            logger.log(Level.SEVERE, "Exception in main: " + ex.toString());
             System.exit(1);
         }
 

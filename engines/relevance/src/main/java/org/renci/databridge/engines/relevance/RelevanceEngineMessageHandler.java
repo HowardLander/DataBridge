@@ -10,6 +10,8 @@ import java.lang.InterruptedException;
 import java.io.IOException;
 import org.renci.databridge.message.*;
 import java.util.*;
+import java.text.*;
+import java.io.*;
 import java.lang.reflect.*;
 
 
@@ -38,7 +40,14 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
   // The byte array for the contents of the message.
   private byte[] bytes;
-  
+
+  /**
+   * This function essentially de-multiplexes the message by calling the 
+   * appropriate lower level handler based on the headers.
+   *
+   * @param amqpMessage The message to handle.
+   * @param extra An object containing the needed DAO objects plus the Properties object
+   */
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
       // Get the individual components of the the message and store
       // them in the fields
@@ -46,22 +55,127 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       properties = amqpMessage.getProperties();
       stringHeaders = amqpMessage.getStringHeaders();
       bytes = amqpMessage.getBytes();
-      System.out.println("headers: " + stringHeaders);
+      logger.log(Level.INFO, "headers: " + stringHeaders);
 
       // get the message name
       String messageName = stringHeaders.get(RelevanceEngineMessage.NAME);
 
       // Call the function appropriate for the message
       if (null == messageName) {
-         System.out.println("messageName is missing");
-      } else if (messageName.compareTo(RelevanceEngineMessage.CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI) == 0) {
+         logger.log(Level.WARNING, "messageName is missing");
+      } else if 
+          (messageName.compareTo(RelevanceEngineMessage.CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI) == 0) {
          processCreateSimilarityMessage(stringHeaders, extra);
+      } else if (messageName.compareTo(IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB) == 0) {
+         processMetadataToMetadataDBMessage(stringHeaders, extra);
       } else {
-         System.out.println("unimplemented messageName: " + messageName);
+         logger.log(Level.WARNING, "unimplemented messageName: " + messageName);
       }
   }
 
+  /**
+   * Handle the PROCESSED_METADATA_TO_METADATADB message.  Primarily, we are going to search
+   * the action table and call the processCreateSimilarityMessage code for each matching
+   * action. There is some remapping of the headers involved as well.
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects
+   */
+  public void processMetadataToMetadataDBMessage( Map<String, String> stringHeaders, Object extra) {
 
+      // We need several pieces of information before we can continue.  This info has to 
+      // all be in the headers or we are toast.
+
+      // 1) the name space
+      String nameSpace = stringHeaders.get(RelevanceEngineMessage.NAME_SPACE);    
+      if (null == nameSpace) {
+         this.logger.log (Level.SEVERE, "No name space in message");
+         return;
+      }
+
+      // Process the array of extra objects
+      Object extraArray[] = (Object[]) extra;
+
+      // The extra parameter in this case is the MetadataDAOFactory followed by the Properties object.
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
+      if (null == theFactory) {
+         this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
+         return;
+      }
+
+      Properties theProps = (Properties) extraArray[1];
+      if (null == theProps) {
+         this.logger.log (Level.SEVERE, "Properties object is null");
+         return;
+      }
+      String dbType = theProps.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
+
+     // Get the list of needed actions
+     ActionTransferObject theAction = new ActionTransferObject();
+     ActionDAO theActionDAO = theFactory.getActionDAO();
+ 
+     Iterator<ActionTransferObject> actionIt =
+            theActionDAO.getActions(IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB, nameSpace);
+     this.logger.log (Level.INFO, "Searching action table for: " + 
+                      IngestListenerMessage.PROCESSED_METADATA_TO_METADATADB + " nameSpace: " + nameSpace);
+     String outputFile = null;
+     while (actionIt.hasNext()) {
+        ActionTransferObject returnedObject = actionIt.next();
+        this.logger.log (Level.INFO, "Found action: " + returnedObject.getDataStoreId());
+        HashMap<String, String> passedHeaders = new HashMap<String, String>();
+
+        // Get the class and outputFile from the action object
+        HashMap<String, String> actionHeaders = returnedObject.getHeaders();
+        passedHeaders.put(RelevanceEngineMessage.CLASS, 
+                          (String) actionHeaders.get(RelevanceEngineMessage.CLASS));
+        outputFile = (String) actionHeaders.get(RelevanceEngineMessage.OUTPUT_FILE);
+        passedHeaders.put(RelevanceEngineMessage.NAME_SPACE, nameSpace);
+
+        // If the outputFile specified is a file, we pass it on. If it's a directory, we generate
+        // a file name in that directory and pass that on.
+        String lastChar = outputFile.substring(outputFile.length() - 1);
+        String fileName = null;
+        if (lastChar.compareTo("/") == 0) {
+           // The user has given us a directory, so we need to append a fileName
+           // We'll let java create the tmp file name, then delete the file.
+           try {
+              File outFileObject = new File(outputFile);
+    
+              // Create the directory if it does not already exist
+              if (outFileObject.exists() == false) {
+                  boolean result = outFileObject.mkdirs();
+                  if (false == result) {
+                      this.logger.log (Level.WARNING, "can't create path: " + outputFile);
+                  }
+              }
+              // Let's add the last element of the class name to the file name
+              String fullClassName = (String) actionHeaders.get(RelevanceEngineMessage.CLASS);
+              String lastClass = fullClassName.substring(fullClassName.lastIndexOf('.') + 1);
+
+              // Let's add a the date and time as well.
+              Date now = new Date();
+              SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
+              String dateString = format.format(now);
+              String labeledFileName = nameSpace + "-" + lastClass + "-" + dateString + ".net";
+              fileName = outputFile + labeledFileName;
+           } catch (Exception e) {
+              e.printStackTrace();
+           }
+        } else {
+          // the user has given us a path
+          fileName = outputFile;
+        } 
+        passedHeaders.put(RelevanceEngineMessage.OUTPUT_FILE, fileName);
+        this.logger.log (Level.INFO, "passing headers to processCreateSimilarityMessage: " + passedHeaders);
+        processCreateSimilarityMessage(passedHeaders, extra);
+     }
+  }
+
+
+  /**
+   * Handle the CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI message.  
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects plus a properties
+   */
   public void processCreateSimilarityMessage( Map<String, String> stringHeaders, Object extra) {
       // We need several pieces of information before we can continue.  This info has to 
       // all be in the headers or we are toast.
@@ -83,8 +197,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          e.printStackTrace();
          return;
       }
-
-      System.out.println("Loaded class: " + className);
+      this.logger.log (Level.INFO, "Loaded class: " + className);
 
       // We'll need an object of this type as well.
       Constructor<?> cons = null;
@@ -114,12 +227,22 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
-      // The "extra" parameter in this case must be of type MetadataDAOFactory
-      MetadataDAOFactory theFactory = (MetadataDAOFactory) extra;
+      // Process the array of extra objects
+      Object extraArray[] = (Object[]) extra;
+
+      // The extra parameter in this case is the MetadataDAOFactory followed by the Properties object.
+      MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
       if (null == theFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
          return;
-      } 
+      }
+
+      Properties theProps = (Properties) extraArray[1];
+      if (null == theProps) {
+         this.logger.log (Level.SEVERE, "Properties object is null");
+         return;
+      }
+
       CollectionDAO theCollectionDAO = theFactory.getCollectionDAO();
       if (null == theCollectionDAO) {
          this.logger.log (Level.SEVERE, "CollectionDAO is null");
@@ -137,7 +260,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       theSimilarityInstance.setNameSpace(nameSpace);
       theSimilarityInstance.setClassName(className);
       theSimilarityInstance.setMethod("compareCollections");
-      theSimilarityInstance.setOutput(outputFile);
+      theSimilarityInstance.setOutput("file://" + outputFile);
 
       // let's find the highest version for this combination of nameSpace, className and method (if any)
       HashMap<String, String> versionMap = new HashMap<String, String>();
@@ -174,6 +297,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       ArrayList<String> collectionIds = new ArrayList<String>();
 
       long nCollections = theCollectionDAO.countCollections(searchMap);
+      this.logger.log (Level.INFO, "number of collections: " + nCollections);
 
       // Here we have a small problem.  Our DB infrastructure supports "long"
       // cardinality for records, but the current similarity file uses a 
@@ -205,7 +329,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          CollectionTransferObject cto1 = iterator1.next();
          CollectionTransferObject cto2 = null;
          collectionIds.add(cto1.getDataStoreId());
-         
+         this.logger.log (Level.INFO, "adding collection id: " + cto1.getDataStoreId());
 
          int colCounter = 0;
          // This is the weird part. Since you can't copy iterators in java
@@ -226,10 +350,19 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
             // Now we have our 2 CollectionTransferObjects, so we want to call the method.
             try {
                similarity =  (double) thisProcessor.compareCollections(cto1, cto2);
-               theSimFile.setSimilarityValue(rowCounter, colCounter, similarity);
+               if (similarity > 0.0) {
+                  this.logger.log (Level.INFO, "adding ids: " + cto1.getDataStoreId() + " " + cto2.getDataStoreId());
+                  this.logger.log (Level.INFO, "rowCounter: " + rowCounter + " colCounter: " + colCounter + " sim: " + similarity);
+                  theSimFile.setSimilarityValue(rowCounter, colCounter, similarity);
+               } else if (colCounter == ((int)nCollections - 1)) {
+                  // this is the last column in the row and it's zero.  Set it to -1 so we avoid a bug in the
+                  // CRSMatrix class.  Of course, we have to remove this when we read the file.
+                  this.logger.log (Level.INFO, "setting (" + rowCounter + "," + colCounter + ") to -1");
+                  theSimFile.setSimilarityValue(rowCounter, colCounter, -1);
+               }
                colCounter++;
             } catch (Exception e) {
-               this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" );
+               this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" + e.getMessage(), e);
                return;
             }
          }
@@ -242,6 +375,23 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Caught Exception writing to disk: " + e.getMessage());
          return;
+      }
+
+      // Assuming we get this far, we want to send out the next message
+      AMQPComms ac = null;
+      try {
+         ac = new AMQPComms (theProps);
+         String headers = ProcessedMetadataToNetworkFile.getSendHeaders (
+                             nameSpace, theSimilarityInstance.getDataStoreId());
+         this.logger.log (Level.INFO, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         this.logger.log (Level.INFO, "Sent ProcessedMetadataToNetworkFile message.");
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
+      } finally {
+         if (null != ac) {
+             ac.shutdownConnection ();
+         }
       }
   }
  

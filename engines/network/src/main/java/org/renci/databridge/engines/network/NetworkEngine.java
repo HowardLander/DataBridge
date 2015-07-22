@@ -24,11 +24,30 @@ public class NetworkEngine {
             propFileName = new String("network.conf");
         }    
         try {
+            Properties props= new Properties();
+            props.load(new FileInputStream(propFileName));
+            props.setProperty("org.renci.databridge.primaryQueue",
+                              props.getProperty("org.renci.databridge.networkEngine.primaryQueue"));
+            logger.log(Level.INFO, 
+                "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
             NetworkEngineMessageListener aml = 
-                new NetworkEngineMessageListener (propFileName, new NetworkEngineMessage(), 
+                new NetworkEngineMessageListener (props, new NetworkEngineMessage(), 
                                                   new NetworkEngineMessageHandler(), logger);
-
             aml.start ();
+
+            // Start a second thread to listen for actionable messages.
+            // We need to reset the org.renci.databridge.primaryQueue property. This is the queue
+            // this listener will listen to.
+            props.setProperty("org.renci.databridge.primaryQueue",
+                              props.getProperty("org.renci.databridge.networkEngine.ingestQueue"));
+            logger.log(Level.INFO, 
+                "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+
+            NetworkEngineMessageListener networkListener = 
+                new NetworkEngineMessageListener (props, new NetworkListenerMessage(), 
+                                                  new NetworkEngineMessageHandler(), logger);
+            networkListener.start ();
+            networkListener.join (); // keeps main thread from exiting 
             aml.join (); // keeps main thread from exiting 
         } catch (Exception ex) {
             System.out.println(ex.toString());

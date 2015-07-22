@@ -26,15 +26,15 @@ public class RelevanceEngineMessageListener extends Thread {
   protected AMQPMessageType amqpMessageType;
   protected AMQPMessageHandler amqpMessageHandler;
   protected Logger logger;
-  protected String pathToPropsFile = null;
+  protected Properties theProps = null;
 
   /**
-   * @param pathToPropsFile properties file for AMQPComms object initialization.
+   * @param props Properties object used for AMQPComms object initialization.
    * @param amqpMessageType
    * @param amqpMessageHandler
    * @param logger can be null.
    */
-  public RelevanceEngineMessageListener (String pathToPropsFile, 
+  public RelevanceEngineMessageListener (Properties props, 
                                          AMQPMessageType amqpMessageType, 
                                          AMQPMessageHandler amqpMessageHandler, 
                                          Logger logger) throws IOException {
@@ -45,8 +45,8 @@ public class RelevanceEngineMessageListener extends Thread {
 
     // creating AMQPComms here becausec passing it in would enable reusing
     // the same AMQPComms instance, which is not safe across multiple clients
-    this.amqpComms = new AMQPComms (pathToPropsFile);
-    this.pathToPropsFile = pathToPropsFile;
+    this.amqpComms = new AMQPComms (props);
+    this.theProps = props;
 
   }
 
@@ -73,14 +73,12 @@ public class RelevanceEngineMessageListener extends Thread {
     MetadataDAOFactory theFactory = null;
 
     try {
-        Properties prop = new Properties();
-        prop.load(new FileInputStream(this.pathToPropsFile));
-        dbType = prop.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
-        dbName = prop.getProperty("org.renci.databridge.relevancedb.dbName", "test");
-        dbHost = prop.getProperty("org.renci.databridge.relevancedb.dbHost", "localhost");
-        dbPort = Integer.parseInt(prop.getProperty("org.renci.databridge.relevancedb.dbPort", "27017"));
-    } catch (IOException ex) { 
-        this.logger.log (Level.SEVERE, "Could not open property file: " + this.pathToPropsFile);
+        dbType = theProps.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
+        dbName = theProps.getProperty("org.renci.databridge.relevancedb.dbName", "test");
+        dbHost = theProps.getProperty("org.renci.databridge.relevancedb.dbHost", "localhost");
+        dbPort = Integer.parseInt(theProps.getProperty("org.renci.databridge.relevancedb.dbPort", "27017"));
+    } catch (Exception ex) { 
+        this.logger.log (Level.SEVERE, "Could not retrieve needed properties");
         return;
     }
 
@@ -116,7 +114,13 @@ public class RelevanceEngineMessageListener extends Thread {
               this.logger.log (Level.SEVERE, "theFactory is null");
               return;
            } 
-          this.amqpMessageHandler.handle (am, (Object) theFactory);
+          
+          // The message handler needs the property file so it can send action messages, so we 
+          // store it in an array of Objects along with the needed factory.
+          Object thePassedObjects[] = new Object[2];
+          thePassedObjects[0] = (Object) theFactory;
+          thePassedObjects[1] = (Object) theProps;
+          this.amqpMessageHandler.handle (am, (Object) thePassedObjects);
         }
 
       } catch (Exception e) {

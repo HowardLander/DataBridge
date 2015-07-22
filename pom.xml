@@ -12,7 +12,6 @@
     <module>util</module>
     <module>persistence</module>
     <module>formatter</module>
-    <module>network</module>
     <module>engines</module>
   </modules>
 

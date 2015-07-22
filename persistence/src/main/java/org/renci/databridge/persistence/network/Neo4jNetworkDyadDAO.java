@@ -18,6 +18,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
        private Iterator<Node> nodeIterator = Collections.emptyIterator();
        private Iterator<Relationship> relationshipIterator = Collections.emptyIterator();
        private String currentNodeId = null;
+       private String similarityId;
        private Node currentNode = null;
        private Logger logger = Logger.getLogger ("org.renci.databridge.persistence.network");
        private RelationshipType newType;
@@ -27,7 +28,17 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
         */
        @Override
        public boolean hasNext() {
-           return (relationshipIterator.hasNext() || nodeIterator.hasNext());
+           GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
+           Transaction tx = theDB.beginTx();
+           try {
+               return (relationshipIterator.hasNext() || nodeIterator.hasNext());
+           } catch (Exception e) {
+               // should send this back using the message logs eventually
+               this.logger.log (Level.SEVERE, "exception in hasNext function: " + e.getMessage(), e);
+           } finally {
+               tx.close();
+           }
+           return false;
        }
 
        /**
@@ -49,6 +60,10 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                       theTransfer = new NetworkDyadTransferObject();
                       theTransfer.setNode1DataStoreId(Long.toString(currentNode.getId()));
                       theTransfer.setNode1MetadataId((String)currentNode.getProperty(NetworkNodeDAO.METADATA_NODE_KEY));
+
+                      // The value of the similarityId property is the index of the node in the 
+                      // original matrix.
+                      theTransfer.setI((int)currentNode.getProperty(similarityId));
                       Relationship theRel = relationshipIterator.next();
                       double simValue = (double)
                              theRel.getProperty(NetworkRelationshipDAO.METADATA_SIMILARITY_PROPERTY_NAME);
@@ -56,6 +71,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                       Node theOtherNode = theRel.getOtherNode(currentNode);
                       theTransfer.setNode2DataStoreId(Long.toString(theOtherNode.getId()));
                       theTransfer.setNode2MetadataId((String)theOtherNode.getProperty(NetworkNodeDAO.METADATA_NODE_KEY));
+                      theTransfer.setJ((int)theOtherNode.getProperty(similarityId));
                       stillLooking = false;
                   }  else if (nodeIterator.hasNext()) {
                       // All the relationships of the currentNode have been exhausted. If there is
@@ -65,6 +81,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                       currentNode = theNode;
                       theTransfer.setNode1DataStoreId(Long.toString(theNode.getId()));
                       theTransfer.setNode1MetadataId((String)theNode.getProperty(NetworkNodeDAO.METADATA_NODE_KEY));
+                      theTransfer.setI((int)theNode.getProperty(similarityId));
 
                       // We also have to reset the relationship iterator to access the relationships
                       // of this node
@@ -80,6 +97,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                           Node theOtherNode = theRel.getOtherNode(theNode);
                           theTransfer.setNode2DataStoreId(Long.toString(theOtherNode.getId()));
                           theTransfer.setNode2MetadataId((String)theOtherNode.getProperty(NetworkNodeDAO.METADATA_NODE_KEY));
+                          theTransfer.setJ((int)theOtherNode.getProperty(similarityId));
                           stillLooking = false;
                       } else {
                           // Why are we check for INCOMING relationships? The reason is to see if this
@@ -141,6 +159,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
             theIterator = new Neo4jNetworkDyadDAOIterator();
             Label newLabel = DynamicLabel.label(nameSpace);
             theIterator.newType = DynamicRelationshipType.withName(similarityId);
+            theIterator.similarityId = similarityId;
 
             Iterator<Node> neo4jNodeList = graphOperations.getAllNodesWithLabel(newLabel).iterator();
             theIterator.nodeIterator = neo4jNodeList;

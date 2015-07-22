@@ -103,7 +103,8 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
           // Add all of the attributes for the relationship, if any
           if (null != theTransfer.getAttributes()) {
              for (Map.Entry<String, Object> entry : theTransfer.getAttributes().entrySet()) {
-                 System.out.println("setting attributes with key: " + entry.getKey());
+                 System.out.println("setting attributes with key: " + entry.getKey() + " value: " +
+                                     entry.getValue());
                  theRelationship.setProperty(entry.getKey(), entry.getValue());
              }
           }
