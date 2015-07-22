@@ -84,7 +84,8 @@ function init() {
 				//popup.append("h2").text(d.title);
 				popup.append("p")
 					.append("a")
-					.attr("href",d.URL)					
+					.attr("href",d.URL)
+					.attr("target", "_blank")
 					.text(d.title);
 				canvasSize = [
 					canvas.node().offsetWidth,
@@ -507,7 +508,7 @@ function SetupData() {
 					return w; })
 		//.style("fill", d3.rgb(142, 186, 229))
 		.style("fill", function(d) { 
-			return color(d.clr); 
+			return d.clr == -1 ? d3.rgb(255, 255, 255) : color(d.clr); 
 			})
 		.style("opacity", 0.9)
 		.style("stroke", function(d) { 
@@ -524,10 +525,10 @@ function SetupData() {
 		.attr("x", 12)
 		.attr("dy", ".35em")
 		.style("visibility", function(d) {
-			return d.multicluster>1? "visible":"hidden";
+			return d.multicluster>1 ? "visible":"hidden";
 		})
 		.text(function(d) {
-			return d.multicluster>1? "Multiple-"+d.title:d.title;
+			return d.multicluster>1 ? "Multiple-"+d.title:d.title;
 		});
 	
 	linkedByIndex = {};
