@@ -27,12 +27,12 @@ d3.legend = function(g) {
 
     
     li.selectAll("text")
-        .data(items,function(d) { return d.key})
+        .data(items,function(d) {return d.key})
         .call(function(d) { d.enter().append("text")})
         .call(function(d) { d.exit().remove()})
         .attr("y",function(d,i) { return i+0.24*i+"em"})
         .attr("x","1em")
-        .text(function(d) { ;return d.key})
+        .text(function(d) { return d.key==-1? "unclustered":d.key})
     
     li.selectAll("circle")
         .data(items,function(d) { return d.key})
@@ -41,7 +41,9 @@ d3.legend = function(g) {
         .attr("cy",function(d,i) { return i-0.25+"em"})
         .attr("cx",0)
         .attr("r","0.4em")
-        .style("fill",function(d) { console.log(d.value.color);return d.value.color})  
+        .style("fill",function(d) {return d.key==-1?d3.rgb(255, 255, 255):d.value.color})  
+		.style("stroke", d3.rgb(142, 186, 229).darker())
+		.style("stroke-width", 1);
     
     // Reposition and resize the box
     var lbbox = li[0][0].getBBox()  
