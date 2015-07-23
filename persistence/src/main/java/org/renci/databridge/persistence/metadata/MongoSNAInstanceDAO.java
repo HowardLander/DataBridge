@@ -20,7 +20,7 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
 
     // This is a little confusing because both the data model and mongo
     // use the term "collection". This is the name of the mongo collection 
-    // into which we are storing the DataBridge collection info.
+    // into which we are storing the DataBridge SNA instance info.
     private static final String MongoName = new String("DB_SNAInstance");
     private static final String MongoExtraName = new String("extra");
     private static final String MongoIdFieldName = new String("_id");
@@ -61,6 +61,7 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
                    theSNAInstance.setClassName((String)theEntry.get("className"));
                    theSNAInstance.setMethod((String)theEntry.get("method"));
                    theSNAInstance.setVersion((int)theEntry.get("version"));
+                   theSNAInstance.setParams((String)theEntry.get("params"));
                    theSNAInstance.setNResultingClusters((String)theEntry.get("nResultingClusters"));
                    theSNAInstance.setSimilarityInstanceId((String)theEntry.get("similarityInstanceId"));
                }
@@ -103,6 +104,7 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
           thisDoc.put("nResultingClusters", theSNAInstance.getNResultingClusters());
           thisDoc.put("similarityInstanceId", theSNAInstance.getSimilarityInstanceId());
           thisDoc.put("version", theSNAInstance.getVersion());
+          thisDoc.put("params", theSNAInstance.getParams());
           DB theDB = MongoDAOFactory.getTheDB();
           DBCollection theTable = theDB.getCollection(MongoName);
           theTable.insert(thisDoc);
@@ -279,6 +281,7 @@ public class MongoSNAInstanceDAO implements SNAInstanceDAO {
                theSNAInstance.setMethod((String)theEntry.get("method"));
                theSNAInstance.setSimilarityInstanceId((String)theEntry.get("similarityInstanceId"));
                theSNAInstance.setVersion((int)theEntry.get("version"));
+               theSNAInstance.setParams((String)theEntry.get("params"));
                theSNAInstance.setNResultingClusters((String)theEntry.get("nResultingClusters"));
             }
         } catch (MongoException e) {

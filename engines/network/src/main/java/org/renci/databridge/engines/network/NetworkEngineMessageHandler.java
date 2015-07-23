@@ -178,6 +178,8 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          processInsertSimilarityMatrixJavaMessage(stringHeaders, extra);
       } else if (messageName.compareTo(NetworkEngineMessage.RUN_SNA_ALGORITHM_JAVA_NETWORKDB) == 0) {
          processRunSnaAlgorithmJavaMessage(stringHeaders, extra);
+      } else if (messageName.compareTo(NetworkEngineMessage.RUN_SNA_ALGORITHM_FILEIO_NETWORKDB) == 0) {
+         processRunSnaAlgorithmFileIOMessage(stringHeaders, extra);
       } else if (messageName.compareTo(NetworkEngineMessage.CREATE_JSON_FILE_NETWORKDB_URI) == 0) {
          processCreateJSONFileMessage(stringHeaders, extra);
       } else if (messageName.compareTo(NetworkListenerMessage.PROCESSED_METADATA_TO_NETWORKFILE) == 0) {
@@ -484,8 +486,15 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
          // Let's get the last element of the sna class name for the file name
          String fullSNAClassName = snaObject.getClassName();
-         String SNAClass = fullSNAClassName.substring(fullSNAClassName.lastIndexOf('.') + 1); 
+         String SNAClass = null;
 
+         // Since the className can also be an executable, we check the first character. If it's a 
+         // "/" than we have an executable and we want to use "/" instead of "." as the seperator.
+         if (fullSNAClassName.startsWith("/")) {
+             SNAClass = fullSNAClassName.substring(fullSNAClassName.lastIndexOf('/') + 1); 
+         } else {
+             SNAClass = fullSNAClassName.substring(fullSNAClassName.lastIndexOf('.') + 1); 
+         }
          // Get the class from the action object
          HashMap<String, String> actionHeaders = actionObject.getHeaders();
          outputFile = (String) actionHeaders.get(NetworkListenerMessage.OUTPUT_FILE);
@@ -510,7 +519,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
                // Let's add a the date and time as well.
                Date now = new Date();
-               SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
+               SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
                String dateString = format.format(now);
                String labeledFileName = nameSpace + "-" + simClass + "-" + SNAClass + "-" + dateString + ".json";
                fileName = outputFile + labeledFileName;
@@ -1090,6 +1099,285 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          }
       }
   }
+
+    /**
+     * Handle the RUN_SNA_ALGORITHM_FILEIO_NETWORKDB message by executing the specified
+     * code to run the SNA algorithm. In this case the algorithm has to be contained in a 
+     * file that can be executed using the java Process implementation. The executable
+     * will be called with three positional arguments: 
+     *    the input file: a CSV file starting with a single line containing the number of distinct nodes
+     *    in the file followed by a set of triples representing the 
+     *    i,j and similarity values where i and j are the indices of the 2 nodes.
+     *    the output file: The CSV file to be produced by the executable consisting of a set of pairs
+     *    representing the index value of the node and the integer group id into which the node has been
+     *    assigned. The group ids start at 0 and are positive integers.
+     *    params: A string containing any additional arguments to pass to the executable.
+     * @param stringHeaders A map of the headers provided in the message
+     * @param extra An object containing the needed DAO objects
+     */
+  public void processRunSnaAlgorithmFileIOMessage( Map<String, String> stringHeaders, Object extra) {
+      // We need several pieces of information before we can continue.  This info has to 
+      // all be in the headers or we are toast.
+
+      // 1) the exectable name
+      String executable = stringHeaders.get(NetworkEngineMessage.EXECUTABLE);    
+      if (null == executable) {
+         this.logger.log (Level.SEVERE, "No executable in message");
+         return;
+      }
+
+      // 2) the name space
+      String nameSpace = stringHeaders.get(NetworkEngineMessage.NAME_SPACE);    
+      if (null == nameSpace) {
+         this.logger.log (Level.SEVERE, "No name space in message");
+         return;
+      }
+
+      // 3) the similarityId
+      String similarityId = stringHeaders.get(NetworkEngineMessage.SIMILARITY_ID);    
+      if (null == similarityId) {
+         this.logger.log (Level.SEVERE, "No similarityId in message");
+         return;
+      }
+
+      // 4) any extra params to pass.  This can be null
+      String params = stringHeaders.get(NetworkEngineMessage.PARAMS);    
+
+      // In this case the extra parameter is an array of 2 objects, which are the metadata and
+      // network factories plus the Properties object used to send the next message.
+      Object[] extraArray = (Object[]) extra;
+
+      MetadataDAOFactory metadataFactory = (MetadataDAOFactory) extraArray[0];
+      if (null == metadataFactory) {
+         this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
+         return;
+      } 
+      CollectionDAO theCollectionDAO = metadataFactory.getCollectionDAO();
+      if (null == theCollectionDAO) {
+         this.logger.log (Level.SEVERE, "CollectionDAO is null");
+         return;
+      } 
+
+      NetworkDAOFactory networkFactory = (NetworkDAOFactory) extraArray[1];
+      if (null == networkFactory) {
+         this.logger.log (Level.SEVERE, "NetworkDAOFactory is null");
+         return;
+      } 
+
+      Properties theProps = (Properties) extraArray[2];
+      if (null == theProps) {
+         this.logger.log (Level.SEVERE, "Properties object is null");
+         return;
+      }
+
+      // We need a directory for the output and input files.
+      String tmpDir = theProps.getProperty("org.renci.databridge.misc.tmpDir", "/tmp");
+      File tmpFileDir = new File(tmpDir);
+
+      SNAInstanceDAO theSNAInstanceDAO = metadataFactory.getSNAInstanceDAO();
+      if (null == theSNAInstanceDAO) {
+         this.logger.log (Level.SEVERE, "SNAInstanceDAO is null");
+         return;
+      }
+
+      NetworkNodeDAO theNetworkNodeDAO = networkFactory.getNetworkNodeDAO();
+      if (null == theSNAInstanceDAO) {
+         this.logger.log (Level.SEVERE, "SNAInstanceDAO is null");
+         return;
+      }
+
+      // Let's add the SNAInstance.
+      SNAInstanceTransferObject theSNAInstance = new SNAInstanceTransferObject();
+      theSNAInstance.setNameSpace(nameSpace);
+
+      // Here we we use the executable name instead of the class name.
+      theSNAInstance.setClassName(executable);
+      theSNAInstance.setMethod("main");
+      theSNAInstance.setSimilarityInstanceId(similarityId);
+      theSNAInstance.setParams(params);
+
+      // let's find the highest version for this combination of nameSpace, className and method (if any)
+      HashMap<String, String> versionMap = new HashMap<String, String>();
+      versionMap.put("nameSpace", nameSpace);
+      versionMap.put("className", executable);
+      versionMap.put("method", "main");
+      versionMap.put("similarityInstanceId", similarityId);
+
+      HashMap<String, String> sortMap = new HashMap<String, String>();
+      sortMap.put("version", SNAInstanceDAO.SORT_DESCENDING);
+      Integer limit = new Integer(1);
+
+      // This is for the case of no previous instance
+      theSNAInstance.setVersion(1);
+      Iterator<SNAInstanceTransferObject> versionIterator =
+          theSNAInstanceDAO.getSNAInstances(versionMap, sortMap, limit);
+      if (versionIterator.hasNext()) {
+         // Found a previous instance
+         SNAInstanceTransferObject prevInstance = versionIterator.next();
+         theSNAInstance.setVersion(prevInstance.getVersion() + 1);
+      }
+
+      try {
+         boolean result = theSNAInstanceDAO.insertSNAInstance(theSNAInstance);
+         this.logger.log(Level.INFO, "Inserted Instance: " + theSNAInstance.getDataStoreId());
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't insert SNA instance");
+         return;
+      }
+
+      NetworkDyadDAO theNetworkDyadDAO = networkFactory.getNetworkDyadDAO();
+
+      // Get the connected dyads only.
+      Iterator<NetworkDyadTransferObject> theDyads = 
+           theNetworkDyadDAO.getNetworkDyads(nameSpace, similarityId, false);
+
+      // Need the count of connected node for the input csv file.
+      long connectedNodeCount = theNetworkDyadDAO.countConnectedNodes(nameSpace, similarityId);
+
+      HashMap<String, ArrayList<String>> clusterList = new HashMap<String, ArrayList<String>>();
+      try {
+          // Invoke the method. To do this we need to create the tmp file names for the input, and
+          // output files, write the network info to the new input file, call the method, read the output 
+          // file, add the info to the database and remove the input and output files.
+
+          // Step 1: The input and output files
+          File inputTmpFile = File.createTempFile("DataBridge-input", ".csv", tmpFileDir);
+          String inputFileString = inputTmpFile.getAbsolutePath();
+          File outputTmpFile = File.createTempFile("DataBridge-output", ".csv", tmpFileDir);
+          String outputFileString = outputTmpFile.getAbsolutePath();
+          File log = File.createTempFile("DataBridge-log", ".log", tmpFileDir);
+
+          // we'll also want a FileWriter for the inputFile and a reader for the output file
+          FileWriter inputFileWriter = new FileWriter(inputTmpFile);
+          BufferedReader outputFileReader = new BufferedReader(new FileReader(outputTmpFile));
+
+          // Step 2: write the network info into the tmp file
+          // Start with the number of connected nodes (the size of the matrix)
+          this.logger.log(Level.INFO, "number of connected nodes: " + connectedNodeCount);
+          inputFileWriter.append(Long.toString(connectedNodeCount));
+          inputFileWriter.append(System.getProperty("line.separator"));
+          inputFileWriter.flush();
+          while (theDyads.hasNext()) {
+             NetworkDyadTransferObject thisDyad = theDyads.next();
+             String id1 = thisDyad.getNode1DataStoreId();
+             String id2 = thisDyad.getNode2DataStoreId();
+             if (null == id2) {
+                // a singleton, no reason to emit this
+                continue;
+             } 
+             // A dyad with 2 nodes: let's add it to csv file
+             //inputFileWriter.append(Integer.toString(thisDyad.getI()));
+             //inputFileWriter.append(Integer.toString(thisDyad.getJ()));
+             inputFileWriter.append(id1);
+             inputFileWriter.append(",");
+             inputFileWriter.append(id2);
+             inputFileWriter.append(",");
+             inputFileWriter.append(Double.toString(thisDyad.getSimilarity()));
+             inputFileWriter.append(System.getProperty("line.separator"));
+             inputFileWriter.flush();
+          }
+          inputFileWriter.close();
+
+          // Step 3: call the executable
+          ProcessBuilder theBuilder = new ProcessBuilder(executable, inputFileString, outputFileString, params);
+          this.logger.log(Level.INFO, "ProcessBuilder args: " + executable + " " + inputFileString + " " + outputFileString + " " + params);
+          theBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(log));
+          theBuilder.redirectError(ProcessBuilder.Redirect.appendTo(log));
+          Process theProcess = theBuilder.start();
+          int returnCode = theProcess.waitFor();
+          if (returnCode != 0) {
+             this.logger.log (Level.SEVERE, "Executable " + executable + "failed: see " + log.getAbsolutePath());
+             inputTmpFile.delete(); 
+             outputTmpFile.delete(); 
+             return;
+          }
+
+          // Step 4: read the output file. Each line is index,cluster
+          String line;
+          while ((line = outputFileReader.readLine()) != null) {
+             System.out.println("line: " + line);
+             String[] lineParts = line.split(",");
+             String thisNode = lineParts[0];
+             String thisCluster = lineParts[1];
+             // Look for an array list of nodes for this cluster.  If it's not found, than this is the
+             // first node in the cluster, so we add the list in. Otherwise we add this node to the 
+             // existing list.
+             ArrayList<String> indicesForCluster = (ArrayList<String>)clusterList.get(thisCluster);
+             if (null == indicesForCluster) {
+                ArrayList<String> newList = new ArrayList<String>();
+                newList.add(thisNode);
+                clusterList.put(thisCluster, newList);
+             } else {
+                indicesForCluster.add(thisNode);
+             }
+          }
+ 
+          // Delete the tmp and log files.
+          inputTmpFile.delete(); 
+          outputTmpFile.delete(); 
+          log.delete();
+
+          String nReturnedClusters = Integer.toString(clusterList.size());
+          HashMap<String, String> updateMap = new HashMap<String, String>();
+          updateMap.put("nResultingClusters", nReturnedClusters);
+          boolean result = theSNAInstanceDAO.updateSNAInstance(theSNAInstance, updateMap);
+          String SNAId = theSNAInstance.getDataStoreId();
+         
+          // For each returned cluster, add the cluster info to the nodes.
+          // We are allowing the possibility of a node being in more than one cluster
+          for (Map.Entry<String, ArrayList<String>> thisCluster : clusterList.entrySet()){
+             String clusterKey = thisCluster.getKey();
+             System.out.println("clusterKey: " + clusterKey);
+             ArrayList<String> nodesInThisCluster = thisCluster.getValue();
+             for (String thisNodeId: nodesInThisCluster) {
+                 NetworkNodeTransferObject theNode = theNetworkNodeDAO.getNetworkNode(thisNodeId);
+                 String clusterString = 
+                    (String) theNetworkNodeDAO.getPropertyFromNetworkNode(theNode, SNAId);
+                 if (null == clusterString) {
+                    // No problem, just means this node is not already in a cluster
+                    theNetworkNodeDAO.addPropertyToNetworkNode(theNode, SNAId, clusterKey);
+                 } else {
+                    // This node was already assigned to a cluster, so we add this id
+                    String multiClusterString = clusterString + "," + clusterKey;
+                    theNetworkNodeDAO.deletePropertyFromNetworkNode(theNode, SNAId);
+                    theNetworkNodeDAO.addPropertyToNetworkNode(theNode, SNAId, multiClusterString);
+                 }
+             }
+          }
+
+          // We also want to add the singleton nodes.  By convention, they are added with group id -1
+          ArrayList<NetworkDyadTransferObject> theSingletonDyads = 
+              theNetworkDyadDAO.getNetworkSingletonArray(nameSpace, similarityId);
+          for (NetworkDyadTransferObject theSingletonDyad : theSingletonDyads) {
+             String nodeId = theSingletonDyad.getNode1DataStoreId();
+             NetworkNodeTransferObject theSingletonNode = theNetworkNodeDAO.getNetworkNode(nodeId);
+             theNetworkNodeDAO.addPropertyToNetworkNode(theSingletonNode, SNAId, "-1");
+          }
+          
+      } catch (Exception e) {
+          this.logger.log (Level.SEVERE, 
+                           "Exception in processRunSnaAlgorithmFileIOMessage: "  + e.getMessage(), e);
+          return;
+      }
+
+      // Assuming we get this far, we want to send out the next message
+      AMQPComms ac = null;
+      try {
+         ac = new AMQPComms (theProps);
+         String headers = AddedSNAToNetworkDB.getSendHeaders (
+                             nameSpace, theSNAInstance.getDataStoreId());
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         this.logger.log (Level.FINE, "Sent AddedSNAToNetworkDB message.");
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage(), e);
+      } finally {
+         if (null != ac) {
+             ac.shutdownConnection ();
+         }
+      }
+  }
+ 
  
   public void handleException (Exception exception) {
 

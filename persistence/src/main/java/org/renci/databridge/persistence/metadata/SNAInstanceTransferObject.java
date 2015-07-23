@@ -8,6 +8,7 @@ public class SNAInstanceTransferObject {
     private String nameSpace;
     private String nResultingClusters; // How many clusters were created
     private String similarityInstanceId; // The id for the similarity instance 
+    private String params;              // params passed to the algorithm
     private int insertTime;     // Seconds since the epoch
     private String dataStoreId; // The id generated at insertion time.
     
@@ -169,6 +170,26 @@ public class SNAInstanceTransferObject {
     public void setInsertTime(int insertTime)
     {
         this.insertTime = insertTime;
+    }
+    
+    /**
+     * Get params.
+     *
+     * @return params as String.
+     */
+    public String getParams()
+    {
+        return params;
+    }
+    
+    /**
+     * Set params.
+     *
+     * @param params the value to set.
+     */
+    public void setParams(String params)
+    {
+        this.params = params;
     }
 }
 

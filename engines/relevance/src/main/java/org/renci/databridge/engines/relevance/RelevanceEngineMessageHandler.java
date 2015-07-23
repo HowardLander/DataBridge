@@ -153,7 +153,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
               // Let's add a the date and time as well.
               Date now = new Date();
-              SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
+              SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
               String dateString = format.format(now);
               String labeledFileName = nameSpace + "-" + lastClass + "-" + dateString + ".net";
               fileName = outputFile + labeledFileName;
