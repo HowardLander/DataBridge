@@ -1042,6 +1042,9 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
+      // TODO: make sure we only pass the connected nodes to the processNetwork call.  Add the
+      // the singletons to the network later.  See how this is done in processRunSnaAlgorithmFileIOMessage 
+      // code.
       NetworkDyadDAO theNetworkDyadDAO = networkFactory.getNetworkDyadDAO();
       Iterator<NetworkDyadTransferObject> theDyads = 
            theNetworkDyadDAO.getNetworkDyads(nameSpace, similarityId);

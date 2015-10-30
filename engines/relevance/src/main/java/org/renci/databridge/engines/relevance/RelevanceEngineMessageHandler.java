@@ -298,6 +298,10 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
       long nCollections = theCollectionDAO.countCollections(searchMap);
       this.logger.log (Level.INFO, "number of collections: " + nCollections);
+      if (nCollections <= 0) {
+         // Nothing to do, we can stop now
+         this.logger.log (Level.INFO, "nCollections <= 0, so nothing to do");
+      }
 
       // Here we have a small problem.  Our DB infrastructure supports "long"
       // cardinality for records, but the current similarity file uses a 
