@@ -56,7 +56,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
 
     Map<String, String> stringHeaders = amqpMessage.getStringHeaders ();
-    this.logger.log (Level.FINE, "headers: " + stringHeaders);
+    this.logger.log (Level.INFO, "headers: " + stringHeaders);
 
     String className = stringHeaders.get (IngestMetadataMessage.CLASS);
     String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
