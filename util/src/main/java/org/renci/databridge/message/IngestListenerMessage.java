@@ -14,6 +14,7 @@ public class IngestListenerMessage implements AMQPMessageType {
 
   // Message types for the relevance engine
   public static final String PROCESSED_METADATA_TO_METADATADB ="Processed.Metadata.To.MetadataDB";
+  public static final String INSERT_METADATA_JAVA_URI_METADATADB ="Insert.Metadata.Java.URI.MetadataDB";
 
   @Override
   public String getBindHeaders () {

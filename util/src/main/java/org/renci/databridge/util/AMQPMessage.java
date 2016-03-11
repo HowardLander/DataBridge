@@ -23,6 +23,9 @@ public class AMQPMessage {
      /** The actual message */
      private byte[] bytes;
 
+     // The string version of the contents of the message.
+     private String content = null;
+
      /**
       * Default constructor with no arguments
       *
@@ -138,7 +141,28 @@ public class AMQPMessage {
          }
          return stringHeaders;
      }
-     
+     /**
+      * Get String Content.
+      *
+      * @return Message body whose value is a string as a Map<java.lang.String,java.lang.String>
+      */
+     public Map<String,String> getStringContent()
+     {
+         Map<String, String> stringMessages = null;
+         if (content != null) {
+            // Note that we expect the message to be all strings in the form key1:value1;key2:value2;
+            stringMessages = new HashMap<String, String>();
+
+            String[] contentArray = content.split(";");
+
+            for (int i = 0; i < contentArray.length; i++ ) {
+                 String[] thisContent = contentArray[i].split(":"); 
+                 stringMessages.put(thisContent[0], thisContent[1]);
+            }
+        }
+        return stringMessages;
+     }
+
      /**
       * Get routingKey.
       *
@@ -157,5 +181,26 @@ public class AMQPMessage {
      public void setRoutingKey(String routingKey)
      {
          this.routingKey = routingKey;
+     }
+     
+     
+     /**
+      * Get content.
+      *
+      * @return content as String.
+      */
+     public String getContent()
+     {
+         return content;
+     }
+     
+     /**
+      * Set content.
+      *
+      * @param content the value to set.
+      */
+     public void setContent(String content)
+     {
+         this.content = content;
      }
 }

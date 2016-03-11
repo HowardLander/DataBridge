@@ -73,7 +73,7 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
 
 
   /**
-   * Handle the CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI message.  
+   * Handle the CREATE_SIMILARITYMATRIX_JAVA_BATCH_METADATADB_URI message.  
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects plus a properties
    */
@@ -149,7 +149,7 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
       if (null == theCollectionDAO) {
          this.logger.log (Level.SEVERE, "CollectionDAO is null");
          return;
-      } 
+      }
 
       SimilarityInstanceDAO theSimilarityInstanceDAO = theFactory.getSimilarityInstanceDAO();
       if (null == theSimilarityInstanceDAO) {
@@ -169,7 +169,7 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
       versionMap.put("nameSpace", nameSpace);
       versionMap.put("className", className);
       versionMap.put("method", "compareCollections");
-      
+
       HashMap<String, String> sortMap = new HashMap<String, String>();
       sortMap.put("version", SimilarityInstanceDAO.SORT_DESCENDING);
       Integer limit = new Integer(1);
@@ -190,7 +190,7 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
          this.logger.log (Level.SEVERE, "Can't insert similarity instance");
          return;
       }
-      
+
       // Search for all of the collections in the nameSpace
       HashMap<String, String> searchMap = new HashMap<String, String>();
       searchMap.put("nameSpace", nameSpace);
@@ -269,19 +269,22 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
 
       // The size of the upper triangular similarity matrix 
       double nSimilarityOps = ((nCollectionsInt * nCollectionsInt) - nCollectionsInt) / 2;
+      this.logger.log (Level.INFO, "nSimilarityOps: " + nSimilarityOps);
 
       // How many total processes will we need?
       int nProcesses = (int) Math.ceil(nSimilarityOps / (double)opsPerProcess);
+      this.logger.log (Level.INFO, "nProcesses: " + nProcesses);
 
       // Assuming we get this far, we want to send out the next message
       AMQPComms ac = null;
       try {
+/*
          ac = new AMQPComms (theProps);
          String headers = ProcessedMetadataToNetworkFile.getSendHeaders (
                              nameSpace, theSimilarityInstance.getDataStoreId());
          this.logger.log (Level.INFO, "Send headers: " + headers);
-         ac.publishMessage (new AMQPMessage (), headers, true);
          this.logger.log (Level.INFO, "Sent ProcessedMetadataToNetworkFile message.");
+ */
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
       } finally {

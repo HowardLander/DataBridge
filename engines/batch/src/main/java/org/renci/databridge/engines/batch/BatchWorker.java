@@ -12,7 +12,7 @@ import java.util.Properties;
  * looks at the message and, if needed, will fork a thread to handle the message.
  *
  */
-public class BatchEngine {
+public class BatchWorker {
 
     protected static Logger logger = Logger.getLogger ("org.renci.databridge.engines.batch");
 
@@ -38,13 +38,13 @@ public class BatchEngine {
             Properties props= new Properties();
             props.load(new FileInputStream(propFileName));
             props.setProperty("org.renci.databridge.primaryQueue", 
-                              props.getProperty("org.renci.databridge.batchEngine.primaryQueue"));
+                              props.getProperty("org.renci.databridge.batchWorker.primaryQueue"));
            logger.log(Level.INFO,
                 "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
      
-            BatchEngineMessageListener aml = 
-                new BatchEngineMessageListener (props, new BatchEngineMessage(), 
-                                         new BatchEngineMessageHandler(), logger);
+            BatchWorkerMessageListener aml = 
+                new BatchWorkerMessageListener (props, new BatchEngineMessage(), 
+                                         new BatchWorkerMessageHandler(), logger);
 
             aml.start ();
 
@@ -68,8 +68,9 @@ public class BatchEngine {
             batchListener.join (); // keeps main thread from exiting 
            */
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Exception in main: " + ex.toString());
+            logger.log(Level.SEVERE, "Exception in main: " + ex.getMessage(), ex);
             System.exit(1);
+
         }
 
     }

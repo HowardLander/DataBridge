@@ -12,16 +12,20 @@ public class BatchUtils {
 
     /**
      * Return the list of pairs of indices in an upper triangular matrix of the specified
-     * dimension at the given start point for the given count.
+     * dimension at the given offset point for the given count.
      *
-     * @param theCollection CollectionTransfer object containing info to be inserted.
+     * @param dimension The number of datasets being compared (also the dimension of the 
+     *                  similarity array)
+     * @param offset    Where in the matrix to start as a one dimesional offset starting at zero
+     * @param count     The number of IndexPairs to generate
      */
-    public static ArrayList<IndexPair> getPairList(int dimension, int start, int count) {
+    public static ArrayList<IndexPair> getPairList(int dimension, int offset, int count) {
 
        ArrayList<IndexPair> thePairs = new ArrayList<IndexPair>();
 
        // Note this is guaranteed to be an integer, why is left as an exercise for the reader...
        int total = ((dimension * dimension) - dimension) / 2;
+       int start = offset + 1;
 
        int cumulative = 0; // How far have we gone, start is offset from 0.
        int rowStart = 0;

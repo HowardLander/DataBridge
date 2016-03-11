@@ -35,21 +35,26 @@ public class BatchTest {
      System.out.println("beginning testBatchUtils");
      boolean result;
 
-     ArrayList<IndexPair> thePairs = BatchUtils.getPairList(10, 1, 1);
+     System.out.println("testing with offset 0 and count 1");
+     ArrayList<IndexPair> thePairs = BatchUtils.getPairList(10, 0, 1);
      System.out.println("first pair: " + thePairs.get(0));
 
-     thePairs = BatchUtils.getPairList(10, 3, 30);
+     thePairs = BatchUtils.getPairList(10, 2, 30);
+     System.out.println("testing with offset 2 and count 30");
      for (IndexPair thisPair: thePairs) {
         System.out.println("a pair: " + thisPair);
      }
 
-     thePairs = BatchUtils.getPairList(10, 9, 1);
+     thePairs = BatchUtils.getPairList(10, 8, 1);
+     System.out.println("testing with offset 8 and count 1");
      System.out.println("first pair: " + thePairs.get(0));
 
-     thePairs = BatchUtils.getPairList(10, 12, 1);
+     thePairs = BatchUtils.getPairList(10, 11, 1);
+     System.out.println("testing with offset 11 and count 1");
      System.out.println("first pair: " + thePairs.get(0));
 
-     thePairs = BatchUtils.getPairList(10, 30, 1);
+     thePairs = BatchUtils.getPairList(10, 29, 1);
+     System.out.println("testing with offset 29 and count 1");
      System.out.println("first pair: " + thePairs.get(0));
   }
 }

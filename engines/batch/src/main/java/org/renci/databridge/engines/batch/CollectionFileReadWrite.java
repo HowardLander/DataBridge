@@ -10,6 +10,13 @@ import org.renci.databridge.persistence.metadata.*;
 
 public class CollectionFileReadWrite {
 
+  /**
+   * This function writes a json representation of the given CollectionTransferObject to the
+   * specified file.
+   *
+   * @param outputFile The file to which to output the json.
+   * @param cto1 The CollectionTransferObject to write.
+   */
   public static void writeToFile(String outputFile, CollectionTransferObject cto1) {
 
     BufferedWriter nodeWriter = null;
@@ -38,6 +45,14 @@ public class CollectionFileReadWrite {
      }
   }
 
+
+  /**
+   * This function reads a json representation of a CollectionTransferObject from a file into an
+   * object in memory.
+   *
+   * @param inputFile The file from which to read the json.
+   * @return The CollectionTransferObject memory object
+   */
   public static CollectionTransferObject readFromFile(String inputFile) {
   
     CollectionTransferObject theObject = null;

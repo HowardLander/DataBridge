@@ -37,25 +37,25 @@ import java.util.Properties;
 public class AMQPComms {
 
      /** The AMQP connection for this comms object */
-     private Connection theConnection;
+     protected Connection theConnection;
 
      /** The AMOP Channel for this comms object */
-     private Channel theChannel;
+     protected Channel theChannel;
 
      /** The AMOP Queue for this comms object */
-     private String primaryQueue;
+     protected String primaryQueue;
 
      /** The consumer for this queue */
-     private QueueingConsumer consumer;
+     protected QueueingConsumer consumer;
 
      /** Header map for publishing message */
-     private Map<String, Object> publishMap = new HashMap<String, Object>();
+     protected Map<String, Object> publishMap = new HashMap<String, Object>();
 
      /** Header map for publishing message */
-     private String publishHeaders;
+     protected String publishHeaders;
 
      /** Header map for publishing message */
-     private String receiveHeaders;
+     protected String receiveHeaders;
 
      // The API requires a routing key, but in fact if you are using a header exchange the
      // value of the routing key is not used in the routing. So we define a dummy key
@@ -64,20 +64,20 @@ public class AMQPComms {
      String routingKey = "unused";
 
      /** The tag for this consumer */
-     private String theTag;
+     protected String theTag;
 
      /** The durability property for the main queue */
-     private boolean queueDurability;
+     protected boolean queueDurability;
 
      /** The AMQP hostname for this comms object */
-     private String theHost;
+     protected String theHost;
 
      /** The AMQP exchange for this comms object */
-     private String theExchange;
+     protected String theExchange;
 
      /** The logging level for this logger.  Any message
          <= this level will be queued*/
-     private int theLevel = 4;
+     protected int theLevel = 4;
 
      /** The static logging levels */
      public static final int LOG_EMERG =   0;
