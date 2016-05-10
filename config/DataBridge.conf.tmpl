@@ -32,8 +32,14 @@ org.renci.databridge.relevancedb.dbPort=27017
 # The communication host
 org.renci.databridge.queueHost=localhost
 
-# the exchange
+# the normal platform (header) exchange
 org.renci.databridge.exchange=databridge-production-exchange
+
+# the direct exchange
+org.renci.databridge.direct.exchange=integration-test-direct
+
+# the direct queue
+org.renci.databridge.direct.queue=batch-worker-test-primary
 
 # The durability for the primary communication queue.
 org.renci.databridge.queueDurability=false
@@ -64,3 +70,54 @@ org.renci.databridge.networkEngine.primaryQueue=databridge-network-engine-produc
 
 # The secondary "ingestlister" communication queue.
 org.renci.databridge.networkEngine.ingestQueue=databridge-action-engine-production-ingest
+###############################################################################
+# Batch engine section
+###############################################################################
+
+# The primary communication queue.
+org.renci.databridge.batchEngine.primaryQueue=batch-installed-primary
+
+# The secondary "ingestlister" communication queue.
+org.renci.databridge.batchEngine.ingestQueue=batch-installed-action
+
+# The direct reply queue used to reply back to the batch engine
+org.renci.databridge.batchEngine.replyQueue=batch-engine-reply-installed-queue
+
+# The direct queue used to send messages to the workers
+org.renci.databridge.batchEngine.directWorkerQueue=batch-engine-worker-installed-queue
+
+###############################################################################
+# Batch worker section
+###############################################################################
+
+# The primary communication queue.
+org.renci.databridge.batchWorker.primaryQueue=batch-worker-primary
+
+# The number of operations for each "batch" (A unit of work tasked to a worker)
+org.renci.databridge.batch.opsPerBatch=1000
+
+# The maximum number of workers to start
+org.renci.databridge.batch.maxWorkers=10
+
+# Command to start the batch workers
+org.renci.databridge.batchWorker.startCommand=dataBridgeBatchWorkerCtl.sh
+
+# Arguments to start the batch workers
+org.renci.databridge.batchWorker.startCommandArgs=start
+
+# Command to stop the batch workers
+org.renci.databridge.batchWorker.stopCommand=dataBridgeBatchWorkerCtl.sh
+
+# Arguments to stop the batch workers
+org.renci.databridge.batchWorker.stopCommandArgs=stop
+
+# Max number of retries for batch command failure
+org.renci.databridge.batchWorker.maxRetries=10
+
+###############################################################################
+# Misc properties
+###############################################################################
+org.renci.databridge.misc.tmpDir=/tmp
+
+# The top level directory for binaries, scripts etc
+org.renci.databridge.misc.binDir=/projects/databridge/DataBridge/bin
