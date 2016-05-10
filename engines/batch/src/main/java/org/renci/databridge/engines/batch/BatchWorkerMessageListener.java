@@ -22,7 +22,7 @@ public class BatchWorkerMessageListener extends Thread {
 
   protected static final long LISTENER_TIMEOUT_MS = 1000;
 
-  protected AMQPComms amqpComms;
+  protected AMQPDirectComms amqpComms;
   protected AMQPMessageType amqpMessageType;
   protected AMQPMessageHandler amqpMessageHandler;
   protected Logger logger;
@@ -45,7 +45,7 @@ public class BatchWorkerMessageListener extends Thread {
 
     // creating AMQPComms here becausec passing it in would enable reusing
     // the same AMQPComms instance, which is not safe across multiple clients
-    this.amqpComms = new AMQPDirectComms (props);
+    this.amqpComms = new AMQPDirectComms (props, false);
     this.theProps = props;
 
   }
@@ -72,6 +72,7 @@ public class BatchWorkerMessageListener extends Thread {
                   logger.log(Level.INFO, "received a message: " + am.getContent());
                   Object thePassedObjects[] = new Object[1];
                   thePassedObjects[0] = (Object) theProps;
+                  am.setDirectComms(this.amqpComms);
                   this.amqpMessageHandler.handle (am, (Object) thePassedObjects);
               }
           } catch (Exception e) {

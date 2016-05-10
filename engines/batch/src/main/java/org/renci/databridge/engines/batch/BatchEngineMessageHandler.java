@@ -12,6 +12,7 @@ import org.renci.databridge.message.*;
 import java.util.*;
 import java.text.*;
 import java.io.*;
+import java.nio.*;
 import java.lang.reflect.*;
 
 
@@ -26,7 +27,7 @@ import java.lang.reflect.*;
 
 public class BatchEngineMessageHandler implements AMQPMessageHandler {
 
-   private Logger logger = Logger.getLogger ("org.renci.databridge.engine.batch");
+  private Logger logger = Logger.getLogger ("org.renci.databridge.engine.batch");
 
   // These are the individual portions of the message.
   // The routing key.
@@ -40,6 +41,8 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
 
   // The byte array for the contents of the message.
   private byte[] bytes;
+
+  protected static final long LISTENER_TIMEOUT_MS = 1000;
 
   /**
    * This function essentially de-multiplexes the message by calling the 
@@ -228,13 +231,14 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
       String  collectionFileDir = 
          theProps.getProperty("org.renci.databridge.batch.collectionFileDir", "collectionDir");
 
-      try {
-         // Create a sub dir for this invocation
-         Date now = new Date();
-         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
-         String dateString = format.format(now);
-         String labeledTmpDir = collectionFileDir + "/" + nameSpace + "-" + dateString;
+      // Create a sub dir for this invocation
+      String labeledTmpDir;
+      Date now = new Date();
+      SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+      String dateString = format.format(now);
+      labeledTmpDir = collectionFileDir + "/" + nameSpace + "-" + dateString;
 
+      try {
          File newTmpDir = new File(labeledTmpDir);
 
          // Create the directory if it does not already exist
@@ -259,34 +263,224 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
          e.printStackTrace();
       }
 
-      // How many ops do we want to do in each process?
-      int opsPerProcess = 
-         Integer.parseInt(theProps.getProperty("org.renci.databridge.batch.opsPerProcess", "1000"));
+      // How many ops do we want to do in each batch?
+      int opsPerBatch = 
+         Integer.parseInt(theProps.getProperty("org.renci.databridge.batch.opsPerBatch", "1000"));
 
       // How many concurrent processes shall we fork off?
-      int maxConcurrentProcesses = 
-         Integer.parseInt(theProps.getProperty("org.renci.databridge.batch.maxConcurrentProcesses", "100"));
+      int maxWorkers = 
+         Integer.parseInt(theProps.getProperty("org.renci.databridge.batch.maxWorkers", "100"));
 
       // The size of the upper triangular similarity matrix 
       double nSimilarityOps = ((nCollectionsInt * nCollectionsInt) - nCollectionsInt) / 2;
       this.logger.log (Level.INFO, "nSimilarityOps: " + nSimilarityOps);
 
       // How many total processes will we need?
-      int nProcesses = (int) Math.ceil(nSimilarityOps / (double)opsPerProcess);
-      this.logger.log (Level.INFO, "nProcesses: " + nProcesses);
+      int nBatches = (int) Math.ceil(nSimilarityOps / (double)opsPerBatch);
+      this.logger.log (Level.INFO, "nBatches: " + nBatches);
 
-      // Assuming we get this far, we want to send out the next message
-      AMQPComms ac = null;
+      int nWorkersToStart;
+      if (nBatches <= maxWorkers) {
+         // we don't need more than the max
+         nWorkersToStart = nBatches;
+      } else {
+         nWorkersToStart = maxWorkers;
+      }
+
+      String stringWorkers = Integer.toString(nWorkersToStart);
+
+      // Now we want to queue up all the messages
+      AMQPDirectComms ac = null;
       try {
-/*
-         ac = new AMQPComms (theProps);
-         String headers = ProcessedMetadataToNetworkFile.getSendHeaders (
-                             nameSpace, theSimilarityInstance.getDataStoreId());
-         this.logger.log (Level.INFO, "Send headers: " + headers);
-         this.logger.log (Level.INFO, "Sent ProcessedMetadataToNetworkFile message.");
- */
+         // Here is where we need to start up whatever batch workers we need.
+         String workerStartCommand = 
+          theProps.getProperty("org.renci.databridge.batchWorker.startCommand", "dataBridgeBatchWorkerCtl.sh");
+         String workerStartArgs = 
+          theProps.getProperty("org.renci.databridge.batchWorker.startCommandArgs", "");
+         String workerStopCommand = 
+          theProps.getProperty("org.renci.databridge.batchWorker.stopCommand", "dataBridgeBatchWorkerCtl.sh");
+         String workerStopArgs = 
+          theProps.getProperty("org.renci.databridge.batchWorker.stopCommandArgs", "");
+         String binDir = 
+          theProps.getProperty("org.renci.databridge.misc.binDir", "/projects/dataBridge/bin");
+         int maxRetries = 
+          Integer.parseInt(theProps.getProperty("org.renci.databridge.batchWorker.maxRetries", "10"));
+         ArrayList<String> allArgs = new ArrayList<String>();
+      
+         // Add the command first
+         String executable = new String(binDir + "/" + workerStartCommand); 
+         allArgs.add(executable);
+
+         // Important note: we are assuming that the startCommand is called with all of the args passed in the
+         // startCommandArgs property plus the number of workers we want. So the command has to conform to this
+         // interface.
+         for (String thisArg: workerStartArgs.split(" ")) {
+            allArgs.add(thisArg);
+         }
+         allArgs.add(stringWorkers);
+
+         ProcessBuilder thePB = new ProcessBuilder(allArgs);
+         Process process = thePB.start();
+        
+         // Read out dir output
+         InputStream is = process.getInputStream();
+         InputStreamReader isr = new InputStreamReader(is);
+         BufferedReader br = new BufferedReader(isr);
+         this.logger.log (Level.INFO, "Running command: " + executable + " " + allArgs);
+         String line;
+         while ((line = br.readLine()) != null) {
+            this.logger.log (Level.INFO, line);
+         }
+
+         // This command waits for the exit value of the command.
+         int exitValue = process.waitFor(); 
+         this.logger.log (Level.INFO, "Command exited with status " + exitValue);
+
+         // Next we send all of the messages. Rabbit takes care of the round robin.
+         ac = new AMQPDirectComms (theProps, true);
+         int startIndex = 0;
+         int nRemainingOps = (int) nSimilarityOps;
+
+         // We are going to save the content for each message in case we need it
+         // again to resend in case of failre
+         HashMap<Integer, String> contentMap = new HashMap<Integer, String>();
+         for (int i = 0; i < nBatches; i++) {
+            // Build up the needed message
+            int opsThisBatch = (nRemainingOps < opsPerBatch) ? nRemainingOps : opsPerBatch;
+            // Each batch produces it's own output file that we will eventually composite into
+            // a single file.
+            String thisOutFile = labeledTmpDir + "/" + nameSpace + ".out." + Integer.toString(i);
+            String theContent = CreateSimilarityMatrixSubsetJavaBatchFile.getSendHeaders(className, 
+                                                                                         nameSpace, 
+                                                                                         thisOutFile,
+                                                                                         startIndex,
+                                                                                         opsThisBatch,
+                                                                                         labeledTmpDir,
+                                                                                         nCollections);
+            this.logger.log (Level.INFO, "Content for batch " + i + " is "  + theContent);
+
+            contentMap.put(i, theContent);
+
+            startIndex += opsThisBatch; 
+            nRemainingOps -= opsThisBatch;
+            // Send the message with a generated correlationId and reply to.
+            AMQPMessage thisMessage = new AMQPMessage(theContent.toString().getBytes());
+            ac.publishMessage(thisMessage, true, Integer.toString(i));
+         }
+
+         // Having sent all of the messages to the exchange, we need to wait for all of the 
+         // workers to finish.  Once that's done we can combine the individual output files
+         // into a complete network file. We also have to consider the possibility of one or 
+         // more of the workers failing...
+         int nCompleted = 0;
+         long nRetries = 0;
+         while (nCompleted < nBatches) {
+             try {
+                 AMQPMessage am = ac.receiveMessage (LISTENER_TIMEOUT_MS);
+                 if (am != null) {
+                     // The message handler needs the property file so it can send action messages, so we
+                     // store it in an array of Objects along with the needed factory.
+                     logger.log(Level.INFO, "received a message: " + am.getContent());
+                     String message = am.getContent();
+                     if (0 == message.compareTo(AMQPComms.MESSAGE_FAILURE)) {
+                        // The call falled for some reason. As long as we have not exceeded
+                        // the max number of retries, we will resend.
+                        String thisTag = am.getTag();
+                        logger.log(Level.INFO, "Message failure on batch: " + thisTag);
+                        if (nRetries < maxRetries) {
+                           AMQPMessage thisMessage = 
+                              new AMQPMessage(contentMap.get(thisTag).getBytes());
+                           ac.publishMessage(thisMessage, true, thisTag);
+                           nRetries ++;
+                        } else {
+                           logger.log(Level.INFO, "Max number of retries exceeded: " + nRetries);
+                           break;
+                        }
+                  
+                        // The tag tells us which message to resend.
+                     } else {
+                        nCompleted ++;
+                     }
+                     ac.ackMessage(am);
+                 }
+             } catch (Exception e) {
+                 // dispatch exception to handler st it doesn't stop dispatch thread
+                 this.handleException (e);
+   
+                 // @todo deal with exceptions here.
+            }
+         }
+         // At this point we are done with processing. So either we have completed all the work or not.
+         // If everything worked, we want to compose the individual results into a result file. In either
+         // case we need to remove all of the temp files.
+         logger.log(Level.INFO, "nCompleted: " + nCompleted + " nBatches " + nBatches);
+         if (nCompleted == nBatches) {
+            // success
+            PrintWriter outputWriter = new PrintWriter(new FileOutputStream(outputFile));
+
+            for (int i = 0; i < nBatches; i++) {
+               String thisContent = contentMap.get(i);
+               logger.log(Level.INFO, "thisContent for tag " + i + " is " + thisContent);
+               String thisTmpFile = CreateSimilarityMatrixSubsetJavaBatchFile.getOutputFile(thisContent);
+
+               BufferedReader readBuff = new BufferedReader (new FileReader(thisTmpFile));
+               // Read each line from the input file
+               line = readBuff.readLine();
+        
+               while (line != null) {
+                   outputWriter.println(line);
+                   line = readBuff.readLine();
+               }
+               readBuff.close();
+           }
+           outputWriter.close();
+         }
+
+         // Now is the time to delete any generated tmp files.
+         File labeledTmpFile = new File(labeledTmpDir);
+         String[] allTmpFiles;
+         if (labeledTmpFile.isDirectory()) {
+            allTmpFiles = labeledTmpFile.list();
+            for (int i = 0; i < allTmpFiles.length; i++) {
+                File thisToDelete = new File(labeledTmpFile, allTmpFiles[i]);
+                thisToDelete.delete();
+            }
+         }
+
+         // And the directory itself
+         labeledTmpFile.delete();
+ 
+         // Shutdown the workers.
+         ArrayList<String> stopArgs = new ArrayList<String>();
+      
+         // Add the command first
+         String stopExecutable = new String(binDir + "/" + workerStopCommand); 
+         stopArgs.add(stopExecutable);
+
+         // Important note: we are assuming that the startCommand is called with all of the args passed in the
+         // stopCommandArgs property. So the command has to conform to this interface.
+         for (String thisArg: workerStopArgs.split(" ")) {
+            stopArgs.add(thisArg);
+         }
+
+         thePB = new ProcessBuilder(stopArgs);
+         process = thePB.start();
+        
+         // Read out dir output
+         is = process.getInputStream();
+         isr = new InputStreamReader(is);
+         br = new BufferedReader(isr);
+         this.logger.log (Level.INFO, "Running command: " + executable + " " + stopArgs);
+         while ((line = br.readLine()) != null) {
+            this.logger.log (Level.INFO, line);
+         }
+
+         // This command waits for the exit value of the command.
+         exitValue = process.waitFor(); 
+         this.logger.log (Level.INFO, "Command exited with status " + exitValue);
+
       } catch (Exception e) {
-         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
+         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage(), e);
       } finally {
          if (null != ac) {
              ac.shutdownConnection ();

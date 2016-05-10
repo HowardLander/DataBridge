@@ -29,6 +29,7 @@ import org.renci.databridge.persistence.metadata.FileTransferObject;
 import org.renci.databridge.persistence.metadata.VariableDAO;
 import org.renci.databridge.persistence.metadata.VariableTransferObject;
 import org.renci.databridge.message.IngestMetadataMessage;
+import org.renci.databridge.message.IngestListenerMessage;
 import org.renci.databridge.message.ProcessedMetadataToMetadataDB;
 
 /**
@@ -54,42 +55,85 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
   @Override
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
+     Map<String, String> stringHeaders = amqpMessage.getStringHeaders ();
+     this.logger.log (Level.INFO, "headers: " + stringHeaders);
+     String messageName = stringHeaders.get(IngestMetadataMessage.NAME);
 
-    Map<String, String> stringHeaders = amqpMessage.getStringHeaders ();
-    this.logger.log (Level.INFO, "headers: " + stringHeaders);
-
-    String className = stringHeaders.get (IngestMetadataMessage.CLASS);
-    String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
-    boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
-    String inputURI = stringHeaders.get (IngestMetadataMessage.INPUT_URI);
-    String messageName = stringHeaders.get(IngestMetadataMessage.NAME);
-
-    // @todo add a message NAME demux like in RelevanceEngineMessageHandler
-
-    // instantiate third-party MetadataFormatter implementation 
-    MetadataFormatter mf = (MetadataFormatter) Class.forName (className).newInstance (); 
-    mf.setLogger (this.logger);
-    byte [] bytes = get (inputURI);
-
-    // dispatch to third-party formatter 
-    List<MetadataObject> metadataObjects = mf.format (bytes);
-
-    for (MetadataObject mo : metadataObjects) {
-      persist (mo, nameSpace);
-      this.logger.log (Level.FINE, "Inserted MetadataObject.");
-    }
-
-    if (fireEvent) {
-      // send ProcessedMetadataToMetadataDB message 
-      AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
-      String headers = ProcessedMetadataToMetadataDB.getSendHeaders (nameSpace);
-      this.logger.log (Level.FINER, "Send headers: " + headers);
-      ac.publishMessage (new AMQPMessage (), headers, true);
-      ac.shutdownConnection ();     
-      this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
-    }
-
+     if (null == messageName) {
+        logger.log(Level.WARNING, "messageName is missing");
+     } else if
+         (messageName.compareTo(IngestListenerMessage.INSERT_METADATA_JAVA_URI_METADATADB) == 0) {
+        processInsertMetadatMessage(stringHeaders, extra);
+     } else {
+         logger.log(Level.WARNING, "unimplemented messageName: " + messageName);
+     }
   }
+
+  /**
+   * Handle the INSERT_METADATA_JAVA_URI_METADATADB message.  
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects
+   */
+    public void processInsertMetadatMessage(Map<String, String> stringHeaders, Object extra) {
+
+       String className = stringHeaders.get (IngestMetadataMessage.CLASS);
+       String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
+       boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
+       String inputURI = stringHeaders.get (IngestMetadataMessage.INPUT_URI);
+
+       // @todo add a message NAME demux like in RelevanceEngineMessageHandler
+
+       // instantiate third-party MetadataFormatter implementation 
+       MetadataFormatter mf = null;
+       try {
+          mf = (MetadataFormatter) Class.forName (className).newInstance (); 
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
+         e.printStackTrace();
+         return;
+      }
+
+       mf.setLogger (this.logger);
+       byte [] bytes = null;
+       try {
+          bytes = get (inputURI);
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't read the inputURI:  " + inputURI);
+         e.printStackTrace();
+         return;
+      }
+
+       // dispatch to third-party formatter 
+       List<MetadataObject> metadataObjects = null;
+       try {
+           metadataObjects = mf.format (bytes);
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't perform format operation");
+         e.printStackTrace();
+         return;
+       }
+
+       for (MetadataObject mo : metadataObjects) {
+         try {
+           persist (mo, nameSpace);
+           this.logger.log (Level.FINE, "Inserted MetadataObject.");
+         } catch (Exception e) {
+           this.logger.log (Level.SEVERE, "Can't insert MetadataObject.");
+           e.printStackTrace();
+           return;
+         }
+       }
+
+       if (fireEvent) {
+         // send ProcessedMetadataToMetadataDB message 
+         AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
+         String headers = ProcessedMetadataToMetadataDB.getSendHeaders (nameSpace);
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         ac.shutdownConnection ();     
+         this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
+       }
+    }
 
   public void handleException (Exception exception) {
 

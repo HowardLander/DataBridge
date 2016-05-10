@@ -113,8 +113,8 @@ public class BatchEngineMessageListener extends Thread {
            if (null == theFactory) {
               this.logger.log (Level.SEVERE, "theFactory is null");
               return;
-           } 
-          
+           }  
+
           // The message handler needs the property file so it can send action messages, so we 
           // store it in an array of Objects along with the needed factory.
           Object thePassedObjects[] = new Object[2];

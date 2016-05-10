@@ -7,8 +7,11 @@ import com.google.gson.*;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.*;
 import org.renci.databridge.persistence.metadata.*;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class CollectionFileReadWrite {
+  protected static Logger logger = Logger.getLogger ("org.renci.databridge.engines.batch");
 
   /**
    * This function writes a json representation of the given CollectionTransferObject to the
@@ -57,6 +60,7 @@ public class CollectionFileReadWrite {
   
     CollectionTransferObject theObject = null;
     BufferedReader nodeReader = null;
+    logger.log(Level.INFO, "reading file: " + inputFile);
 
     try {
         // Create the node file and it's reader

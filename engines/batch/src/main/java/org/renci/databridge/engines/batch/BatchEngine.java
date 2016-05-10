@@ -39,7 +39,7 @@ public class BatchEngine {
             props.load(new FileInputStream(propFileName));
             props.setProperty("org.renci.databridge.primaryQueue", 
                               props.getProperty("org.renci.databridge.batchEngine.primaryQueue"));
-           logger.log(Level.INFO,
+            logger.log(Level.INFO,
                 "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
      
             BatchEngineMessageListener aml = 

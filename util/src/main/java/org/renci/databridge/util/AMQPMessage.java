@@ -26,6 +26,15 @@ public class AMQPMessage {
      // The string version of the contents of the message.
      private String content = null;
 
+     // The delivery tag from the envelope
+     private long deliveryTag = 0;
+
+     // The tag from the correlationId field
+     private String tag;
+
+     // The AMQPDirectComms object that produced this message.  Needed for ack/reply
+     private AMQPDirectComms comms = null;
+
      /**
       * Default constructor with no arguments
       *
@@ -202,5 +211,65 @@ public class AMQPMessage {
      public void setContent(String content)
      {
          this.content = content;
+     }
+     
+     /**
+      * Get deliveryTag.
+      *
+      * @return deliveryTag as long.
+      */
+     public long getDeliveryTag()
+     {
+         return deliveryTag;
+     }
+     
+     /**
+      * Set deliveryTag.
+      *
+      * @param deliveryTag the value to set.
+      */
+     public void setDeliveryTag(long deliveryTag)
+     {
+         this.deliveryTag = deliveryTag;
+     }
+     
+     /**
+      * Get tag.
+      *
+      * @return tag as String.
+      */
+     public String getTag()
+     {
+         return tag;
+     }
+     
+     /**
+      * Set tag.
+      *
+      * @param tag the value to set.
+      */
+     public void setTag(String tag)
+     {
+         this.tag = tag;
+     }
+     
+     /**
+      * Get comms.
+      *
+      * @return comms as AMQPDirectComms.
+      */
+     public AMQPDirectComms getDirectComms()
+     {
+         return comms;
+     }
+     
+     /**
+      * Set comms.
+      *
+      * @param comms the value to set.
+      */
+     public void setDirectComms(AMQPDirectComms comms)
+     {
+         this.comms = comms;
      }
 }

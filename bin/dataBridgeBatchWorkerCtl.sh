@@ -41,16 +41,17 @@ batch_worker_stdout_file=${DATABRIDGE_LOG_DIR}/batchWorker.log
 batch_worker_stderr_file=${DATABRIDGE_LOG_DIR}/batchWorker.err
 
 get_batch_pid() {
-   cat ${batch_worker_pid_file}
+  sed -n "${1}{p;q;}"  ${batch_worker_pid_file}
 }
 
 is_batch_running() {
-    [ -f "$batch_worker_pid_file" ] && ps `get_batch_pid` > /dev/null 2>&1
+    [ -f "$batch_worker_pid_file" ] && ps `get_batch_pid $1` > /dev/null 2>&1
 }
 
 
 is_running() {
-    is_batch_running
+    # For now we just check for the first worker.
+    is_batch_running 0
 }
 # Find the config file
 DATABRIDGE_CONFIG_FILE=${DATABRIDGE_CONFIG_DIR}/DataBridge.conf
@@ -70,44 +71,63 @@ fi
 case "$1" in
     start)
     if is_batch_running; then
-        echo "Batch worker already running"
+        echo "Batch workers already running"
     else
-        echo "Starting batch worker"
+        echo "Starting $2 batch worker(s)"
         cd "$DATABRIDGE_BIN"
-        echo "Batch worker startup at "`date -u` >> ${batch_worker_stdout_file}
-        $JAVA -cp ${BATCH_WORKER_CLASS_PATH} org.renci.databridge.engines.batch.BatchWorker ${DATABRIDGE_CONFIG_DIR}/DataBridge.conf >> "$batch_worker_stdout_file" 2>> "$batch_worker_stderr_file" &
-        echo $! > "$batch_worker_pid_file"
-        if ! is_batch_running; then
-            echo "Unable to start worker, see $batch_worker_stdout_file and $batch_worker_stderr_file"
-            exit 1
+        COUNTER=0
+        OFFSET=1
+        if [ -f "$batch_worker_pid_file" ]; then
+           /bin/rm $batch_worker_pid_file
         fi
+        while [[ $COUNTER -lt $2 ]]; do
+            echo "Batch worker startup at "`date -u` >> ${batch_worker_stdout_file}.$COUNTER
+            $JAVA -cp ${BATCH_WORKER_CLASS_PATH} org.renci.databridge.engines.batch.BatchWorker ${DATABRIDGE_CONFIG_DIR}/DataBridge.conf >> "$batch_worker_stdout_file.$COUNTER" 2>> "$batch_worker_stderr_file.$COUNTER" &
+            echo $! >> "$batch_worker_pid_file"
+            if ! is_batch_running $OFFSET; then
+                echo "Unable to start worker, see $batch_worker_stdout_file.$COUNTER and $batch_worker_stderr_file.$COUNTER"
+                exit 1
+            fi
+            let OFFSET=OFFSET+1
+            let COUNTER=COUNTER+1
+        done
     fi
     ;;
     stop)
     # Stop the batch engine
-    if is_batch_running; then
-        echo -n "Stopping batch worker.."
-        kill `get_batch_pid`
-        for i in {1..10}
-        do
-            if ! is_batch_running; then
-                break
-            fi
+    if is_batch_running 1; then
+        nWorkers=`wc -l $batch_worker_pid_file | awk '{print $1}'`
+        echo "Stopping $nWorkers batch worker(s)..."
+        COUNTER=0
+        OFFSET=1
+        while [[ $COUNTER -lt $nWorkers ]]; do
+            echo -n "killing worker process `get_batch_pid $OFFSET`"
+            kill `get_batch_pid $OFFSET`
+            for i in {1..10}
+            do
+                if ! is_batch_running $OFFSET; then
+                    echo
+                    break
+                fi
+    
+                echo -n "."
+                sleep 1
+            done
 
-            echo -n "."
-            sleep 1
+            if is_batch_running $OFFSET; then
+                echo "Not stopped; may still be shutting down or shutdown may have failed"
+                exit 1
+            else
+                if [[ $OFFSET -eq ${nWorkers} ]]; then
+                    echo "Stopped"
+                    if [ -f "$batch_worker_pid_file" ]; then
+                        rm -f "$batch_worker_pid_file"
+                    fi
+                fi
+            fi
+            let OFFSET=OFFSET+1
+            let COUNTER=COUNTER+1
         done
-        echo
-
-        if is_batch_running; then
-            echo "Not stopped; may still be shutting down or shutdown may have failed"
-            exit 1
-        else
-            echo "Stopped"
-            if [ -f "$batch_worker_pid_file" ]; then
-                rm -f "$batch_worker_pid_file"
-            fi
-        fi
     else
         echo "Batch worker not running"
     fi
@@ -123,7 +143,8 @@ case "$1" in
     ;;
     status)
     if is_batch_running; then
-        echo "Batch worker running"
+        nWorkers=`wc -l $batch_worker_pid_file | awk '{print $1}'`
+        echo "$nWorkers batch worker(s) running"
     else
         echo "Batch worker stopped"
     fi

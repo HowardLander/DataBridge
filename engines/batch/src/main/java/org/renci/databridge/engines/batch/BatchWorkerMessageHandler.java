@@ -70,7 +70,7 @@ public class BatchWorkerMessageHandler implements AMQPMessageHandler {
          logger.log(Level.WARNING, "messageName is missing");
       } else if 
           (messageName.compareTo(BatchEngineMessage.CREATE_SIMILARITYMATRIXSUBSET_JAVA_BATCH_FILE) == 0) {
-         processCreateSimilaritySubsetBatchMessage(stringHeaders, extra);
+         processCreateSimilaritySubsetBatchMessage(amqpMessage, stringHeaders, extra);
       } else {
          logger.log(Level.WARNING, "unimplemented messageName: " + messageName);
       }
@@ -79,188 +79,219 @@ public class BatchWorkerMessageHandler implements AMQPMessageHandler {
 
   /**
    * Handle the CREATE_SIMILARITYMATRIX_JAVA_MATCH_METADATADB_URI message.  
+   * @param theMessage The message that caused this invocated.  Needed for the properties
+   *                   the tag.
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects plus a properties
    */
-  public void processCreateSimilaritySubsetBatchMessage( Map<String, String> stringHeaders, Object extra) {
+  public void processCreateSimilaritySubsetBatchMessage( AMQPMessage theMessage, 
+                                                         Map<String, String> stringHeaders, 
+                                                         Object extra) {
+      // returnContent
+      String returnContent = AMQPComms.MESSAGE_SUCCESS;
+
       // We need several pieces of information before we can continue.  This info has to 
       // all be in the headers or we are toast.
 
-      // 1) the class name
-      String className = stringContent.get(BatchEngineMessage.CLASS);    
-      if (null == className) {
-         this.logger.log (Level.SEVERE, "No class name in message");
-         return;
-      }
+      // ??? Why are we using stringContent instead of stringHeaders ???
 
-      // Let's try to load the class. Note that we aren't going to execute the clas
-      // in this code, so we are only making sure we trap any errors.
+      // Grab everything we need from the headers
+      String className = stringContent.get(BatchEngineMessage.CLASS);    
+      String nameSpace = stringContent.get(BatchEngineMessage.NAME_SPACE);    
+      String outputFile = stringContent.get(BatchEngineMessage.OUTPUT_FILE);    
+      String startIndexString = stringContent.get(BatchEngineMessage.START_INDEX);
+      String countString = stringContent.get(BatchEngineMessage.COUNT);
+      String inputDir = stringContent.get(BatchEngineMessage.INPUT_DIR);
+      String dimensionString = stringContent.get(BatchEngineMessage.DIMENSION);
+      Object extraArray[] = (Object[]) extra;
+      // The extra parameter in this case is the Properties object.
+      Properties theProps = (Properties) extraArray[0];
+
+      // Create the rest of the needed variables
       Class<?> theClass = null;
       ClassLoader classLoader = BatchEngineMessageHandler.class.getClassLoader();
-      try {
-         theClass = classLoader.loadClass(className);
-      } catch (ClassNotFoundException e) {
-         this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
-         e.printStackTrace();
-         return;
-      }
-      this.logger.log (Level.INFO, "Loaded class: " + className);
-
-      // We'll need an object of this type as well.
       Constructor<?> cons = null;
       Object theObject = null;
       SimilarityProcessor thisProcessor = null;
-      try {
-         cons = (Constructor<?>) theClass.getConstructor(null);
-         theObject = cons.newInstance(null);
-         thisProcessor = (SimilarityProcessor) theObject;
-      } catch (Exception e) {
-         this.logger.log (Level.SEVERE, "Can't create instance");
-         e.printStackTrace();
-         return;
-      }
-
-      // 2) the name space
-      String nameSpace = stringContent.get(BatchEngineMessage.NAME_SPACE);    
-      if (null == nameSpace) {
-         this.logger.log (Level.SEVERE, "No name space in message");
-         return;
-      }
-
-      // 3) the outputFile
-      String outputFile = stringContent.get(BatchEngineMessage.OUTPUT_FILE);    
-      if (null == outputFile) {
-         this.logger.log (Level.SEVERE, "No output file in message");
-         return;
-      }
-
-      File file = new File(outputFile);
+      File file = null;
       FileWriter fw = null;
       BufferedWriter bw = null;
+      int startIndex = 0;
+      int count = 0;
+      int dimension = 0;
 
-      try {
-         // if file doesnt exists, then create it
-         if (!file.exists()) {
-             file.createNewFile();
+      // Lets do some validation! Note that if any of the validation checks fail, we want to set
+      // the return message to failure.
+      do {
+         // 1) the class name
+         if (null == className) {
+            this.logger.log (Level.SEVERE, "No class name in message");
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
          }
-
-          fw = new FileWriter(file.getAbsoluteFile());
-          bw = new BufferedWriter(fw);
-      } catch (IOException e) {
-         e.printStackTrace();
-      }
-      
-
-
-     // 4) the startIndex
-      String startIndexString = stringContent.get(BatchEngineMessage.START_INDEX);
-      if (null == startIndexString) {
-         this.logger.log (Level.SEVERE, "No start index in message");
-         return;
-      }
-      int startIndex = Integer.parseInt(startIndexString);
-
-      // 5) the count
-      String countString = stringContent.get(BatchEngineMessage.COUNT);
-      if (null == countString) {
-         this.logger.log (Level.SEVERE, "No count in message");
-         return;
-      }
-      int count = Integer.parseInt(countString);
-
-      // 6) the inputDir
-      String inputDir = stringContent.get(BatchEngineMessage.INPUT_DIR);
-      if (null == inputDir) {
-         this.logger.log (Level.SEVERE, "No input dir in message");
-         return;
-      }
-
-      // 7) the dimension of the array
-      String dimensionString = stringContent.get(BatchEngineMessage.DIMENSION);
-      if (null == dimensionString) {
-         this.logger.log (Level.SEVERE, "No dimension in message");
-         return;
-      }
-      int dimension = Integer.parseInt(dimensionString);
-
-      // Process the array of extra objects
-      Object extraArray[] = (Object[]) extra;
-
-      // The extra parameter in this case is the Properties object.
-      Properties theProps = (Properties) extraArray[0];
-      if (null == theProps) {
-         this.logger.log (Level.SEVERE, "Properties object is null");
-         return;
-      }
-
-      if (count <= 0) {
-         // Nothing to do, we can stop now
-         this.logger.log (Level.INFO, "count <= 0, so nothing to do");
-      }
+    
+         // Let's try to load the class. Note that we aren't going to execute the clas
+         // in this code, so we are only making sure we trap any errors.
+         try {
+            theClass = classLoader.loadClass(className);
+         } catch (ClassNotFoundException e) {
+            this.logger.log (Level.SEVERE, "Can't instantiate class " + className + e.getMessage(), e);
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
+         }
+         this.logger.log (Level.INFO, "Loaded class: " + className);
+    
+         // We'll need an object of this type as well.
+         try {
+            cons = (Constructor<?>) theClass.getConstructor(null);
+            theObject = cons.newInstance(null);
+            thisProcessor = (SimilarityProcessor) theObject;
+         } catch (Exception e) {
+            this.logger.log (Level.SEVERE, "Can't create instance " + className + e.getMessage(), e);
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
+         }
+    
+         // 2) the name space
+         if (null == nameSpace) {
+            this.logger.log (Level.SEVERE, "No name space in message");
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
+         }
+    
+         // 3) the outputFile
+         if (null == outputFile) {
+            this.logger.log (Level.SEVERE, "No output file in message");
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
+         }
+    
+         file = new File(outputFile);
+    
+         try {
+            // if file doesnt exists, then create it
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+    
+             fw = new FileWriter(file.getAbsoluteFile());
+             bw = new BufferedWriter(fw);
+         } catch (IOException e) {
+            this.logger.log (Level.SEVERE, "Can't create outputFile " + outputFile + e.getMessage(), e);
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
+         }
+         
+        // 4) the startIndex
+         if (null == startIndexString) {
+            this.logger.log (Level.SEVERE, "No start index in message");
+            return;
+         }
+         startIndex = Integer.parseInt(startIndexString);
+    
+         // 5) the count
+         if (null == countString) {
+            this.logger.log (Level.SEVERE, "No count in message");
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
+         }
+         count = Integer.parseInt(countString);
+    
+         // 6) the inputDir
+         if (null == inputDir) {
+            this.logger.log (Level.SEVERE, "No input dir in message");
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
+         }
+    
+         // 7) the dimension of the array
+         if (null == dimensionString) {
+            this.logger.log (Level.SEVERE, "No dimension in message");
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
+         }
+         dimension = Integer.parseInt(dimensionString);
+    
+         // Process the array of extra objects
+         if (null == theProps) {
+            this.logger.log (Level.SEVERE, "Properties object is null");
+            returnContent = AMQPComms.MESSAGE_FAILURE;
+            break;
+         }
+    
+         if (count <= 0) {
+            // Nothing to do, we can stop now
+            this.logger.log (Level.INFO, "count <= 0, so nothing to do");
+         }
+      } while (false);
 
       // Declare a hashmap to store the collection transfer objects
       HashMap<Integer, CollectionTransferObject> ctoMap = new HashMap<Integer, CollectionTransferObject>();
-      try {
-         long startTime = System.currentTimeMillis();
-         // Get the list of pairs for this invocation of the process.
-         ArrayList<IndexPair> thePairs = BatchUtils.getPairList(dimension, startIndex, count);
-
-         // Process each IndexPair in the list
-         for (IndexPair thisPair: thePairs) {
-             int index1 = thisPair.getIndex1();
-             int index2 = thisPair.getIndex2();
-
-             String file1 = inputDir + "/" + nameSpace + "." + Integer.toString(index1);
-             String file2 = inputDir + "/" + nameSpace + "." + Integer.toString(index2);
-
-             // Here we have a class space vs time tradeoff.  We need to read each of the collection 
-             // objects into memory from the files written using CollectionFileReadWrite.writeToFile.
-             // We can either read them in every time they are needed (dumping them after each use)
-             // or keep them all in memory simultaneously and only read them once. We'll start with
-             // keeping them in memory.
-             // Check to see if the ctos we need are in the map already.  If not add them in
-             if (false == ctoMap.containsKey(index1)) {
-                ctoMap.put(index1, CollectionFileReadWrite.readFromFile(file1));
-             }
-             if (false == ctoMap.containsKey(index2)) {
-                ctoMap.put(index2, CollectionFileReadWrite.readFromFile(file2));
-             }
-
-             // At this point we have both the collection objects we need, so we can in theory
-             // execute the class.
-             double similarity = 0.;
-             similarity =  
-                (double) thisProcessor.compareCollections(ctoMap.get(index1), ctoMap.get(index2));
-             String resultString = 
-                 Integer.toString(index1) + "," + Integer.toString(index2) + "," + Double.toString(similarity);
-             bw.write(resultString);
-             bw.newLine();
-         }
-         long endTime = System.currentTimeMillis();
-         long elapsedTime = endTime - startTime;
-
-         logger.log(Level.INFO, "Used " + elapsedTime + " milliseconds for " + count + " operations");
-         bw.flush();
-         bw.close();
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
-
-/*
-      try {
-         ac = new AMQPComms (theProps);
-         String headers = ProcessedMetadataToNetworkFile.getSendHeaders (
-                             nameSpace, theSimilarityInstance.getDataStoreId());
-         this.logger.log (Level.INFO, "Send headers: " + headers);
-         this.logger.log (Level.INFO, "Sent ProcessedMetadataToNetworkFile message.");
-      } catch (Exception e) {
-         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
-      } finally {
-         if (null != ac) {
-             ac.shutdownConnection ();
+      if (returnContent.equals(AMQPComms.MESSAGE_SUCCESS)) {
+         try {
+            long startTime = System.currentTimeMillis();
+            // Get the list of pairs for this invocation of the process.
+            ArrayList<IndexPair> thePairs = BatchUtils.getPairList(dimension, startIndex, count);
+    
+            // Process each IndexPair in the list
+            for (IndexPair thisPair: thePairs) {
+                int index1 = thisPair.getIndex1();
+                int index2 = thisPair.getIndex2();
+    
+                String file1 = inputDir + "/" + nameSpace + "." + Integer.toString(index1);
+                String file2 = inputDir + "/" + nameSpace + "." + Integer.toString(index2);
+    
+                // Here we have a class space vs time tradeoff.  We need to read each of the collection 
+                // objects into memory from the files written using CollectionFileReadWrite.writeToFile.
+                // We can either read them in every time they are needed (dumping them after each use)
+                // or keep them all in memory simultaneously and only read them once. We'll start with
+                // keeping them in memory.
+                // Check to see if the ctos we need are in the map already.  If not add them in
+                if (false == ctoMap.containsKey(index1)) {
+                   ctoMap.put(index1, CollectionFileReadWrite.readFromFile(file1));
+                }
+                if (false == ctoMap.containsKey(index2)) {
+                   ctoMap.put(index2, CollectionFileReadWrite.readFromFile(file2));
+                }
+    
+                // At this point we have both the collection objects we need, so we can in theory
+                // execute the class.
+                double similarity = 0.;
+                similarity =  
+                   (double) thisProcessor.compareCollections(ctoMap.get(index1), ctoMap.get(index2));
+                String resultString = 
+                    Integer.toString(index1) + "," + Integer.toString(index2) + "," + Double.toString(similarity);
+                bw.write(resultString);
+                bw.newLine();
+            }
+            long endTime = System.currentTimeMillis();
+            long elapsedTime = endTime - startTime;
+    
+            logger.log(Level.INFO, "Used " + elapsedTime + " milliseconds for " + count + " operations");
+            bw.flush();
+            bw.close();
+         } catch (Exception e) {
+            this.logger.log (Level.SEVERE, "Failed to process collection transfer objects" + e.getMessage());
+            returnContent = AMQPComms.MESSAGE_FAILURE;
          }
       }
- */
+      AMQPDirectComms ac = theMessage.getDirectComms();
+      try {
+
+         // Send the ack. This indicates to RabbitMQ that the message has been successfully consumed
+         // by the client. This prevents Rabbit from resending the message.
+         this.logger.log (Level.INFO, "Sending ack for tag: " + theMessage.getDeliveryTag());
+         ac.ackMessage(theMessage);
+
+         // Send a message informing the batch engine that the message has been processed.  Note that
+         // the content indicates either success or failure.  We may want to add more specific
+         // information later.
+         AMQPMessage returnMessage = new AMQPMessage(returnContent.getBytes());
+         this.logger.log (Level.INFO, "Sending return message for tag: " + theMessage.getTag());
+         ac.publishMessage(returnMessage, true, theMessage.getTag());
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception replying/ack: " + e.getMessage(), e);
+      } 
   }
  
   public void handleException (Exception exception) {

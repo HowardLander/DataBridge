@@ -89,6 +89,12 @@ public class AMQPComms {
      public static final int LOG_INFO =    6;
      public static final int LOG_DEBUG =   7;
 
+     /** Message success */
+     public static final String MESSAGE_SUCCESS = "messageSuccess";
+
+     /** Message failure */
+     public static final String MESSAGE_FAILURE = "messageFailure";
+
      /** The log topic */
      public static final String DATABRIDGE_LOG_TOPIC = "databridge.log";
 

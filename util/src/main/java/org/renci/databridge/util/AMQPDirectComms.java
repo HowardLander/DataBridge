@@ -20,6 +20,8 @@ import java.util.logging.Level;
  */
 public class AMQPDirectComms extends AMQPComms {
      protected static Logger logger = Logger.getLogger ("org.renci.databridge.util");
+     private String batchQueue;
+     private String replyQueue;
 
      public AMQPDirectComms() {
      }
@@ -75,8 +77,25 @@ public class AMQPDirectComms extends AMQPComms {
        init (prop, true);
      }
 
+     /**
+      * AMQPComms constructor with a properties object and boolean for consumer
+      *
+      *  @param  prop  The prop file to read to configure the communication channel. The property
+      *                    object has to define at least the following properties: 
+      *                    org.renci.databridge.primaryQueue, org.renci.databridge.exchange and
+      *                    org.renci.databridge.queueHost.  Other relevant properties are
+      *                    org.renci.databridge.queueDurability and org.renci.databridge.logLevel
+      *  @param isConsumer True for consumer, false for producer.
+      */
+     public AMQPDirectComms (Properties prop, boolean isConsumer) throws IOException {
+       init (prop, isConsumer);
+     }
+
+
      protected void init (Properties prop, boolean isConsumer) throws IOException {
        primaryQueue = prop.getProperty("org.renci.databridge.primaryQueue", "primary");
+       batchQueue = prop.getProperty("org.renci.databridge.batchEngine.directWorkerQueue", "batch");
+       replyQueue = prop.getProperty("org.renci.databridge.batchEngine.replyQueue", "batchReply");
        theHost = prop.getProperty("org.renci.databridge.queueHost", "localhost");
        theExchange = prop.getProperty("org.renci.databridge.direct.exchange", "localhost");
        theLevel = Integer.parseInt(prop.getProperty("org.renci.databridge.logLevel", "4"));
@@ -89,10 +108,24 @@ public class AMQPDirectComms extends AMQPComms {
        theChannel = theConnection.createChannel();
 
        // Declare a queue to be the main queue.  If the queue is durable and messages sent to it
-       // are also durable, then those messages will be recieved by the app at start time, even
+       // are also durable, then those messages will be received by the app at start time, even
        // if they were queued before the app was started.
+       // We are going to declare a reply queue.  We are (roughly) following the AMQP RPC pattern
+       // See https://www.rabbitmq.com/tutorials/tutorial-six-java.html for more details.
        if (isConsumer) {
-          theChannel.queueDeclare(primaryQueue, queueDurability, false, false, null);
+          logger.log(Level.INFO, "declaring consumer queue: " + replyQueue);
+          theChannel.queueDeclare(replyQueue, queueDurability, false, false, null);
+          theChannel.queueBind(replyQueue, theExchange, replyQueue);
+          // We want to route the messages to the workers, who are listening on the batch queue
+          this.routingKey = batchQueue;
+          this.primaryQueue = replyQueue;
+       } else {
+          logger.log(Level.INFO, "declaring non-consumer queue: " + batchQueue);
+          theChannel.queueDeclare(batchQueue, queueDurability, false, false, null);
+          theChannel.queueBind(batchQueue, theExchange, batchQueue);
+          // We want to route the messages to the batch server, which is listening on the reply queue
+          this.routingKey = replyQueue;
+          this.primaryQueue = batchQueue;
        }
 
        // Declare a direct exchange.  Note that the declaration of the exchange is idempotent,
@@ -104,8 +137,10 @@ public class AMQPDirectComms extends AMQPComms {
        theChannel.exchangeDeclare(theExchange, "direct", true);
 
        // Create the consumer
-       if (isConsumer) {
-          consumer = new QueueingConsumer(theChannel);
+      consumer = new QueueingConsumer(theChannel);
+       if (isConsumer == false) {
+          // We are the producer so we tell Rabbit not to send more than one message to any one worker
+          theChannel.basicQos(1);
        }
      }
 
@@ -130,13 +165,68 @@ public class AMQPDirectComms extends AMQPComms {
             // Use the builder to create the BasicProperties object.
             AMQP.BasicProperties theProps = builder.build();
 
-            theChannel.basicPublish(theExchange, routingKey, theProps, theMessage.getBytes());
+            theChannel.basicPublish(theExchange, this.routingKey, theProps, theMessage.getBytes());
    
          } catch (Exception e){
             // Not much we can do with the exception ...
             e.printStackTrace();
          }
      }
+
+     /**
+      *  Code to publish a message using a "correlationId"
+      *
+      *  @param  theMessage The user provided AMQPMessage.
+      *  @param  persistence Whether or not to set MessageProperties.PERSISTENT_TEXT_PLAIN in the message.
+      *  @param  id The id for this message.
+      */
+     public void publishMessage(AMQPMessage theMessage, boolean persistence, String id) {
+         try {
+   
+            AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
+       
+            if (persistence) {
+               // MessageProperties.PERSISTENT_TEXT_PLAIN is a static instance of AMQP.BasicProperties
+               // that contains a delivery mode and a priority. So we pass them to the builder.
+               builder.deliveryMode(MessageProperties.PERSISTENT_TEXT_PLAIN.getDeliveryMode());
+               builder.priority(MessageProperties.PERSISTENT_TEXT_PLAIN.getPriority());
+            }
+
+            // add the "RPC" properties
+            builder.correlationId(id);
+            builder.replyTo(replyQueue);
+       
+            // Use the builder to create the BasicProperties object.
+            AMQP.BasicProperties theProps = builder.build();
+            String stringMessage = new String(theMessage.getBytes());
+
+            logger.log(Level.INFO, "publishing message " + stringMessage + " to exchange: " + theExchange +
+               " using routingKey " + this.routingKey);
+            theChannel.basicPublish(theExchange, this.routingKey, theProps, theMessage.getBytes());
+   
+         } catch (Exception e){
+            // Not much we can do with the exception ...
+            e.printStackTrace();
+         }
+     }
+
+     /**
+      *  Code to ack a message using a "correlationId"
+      *
+      *  @param  theMessage The AMQPMessage that needs to be acknowledge.
+      */
+     public void ackMessage(AMQPMessage theMessage) {
+         try {
+   
+            theChannel.basicAck(theMessage.getDeliveryTag(), false);
+   
+         } catch (Exception e){
+            // Not much we can do with the exception ...
+            this.logger.log (Level.SEVERE, "Caught Exception sending acknowledgment: " + e.getMessage());
+         }
+     }
+
+
 
      /**
       *  Code to receive a message.  Note that this code blocks until a message is
@@ -150,7 +240,7 @@ public class AMQPDirectComms extends AMQPComms {
          try {
 
              // Start the consumer
-             theTag = theChannel.basicConsume(primaryQueue, true, consumer);
+             theTag = theChannel.basicConsume(primaryQueue, false, consumer);
 
              // Wait for message to arrive
              QueueingConsumer.Delivery delivery = consumer.nextDelivery();
@@ -158,12 +248,20 @@ public class AMQPDirectComms extends AMQPComms {
              // Build the AMQPMessage to return
              thisMessage.setRoutingKey(delivery.getEnvelope().getRoutingKey());
              thisMessage.setBytes(delivery.getBody());
+             String bytesAsString = new String(thisMessage.getBytes(), "UTF-8");
+             logger.log(Level.INFO, "bytesAsString: " + bytesAsString);
              thisMessage.setProperties(delivery.getProperties());
              if (delivery.getBody() != null) {
                 String thisBody = new String(delivery.getBody(), "UTF-8");
                 logger.log(Level.INFO, "thisBody: " + thisBody);
                 thisMessage.setContent(thisBody);
              }
+
+             // Save the delivery tag for later
+             thisMessage.setDeliveryTag(delivery.getEnvelope().getDeliveryTag());
+
+             // Set the ordinary tag for later
+             thisMessage.setTag(delivery.getProperties().getCorrelationId());
 
              // Turn off the consumer till the next time
              theChannel.basicCancel(theTag);
@@ -192,7 +290,7 @@ public class AMQPDirectComms extends AMQPComms {
          try {
 
              // Start the consumer
-             theTag = theChannel.basicConsume(primaryQueue, true, consumer);
+             theTag = theChannel.basicConsume(primaryQueue, false, consumer);
 
              // Wait for either message to arrive or timeout.  Returns null on 
              // timeout
@@ -209,7 +307,14 @@ public class AMQPDirectComms extends AMQPComms {
                    thisMessage.setContent(thisBody);
                 }
                 thisMessage.setProperties(delivery.getProperties());
-             } else 
+
+               // Save the delivery tag for later
+               thisMessage.setDeliveryTag(delivery.getEnvelope().getDeliveryTag());
+               logger.log(Level.INFO, "setting delivery tag: " + delivery.getEnvelope().getDeliveryTag());
+
+               // Set the ordinary tag for later
+               thisMessage.setTag(delivery.getProperties().getCorrelationId());
+             } 
 
              // Turn off the consumer till the next time
              theChannel.basicCancel(theTag);
