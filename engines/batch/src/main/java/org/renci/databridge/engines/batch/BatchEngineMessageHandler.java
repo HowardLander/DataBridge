@@ -206,7 +206,7 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
       if (nCollections <= 0) {
          // Nothing to do, we can stop now
          this.logger.log (Level.INFO, "nCollections <= 0, so nothing to do");
-      }
+      } 
 
       // We also need the iterator of collections
       Iterator<CollectionTransferObject> collectionIterator = theCollectionDAO.getCollections(searchMap);
@@ -224,10 +224,16 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
          nCollectionsInt = (int) nCollections;
       }
 
+      SimilarityFile theSimFile = new SimilarityFile(nCollectionsInt, nameSpace);
+      theSimFile.setNameSpace(nameSpace);
+
+      theSimFile.setSimilarityInstanceId(theSimilarityInstance.getDataStoreId());
+
       // We are going to write out each collection as a json file. Then the individual batch processes can
       // read these json files before running the similarity algorithm.  This is needed because we can't
       // assume that the compute nodes where the batch processes are running will be able to access the
-      // metadata
+      // metadata.  This does assume a commonly accessible file structure.  We may eventually have to do
+      // something more sophisticated
       String  collectionFileDir = 
          theProps.getProperty("org.renci.databridge.batch.collectionFileDir", "collectionDir");
 
@@ -256,12 +262,16 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
              String thisFile = labeledTmpDir + "/" + nameSpace + "." + Integer.toString(fileNumber);
              CollectionTransferObject getObj = collectionIterator.next();
              CollectionFileReadWrite.writeToFile(thisFile, getObj);
+             collectionIds.add(getObj.getDataStoreId());
              fileNumber ++;
          }
          
       } catch (Exception e) {
          e.printStackTrace();
       }
+
+      // At this point we can add the array of data store ids to the simFile
+      theSimFile.setCollectionIds(collectionIds);
 
       // How many ops do we want to do in each batch?
       int opsPerBatch = 
@@ -416,8 +426,6 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
          logger.log(Level.INFO, "nCompleted: " + nCompleted + " nBatches " + nBatches);
          if (nCompleted == nBatches) {
             // success
-            PrintWriter outputWriter = new PrintWriter(new FileOutputStream(outputFile));
-
             for (int i = 0; i < nBatches; i++) {
                String thisContent = contentMap.get(i);
                logger.log(Level.INFO, "thisContent for tag " + i + " is " + thisContent);
@@ -428,13 +436,27 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
                line = readBuff.readLine();
         
                while (line != null) {
-                   outputWriter.println(line);
+                   // Typical line is row,column,value (ex. 0,1,0.0)
+                   String[] lineParts = line.split(",");
+                   int row = Integer.parseInt(lineParts[0]);
+                   int col = Integer.parseInt(lineParts[1]);
+                   double similarity = Double.parseDouble(lineParts[2]);
+                   if (similarity > 0.0) {
+                       this.logger.log (Level.INFO, "row: " + row + " col: " + col + " sim: " + similarity);
+                       theSimFile.setSimilarityValue(row, col, similarity);
+                   } else if (col == ((int)nCollections - 1)) {
+                       // the the last column in the row and it's zero.  Set it to -1 so we avoid a bug in the
+                       // CRSMatrix class.  Of course, we have to remove this when we read the file.
+                       this.logger.log (Level.INFO, "setting (" + row + "," + col + ") to -1");
+                       theSimFile.setSimilarityValue(row, col, -1);
+                   }
                    line = readBuff.readLine();
                }
-               readBuff.close();
-           }
-           outputWriter.close();
+            }
          }
+ 
+         // Write the network file
+         theSimFile.writeToDisk(outputFile);
 
          // Now is the time to delete any generated tmp files.
          File labeledTmpFile = new File(labeledTmpDir);
