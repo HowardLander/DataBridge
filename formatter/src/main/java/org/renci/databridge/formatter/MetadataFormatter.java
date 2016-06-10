@@ -15,6 +15,13 @@ import org.renci.databridge.persistence.metadata.MetadataObject;
 public interface MetadataFormatter {
 
   /**
+   * @param input A class specific object that tells the function where to find the objects
+   *              to turn into bytes.
+   * @return byte array representing the objects.
+   */
+
+  public byte[] getBytes (Object input) throws FormatterException;
+  /**
    * @param bytes "Document" that implementor understands the format for.
    * @return the metadata elements from the bytes.
    */

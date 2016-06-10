@@ -2,13 +2,8 @@ package org.renci.databridge.engines.ingest;
 
 import java.util.logging.Logger;
 import java.util.logging.Level;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.util.*;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -62,8 +57,11 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
      if (null == messageName) {
         logger.log(Level.WARNING, "messageName is missing");
      } else if
-         (messageName.compareTo(IngestListenerMessage.INSERT_METADATA_JAVA_URI_METADATADB) == 0) {
-        processInsertMetadatMessage(stringHeaders, extra);
+         (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_URI_METADATADB) == 0) {
+        processInsertMetadataMessage(stringHeaders, extra);
+     } else if
+         (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_FILES_METADATADB) == 0) {
+        processInsertMetadataFilesMessage(stringHeaders, extra);
      } else {
          logger.log(Level.WARNING, "unimplemented messageName: " + messageName);
      }
@@ -74,7 +72,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects
    */
-    public void processInsertMetadatMessage(Map<String, String> stringHeaders, Object extra) {
+    public void processInsertMetadataMessage(Map<String, String> stringHeaders, Object extra) {
 
        String className = stringHeaders.get (IngestMetadataMessage.CLASS);
        String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
@@ -135,6 +133,70 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        }
     }
 
+
+  /**
+   * Handle the INSERT_METADATA_JAVA_FILES_METADATADB message.  
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects
+   */
+    public void processInsertMetadataFilesMessage(Map<String, String> stringHeaders, Object extra) {
+
+       String className = stringHeaders.get (IngestMetadataMessage.CLASS);
+       String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
+       boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
+       String inputDir = stringHeaders.get (IngestMetadataMessage.INPUT_DIR);
+
+       // instantiate third-party MetadataFormatter implementation 
+       MetadataFormatter mf = null;
+       try {
+          mf = (MetadataFormatter) Class.forName (className).newInstance (); 
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
+         e.printStackTrace();
+         return;
+      }
+
+       mf.setLogger (this.logger);
+       byte [] bytes = null;
+       this.logger.log (Level.INFO, "inputDir token:  " + IngestMetadataMessage.INPUT_DIR);
+       this.logger.log (Level.INFO, "inputDir:  " + inputDir);
+      
+       try {
+          bytes = mf.getBytes((Object) inputDir);
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Problems with the inputDir:  " + inputDir, e );
+         return;
+      }
+
+       // dispatch to third-party formatter 
+       List<MetadataObject> metadataObjects = null;
+       try {
+           metadataObjects = mf.format (bytes);
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't perform format operation", e);
+         return;
+       }
+
+       for (MetadataObject mo : metadataObjects) {
+         try {
+           persist (mo, nameSpace);
+           this.logger.log (Level.FINE, "Inserted MetadataObject.");
+         } catch (Exception e) {
+           this.logger.log (Level.SEVERE, "Can't insert MetadataObject.", e);
+           return;
+         }
+       }
+
+       if (fireEvent) {
+         // send ProcessedMetadataToMetadataDB message 
+         AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
+         String headers = ProcessedMetadataToMetadataDB.getSendHeaders (nameSpace);
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         ac.shutdownConnection ();     
+         this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
+       }
+    }
   public void handleException (Exception exception) {
 
     this.logger.log (Level.WARNING, "handler received exception: ", exception);
@@ -156,20 +218,24 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
     this.logger.log (Level.FINE, "Inserted CTO id: '" + cto.getDataStoreId () + "'");
 
     List<FileTransferObject> ftos = metadataObject.getFileTransferObjects ();
-    for (FileTransferObject fto : ftos) {
-      fto.setNameSpace (nameSpace);
-      fto.setCollectionDataStoreId (cto.getDataStoreId ());
-      FileDAO fd = this.metadataDAOFactory.getFileDAO ();
-      fd.insertFile (fto);
-      this.logger.log (Level.FINE, "Inserted FTO id: '" + fto.getDataStoreId () + "'");
+    if (ftos != null) {
+       for (FileTransferObject fto : ftos) {
+         fto.setNameSpace (nameSpace);
+         fto.setCollectionDataStoreId (cto.getDataStoreId ());
+         FileDAO fd = this.metadataDAOFactory.getFileDAO ();
+         fd.insertFile (fto);
+         this.logger.log (Level.FINE, "Inserted FTO id: '" + fto.getDataStoreId () + "'");
+       }
     }
 
     List<VariableTransferObject> vtos = metadataObject.getVariableTransferObjects ();
-    for (VariableTransferObject vto : vtos) {
-      // vto.setFileDataStoreId ();
-      VariableDAO vd = this.metadataDAOFactory.getVariableDAO ();
-      vd.insertVariable (vto);
-      this.logger.log (Level.FINE, "Inserted VTO id: '" + vto.getDataStoreId () + "'");
+    if (vtos != null) {
+       for (VariableTransferObject vto : vtos) {
+         // vto.setFileDataStoreId ();
+         VariableDAO vd = this.metadataDAOFactory.getVariableDAO ();
+         vd.insertVariable (vto);
+         this.logger.log (Level.FINE, "Inserted VTO id: '" + vto.getDataStoreId () + "'");
+       }
     }
 
   }
