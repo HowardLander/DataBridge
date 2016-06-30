@@ -44,10 +44,27 @@ get_batch_pid() {
    cat ${batch_pid_file}
 }
 
-is_batch_running() {
+log() {
+    printf '%s\n' "$@" >> debug.log
+}
+
+is_batch_running_orig() {
     [ -f "$batch_pid_file" ] && ps `get_batch_pid` > /dev/null 2>&1
 }
 
+test_pid() {
+    ps_out=`ps -ef | grep $1 | grep -v 'grep'`
+    #result=$(echo $ps_out | grep "$1")
+    if [[ !  -z  $ps_out ]];then
+        return 0
+    else
+        return 1
+    fi
+}
+
+is_batch_running() {
+    [ -f "$batch_pid_file" ] && test_pid `get_batch_pid` > /dev/null 2>&1
+}
 
 is_running() {
     is_batch_running
