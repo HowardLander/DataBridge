@@ -329,19 +329,28 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
          }
          allArgs.add(stringWorkers);
 
-         ProcessBuilder thePB = new ProcessBuilder(allArgs);
+         //ProcessBuilder thePB = new ProcessBuilder(allArgs);
+         ProcessBuilder thePB = new ProcessBuilder().inheritIO().command(allArgs);
          Process process = thePB.start();
-        
-         // Read out dir output
+         String line;
          InputStream is = process.getInputStream();
          InputStreamReader isr = new InputStreamReader(is);
          BufferedReader br = new BufferedReader(isr);
+        
+         // Read out dir output
+/*
+         InputStream is = process.getInputStream();
+         InputStreamReader isr = new InputStreamReader(is);
+         BufferedReader br = new BufferedReader(isr);
+         InputStream es = process.getErrorStream();
+         InputStreamReader esr = new InputStreamReader(es);
+         BufferedReader errorReader = new BufferedReader(esr);
          this.logger.log (Level.INFO, "Running command: " + executable + " " + allArgs);
          String line;
          while ((line = br.readLine()) != null) {
             this.logger.log (Level.INFO, line);
          }
-
+*/
          // This command waits for the exit value of the command.
          int exitValue = process.waitFor(); 
          this.logger.log (Level.INFO, "Command exited with status " + exitValue);
@@ -442,12 +451,12 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
                    int col = Integer.parseInt(lineParts[1]);
                    double similarity = Double.parseDouble(lineParts[2]);
                    if (similarity > 0.0) {
-                       this.logger.log (Level.INFO, "row: " + row + " col: " + col + " sim: " + similarity);
+                       this.logger.log (Level.FINEST, "row: " + row + " col: " + col + " sim: " + similarity);
                        theSimFile.setSimilarityValue(row, col, similarity);
                    } else if (col == ((int)nCollections - 1)) {
                        // the the last column in the row and it's zero.  Set it to -1 so we avoid a bug in the
                        // CRSMatrix class.  Of course, we have to remove this when we read the file.
-                       this.logger.log (Level.INFO, "setting (" + row + "," + col + ") to -1");
+                       this.logger.log (Level.FINEST, "setting (" + row + "," + col + ") to -1");
                        theSimFile.setSimilarityValue(row, col, -1);
                    }
                    line = readBuff.readLine();

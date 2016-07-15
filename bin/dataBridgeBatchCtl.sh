@@ -2,6 +2,7 @@
 # pick a java
 JAVA=/usr/bin/java
 NAME=databridge
+HOSTNAME=`echo $HOSTNAME | cut -d "." -f 1`
 
 # Gets the directory of the script
 SCRIPT_HOME="${BASH_SOURCE[0]}";
@@ -34,11 +35,11 @@ DATABRIDGE_RUN_DIR=${DATABRIDGE_HOME}/run
 # Get the DATABRIDGE log dir
 DATABRIDGE_LOG_DIR=${DATABRIDGE_HOME}/log
 
-batch_pid_file=${DATABRIDGE_RUN_DIR}/batch.pid
+batch_pid_file=${DATABRIDGE_RUN_DIR}/batch.${HOSTNAME}.pid
 
-batch_stdout_file=${DATABRIDGE_LOG_DIR}/batch.log
+batch_stdout_file=${DATABRIDGE_LOG_DIR}/batch.${HOSTNAME}.log
 
-batch_stderr_file=${DATABRIDGE_LOG_DIR}/batch.log
+batch_stderr_file=${DATABRIDGE_LOG_DIR}/batch.${HOSTNAME}.log
 
 get_batch_pid() {
    cat ${batch_pid_file}
