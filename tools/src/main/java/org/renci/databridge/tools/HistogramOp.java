@@ -17,6 +17,12 @@ import java.nio.file.*;
        if (value >= 1.) {
           thisBin = AnalyzeSimilarityFile.nBins - 1;
        }
+       if (value < 0.) {
+          return;
+       }
+       if (value > 0.0) {
+          AnalyzeSimilarityFile.nonZeros ++;
+       }
        AnalyzeSimilarityFile.histogram[thisBin] ++;
     }
  }

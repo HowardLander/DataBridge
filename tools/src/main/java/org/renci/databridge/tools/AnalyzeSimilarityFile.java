@@ -26,6 +26,7 @@ import java.nio.file.*;
 public class AnalyzeSimilarityFile {
   public static int total = 0;
   public static int zeros = 0;
+  public static int nonZeros = 0;
   public static long[] histogram = null;
   public static int nBins = 0;
   public static final String STATS = "stats";  
@@ -70,14 +71,19 @@ public class AnalyzeSimilarityFile {
         System.out.println("\tsimilarityInstanceId: " + readData.getSimilarityInstanceId());
         int nodeCount = readData.getCollectionIds().size();
         System.out.println("\tnumber of nodes: " + nodeCount);
-        VectorOp theVectorClass = new VectorOp();
+        //VectorOp theVectorClass = new VectorOp();
+        MatrixOp theMatrixClass = new MatrixOp();
         org.la4j.matrix.sparse.CRSMatrix theMatrix = readData.getSimilarityMatrix();
+        theMatrix.each(theMatrixClass);
+
+        /*
         for (int i = 0; i < theMatrix.rows(); i++) {
             if (theMatrix.maxInRow(i) > 0.) {
                org.la4j.vector.Vector thisRow = theMatrix.getRow(i);
                thisRow.each(theVectorClass);
             } 
         }
+        */
 
         long totalEdges = ((nodeCount * nodeCount) / 2) - nodeCount;
         System.out.println("\tnumber of zeros in matrix: " + zeros);
@@ -130,12 +136,20 @@ public class AnalyzeSimilarityFile {
         readData.readFromDisk(inputFile);
         org.la4j.matrix.sparse.CRSMatrix theMatrix = readData.getSimilarityMatrix();
         int nodeCount = readData.getCollectionIds().size();
-        long totalEdges = ((nodeCount * nodeCount) / 2) - nodeCount;
+        long totalEdges = (((nodeCount * nodeCount) - nodeCount) / 2);
 
         HistogramOp theHistogram = new HistogramOp();
         readData.getSimilarityMatrix().each(theHistogram);
 
+        // let's subtract out the lower triangle and the diagonal from bin 0
+        histogram[0] = histogram[0] - ((nodeCount * nodeCount) - totalEdges);
+        int totalInBins = 0;
+        for (int i = 0; i < nBins; i++) {
+            totalInBins += histogram[i];
+        }
         System.out.println("\tTotal Edges: " + totalEdges);
+        System.out.println("\tTotal Non Zeros: " + nonZeros);
+        System.out.println("\tTotal In Bins (should match Total Edges): " + totalInBins);
         System.out.println("\tPrinting Histogram");
         for (int i = 0; i < nBins; i++) {
            double percent = ((float)(histogram[i])/totalEdges) * 100;      
