@@ -1,11 +1,14 @@
 package org.renci.databridge.persistence.network;
 import  org.neo4j.graphdb.*;
-import  org.neo4j.tooling.*;
+//import  org.neo4j.tooling.*;
 import  org.neo4j.graphdb.factory.*;
-import  org.neo4j.cypher.javacompat.*;
+//import  org.neo4j.cypher.javacompat.*;
 import  java.util.*;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Handler;
+import java.util.logging.FileHandler;
+import java.io.*;
 
 public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
    private Logger logger = Logger.getLogger ("org.renci.databridge.persistence.network");
@@ -16,6 +19,7 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
      */
     private class Neo4jNetworkNodeDAOIterator implements Iterator<NetworkNodeTransferObject> {
        private Iterator<Node> nodeIterator;
+       private ArrayList<Node> nodeList;
        private Logger logger = Logger.getLogger ("org.renci.databridge.persistence.network");
 
        /** 
@@ -24,7 +28,14 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
        @Override
        public boolean hasNext() {
            // Wrap the neo4j iterator
-           return nodeIterator.hasNext();
+           boolean hasN = false;
+           try {
+              hasN = nodeIterator.hasNext();
+           } catch (Exception e) {
+               // should send this back using the message logs eventually
+               this.logger.log (Level.SEVERE, "exception in hasNext: " + e.getMessage(), e);
+           }
+           return hasN;
        }
 
        /** 
@@ -94,12 +105,10 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
        GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
        Transaction tx = theDB.beginTx();
        try {
-          Label newLabel = DynamicLabel.label(transferNode.getNameSpace());
+          Label newLabel = Label.label(transferNode.getNameSpace());
           // Check to see if the node already exists
           Iterator<Node> neo4jNodeList = 
-               theDB.findNodesByLabelAndProperty(newLabel,
-                                                 NetworkNodeDAO.METADATA_NODE_KEY, 
-                                                 transferNode.getNodeId()).iterator();
+               theDB.findNodes(newLabel, NetworkNodeDAO.METADATA_NODE_KEY, transferNode.getNodeId());
           if (neo4jNodeList.hasNext()) {
               // this node is already in the database.  So be it.
               this.logger.log (Level.INFO, "node " + transferNode.getNodeId() + " is already in the database");
@@ -161,11 +170,9 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
           // Is the dataStoreId in the transfer object?
           if (null == dataStoreId) {
               // Nope, try to find the node the hard away.
-              Label newLabel = DynamicLabel.label(transferNode.getNameSpace());
+              Label newLabel = Label.label(transferNode.getNameSpace());
               Iterator<Node> neo4jNodeList = 
-                   theDB.findNodesByLabelAndProperty(newLabel,
-                                                     NetworkNodeDAO.METADATA_NODE_KEY, 
-                                                     transferNode.getNodeId()).iterator();
+                   theDB.findNodes(newLabel, NetworkNodeDAO.METADATA_NODE_KEY, transferNode.getNodeId());
               if (neo4jNodeList.hasNext()) {
                   updateNode = neo4jNodeList.next();    
               } else {
@@ -212,11 +219,9 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
           // Is the dataStoreId in the transfer object?
           if (null == dataStoreId) {
               // Nope, try to find the node the hard away.
-              Label newLabel = DynamicLabel.label(transferNode.getNameSpace());
+              Label newLabel = Label.label(transferNode.getNameSpace());
               Iterator<Node> neo4jNodeList = 
-                   theDB.findNodesByLabelAndProperty(newLabel,
-                                                     NetworkNodeDAO.METADATA_NODE_KEY, 
-                                                     transferNode.getNodeId()).iterator();
+                   theDB.findNodes(newLabel, NetworkNodeDAO.METADATA_NODE_KEY, transferNode.getNodeId());
               if (neo4jNodeList.hasNext()) {
                   updateNode = neo4jNodeList.next();    
               } else {
@@ -262,11 +267,9 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
           // Is the dataStoreId in the transfer object?
           if (null == dataStoreId) {
               // Nope, try to find the node the hard away.
-              Label newLabel = DynamicLabel.label(transferNode.getNameSpace());
+              Label newLabel = Label.label(transferNode.getNameSpace());
               Iterator<Node> neo4jNodeList = 
-                   theDB.findNodesByLabelAndProperty(newLabel,
-                                                     NetworkNodeDAO.METADATA_NODE_KEY, 
-                                                     transferNode.getNodeId()).iterator();
+                   theDB.findNodes(newLabel, NetworkNodeDAO.METADATA_NODE_KEY, transferNode.getNodeId());
               if (neo4jNodeList.hasNext()) {
                   updateNode = neo4jNodeList.next();    
               } else {
@@ -304,16 +307,26 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
     public Iterator<NetworkNodeTransferObject> 
         getNetworkNodes(NetworkNodeTransferObject theNode, String key, Object value){
 
-        Neo4jNetworkNodeDAOIterator theIterator = null;
-        GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
-        Transaction tx = theDB.beginTx();
-        try {
+        Transaction tx = null;
+        Neo4jNetworkNodeDAOIterator theIterator = new Neo4jNetworkNodeDAOIterator();
 
-            Label newLabel = DynamicLabel.label(theNode.getNameSpace());
-            Iterator<Node> neo4jNodeList =
-                   theDB.findNodesByLabelAndProperty(newLabel, key, value).iterator();
-            theIterator = new Neo4jNetworkNodeDAOIterator();
-            theIterator.nodeIterator = neo4jNodeList;
+        try {
+            GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
+            tx = theDB.beginTx();
+
+            Label newLabel = Label.label(theNode.getNameSpace());
+            Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel, key, value);
+            theIterator.nodeList = new ArrayList<Node>();
+
+            // We don't really like this, but changes in the Neo4j API for version 3 
+            // don't leave us a lot of choice. We could try moving the transaction into the
+            // iterator, but for now we are going to live with this. See 
+            // http://stackoverflow.com/questions/39046000/issue-upgrading-from-neo4j-2-to-3-using-embedded-java-api-exception-in-hasnexti
+            while(neo4jNodeList.hasNext()) {
+               Node thisNode = neo4jNodeList.next();
+               theIterator.nodeList.add(thisNode);
+            }
+            theIterator.nodeIterator = theIterator.nodeList.iterator();
         } catch (Exception e) {
             // should send this back using the message logs eventually
             this.logger.log (Level.SEVERE, "exception in getNetworkNodes: " + e.getMessage(), e);
@@ -386,11 +399,20 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
         Transaction tx = theDB.beginTx();
         try {
 
-            Label newLabel = DynamicLabel.label(nameSpace);
-            Iterator<Node> neo4jNodeList =
-                   theDB.findNodesByLabelAndProperty(newLabel, key, value).iterator();
+            Label newLabel = Label.label(nameSpace);
+            Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel, key, value);
             theIterator = new Neo4jNetworkNodeDAOIterator();
-            theIterator.nodeIterator = neo4jNodeList;
+            theIterator.nodeList = new ArrayList<Node>();
+            // We don't really like this, but changes in the Neo4j API for version 3 
+            // don't leave us a lot of choice. We could try moving the transaction into the
+            // iterator, but for now we are going to live with this. See 
+            // http://stackoverflow.com/questions/39046000/issue-upgrading-from-neo4j-2-to-3-using-embedded-java-api-exception-in-hasnexti
+            while(neo4jNodeList.hasNext()) {
+               Node thisNode = neo4jNodeList.next();
+               theIterator.nodeList.add(thisNode);
+            }
+            //theIterator.nodeIterator = neo4jNodeList;
+            theIterator.nodeIterator = theIterator.nodeList.iterator();
         } catch (Exception e) {
             // should send this back using the message logs eventually
             this.logger.log (Level.SEVERE, "exception in getNetworkNodes: " + e.getMessage(), e);
@@ -412,12 +434,11 @@ public class Neo4jNetworkNodeDAO implements NetworkNodeDAO {
         Neo4jNetworkNodeDAOIterator theIterator = null;
         GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
         Transaction tx = theDB.beginTx();
-        GlobalGraphOperations graphOperations = GlobalGraphOperations.at(theDB);
+        //GlobalGraphOperations graphOperations = GlobalGraphOperations.at(theDB);
         try {
 
-            Label newLabel = DynamicLabel.label(nameSpace);
-            Iterator<Node> neo4jNodeList =
-                   graphOperations.getAllNodesWithLabel(newLabel).iterator();
+            Label newLabel = Label.label(nameSpace);
+            Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel);
             theIterator = new Neo4jNetworkNodeDAOIterator();
             theIterator.nodeIterator = neo4jNodeList;
         } catch (Exception e) {

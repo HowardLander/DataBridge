@@ -1,8 +1,8 @@
 package org.renci.databridge.persistence.network;
 import  org.neo4j.graphdb.*;
-import  org.neo4j.tooling.*;
+//import  org.neo4j.tooling.*;
 import  org.neo4j.graphdb.factory.*;
-import  org.neo4j.cypher.javacompat.*;
+//import  org.neo4j.cypher.javacompat.*;
 import  java.util.*;
 import  java.util.logging.Logger;
 import  java.util.logging.Level;
@@ -184,15 +184,16 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
         Neo4jNetworkDyadDAOIterator theIterator = null;
         GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
         Transaction tx = theDB.beginTx();
-        GlobalGraphOperations graphOperations = GlobalGraphOperations.at(theDB);
+        //GlobalGraphOperations graphOperations = GlobalGraphOperations.at(theDB);
         try {
             theIterator = new Neo4jNetworkDyadDAOIterator();
-            Label newLabel = DynamicLabel.label(nameSpace);
-            theIterator.newType = DynamicRelationshipType.withName(similarityId);
+            Label newLabel = Label.label(nameSpace);
+            theIterator.newType = RelationshipType.withName(similarityId);
             theIterator.similarityId = similarityId;
             theIterator.returnSingletons = returnSingletons;
 
-            Iterator<Node> neo4jNodeList = graphOperations.getAllNodesWithLabel(newLabel).iterator();
+            //Iterator<Node> neo4jNodeList = graphOperations.getAllNodesWithLabel(newLabel).iterator();
+            Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel);
             theIterator.nodeIterator = neo4jNodeList;
             if (neo4jNodeList.hasNext()) {
                 Node thisNode = neo4jNodeList.next();
@@ -224,16 +225,16 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
         NetworkDyadTransferObject theTransfer = null;
         GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
         Transaction tx = theDB.beginTx();
-        GlobalGraphOperations graphOperations = GlobalGraphOperations.at(theDB);
+        //GlobalGraphOperations graphOperations = GlobalGraphOperations.at(theDB);
 
         Iterator<Relationship> relationshipIterator = Collections.emptyIterator();
-        Label newLabel = DynamicLabel.label(nameSpace);
-        RelationshipType newType = DynamicRelationshipType.withName(similarityId);
+        Label newLabel = Label.label(nameSpace);
+        RelationshipType newType = RelationshipType.withName(similarityId);
         ArrayList<NetworkDyadTransferObject> theList = new ArrayList<NetworkDyadTransferObject>();
         try {
             // Translate the date from the Neo4j representation to the
             // representation presented to the users in the Transfer object.
-            Iterator<Node> neo4jNodeList = graphOperations.getAllNodesWithLabel(newLabel).iterator();
+            Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel);
             while (neo4jNodeList.hasNext()) {
                Node theNode = neo4jNodeList.next();
 
@@ -274,16 +275,17 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
 
         GraphDatabaseService theDB = Neo4jDAOFactory.getTheNetworkDB();
         Transaction tx = theDB.beginTx();
-        GlobalGraphOperations graphOperations = GlobalGraphOperations.at(theDB);
+        //GlobalGraphOperations graphOperations = GlobalGraphOperations.at(theDB);
         RelationshipType newType;
         Iterator<Node> nodeIterator = Collections.emptyIterator();
         Iterator<Relationship> relationshipIterator = Collections.emptyIterator();
         long count = 0;
         try {
-            Label newLabel = DynamicLabel.label(nameSpace);
-            newType = DynamicRelationshipType.withName(similarityId);
+            Label newLabel = Label.label(nameSpace);
+            newType = RelationshipType.withName(similarityId);
 
-            Iterator<Node> neo4jNodeList = graphOperations.getAllNodesWithLabel(newLabel).iterator();
+            //Iterator<Node> neo4jNodeList = graphOperations.getAllNodesWithLabel(newLabel).iterator();
+            Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel);
             nodeIterator = neo4jNodeList;
             while (neo4jNodeList.hasNext()) {
                 Node theNode = neo4jNodeList.next();

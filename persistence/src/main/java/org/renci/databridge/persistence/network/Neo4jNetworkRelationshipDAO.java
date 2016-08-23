@@ -1,8 +1,8 @@
 package org.renci.databridge.persistence.network;
 import  org.neo4j.graphdb.*;
-import  org.neo4j.tooling.*;
+//import  org.neo4j.tooling.*;
 import  org.neo4j.graphdb.factory.*;
-import  org.neo4j.cypher.javacompat.*;
+//import  org.neo4j.cypher.javacompat.*;
 import  java.util.*;
 import  java.util.logging.Logger;
 import  java.util.logging.Level;
@@ -97,14 +97,14 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
 
           // Create the Relationship. Note that we don't care about directionality and neither
           // does Neo4j (much)
-          RelationshipType newType = DynamicRelationshipType.withName(theTransfer.getType());
+          RelationshipType newType = RelationshipType.withName(theTransfer.getType());
           Relationship theRelationship = node1.createRelationshipTo(node2, newType);
 
           // Add all of the attributes for the relationship, if any
           if (null != theTransfer.getAttributes()) {
              for (Map.Entry<String, Object> entry : theTransfer.getAttributes().entrySet()) {
-                 System.out.println("setting attributes with key: " + entry.getKey() + " value: " +
-                                     entry.getValue());
+                // System.out.println("setting attributes with key: " + entry.getKey() + " value: " +
+                 //                    entry.getValue());
                  theRelationship.setProperty(entry.getKey(), entry.getValue());
              }
           }
@@ -264,7 +264,7 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
         try {
             long nodeId = Long.valueOf(theTransferNode.getDataStoreId()).longValue();
             Node theNode = theDB.getNodeById(nodeId);
-            RelationshipType theType = DynamicRelationshipType.withName(key);
+            RelationshipType theType = RelationshipType.withName(key);
             Iterator<Relationship> neo4jRelationshipList =
                    theNode.getRelationships(theType).iterator();
             theIterator = new Neo4jNetworkRelationshipDAOIterator();

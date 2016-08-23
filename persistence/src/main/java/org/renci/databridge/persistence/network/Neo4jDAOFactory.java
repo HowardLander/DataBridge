@@ -2,6 +2,7 @@ package org.renci.databridge.persistence.network;
 import  org.neo4j.graphdb.GraphDatabaseService;
 import  org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import  java.util.*;
+import  java.io.File;
 
 public class Neo4jDAOFactory extends NetworkDAOFactory {
 
@@ -30,7 +31,7 @@ public class Neo4jDAOFactory extends NetworkDAOFactory {
     public static GraphDatabaseService getTheNetworkDB () {
         if (null == theNetworkDB) {
            try {
-               theNetworkDB = new GraphDatabaseFactory().newEmbeddedDatabase(databasePath);
+               theNetworkDB = new GraphDatabaseFactory().newEmbeddedDatabase(new File(databasePath));
  
                // close the database when this JVM exits.
                registerShutdownHook(theNetworkDB);

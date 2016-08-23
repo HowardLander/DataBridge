@@ -47,6 +47,17 @@
         <artifactId>gson</artifactId>
         <version>2.3.1</version>
     </dependency>
+
+    <dependency>
+        <groupId>org.neo4j</groupId>
+        <artifactId>neo4j</artifactId>
+        <version>3.0.4</version>
+    </dependency>
+    <dependency>
+        <groupId>org.neo4j</groupId>
+        <artifactId>neo4j-kernel</artifactId>
+        <version>3.0.4</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -60,6 +71,7 @@
                <id>copy</id>
                <phase>install</phase>
                <configuration>
+                 <source>8</source>
                  <tasks>
                    <copy file="target/tools-1.0-BETA.jar" tofile="../../bin/system/tools-1.0-BETA.jar"/>
                  </tasks>
@@ -69,6 +81,14 @@
                </goals>
              </execution>
            </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
       </plugin>
     </plugins>
   </build>

@@ -37,7 +37,7 @@ public class NetworkTest {
      int result;
 
      NetworkDAOFactory theNeo4jFactory = 
-        NetworkDAOFactory.getNetworkDAOFactory(NetworkDAOFactory.NEO4JDB, "testData");
+        NetworkDAOFactory.getNetworkDAOFactory(NetworkDAOFactory.NEO4JDB, "testData-V3");
      try {
          NetworkNodeDAO theNetworkNodeDAO = theNeo4jFactory.getNetworkNodeDAO();
          NetworkNodeTransferObject theNode = new NetworkNodeTransferObject();
@@ -82,23 +82,33 @@ public class NetworkTest {
             theNetworkNodeDAO.getNetworkNodes("junit_test", NetworkNodeDAO.METADATA_NODE_KEY, "1");
          if (theNodes.hasNext()) {
              NetworkNodeTransferObject returnedNode = theNodes.next();
-             System.out.println("returned nameSpace: " + returnedNode.getNameSpace());
-             System.out.println("returned nodeId: " + returnedNode.getNodeId());
-             System.out.println("returned dataStoreId: " + returnedNode.getDataStoreId());
-             System.out.println("returned attributes: " + returnedNode.getAttributes());
+             System.out.println("1: returned nameSpace: " + returnedNode.getNameSpace());
+             System.out.println("1: returned nodeId: " + returnedNode.getNodeId());
+             System.out.println("1: returned dataStoreId: " + returnedNode.getDataStoreId());
+             System.out.println("1: returned attributes: " + returnedNode.getAttributes());
              TestCase.assertTrue("dataStoreIds don't match", theNode.getDataStoreId().compareTo(returnedNode.getDataStoreId()) == 0);
              // Let's test the getById functionality
              NetworkNodeTransferObject byIdNode = theNetworkNodeDAO.getNetworkNode(returnedNode.getDataStoreId());
-             System.out.println("returned nameSpace byId: " + byIdNode.getNameSpace());
-             System.out.println("returned nodeId byId: " + byIdNode.getNodeId());
-             System.out.println("returned dataStoreId byId: " + byIdNode.getDataStoreId());
-             System.out.println("returned attributes byId: " + byIdNode.getAttributes());
+             System.out.println("2: returned nameSpace byId: " + byIdNode.getNameSpace());
+             System.out.println("2: returned nodeId byId: " + byIdNode.getNodeId());
+             System.out.println("2: returned dataStoreId byId: " + byIdNode.getDataStoreId());
+             System.out.println("2: returned attributes byId: " + byIdNode.getAttributes());
              TestCase.assertTrue("nameSpaces don't match byId", returnedNode.getDataStoreId().compareTo(byIdNode.getDataStoreId()) == 0);
+         }  
+
+         theNodes = theNetworkNodeDAO.getNetworkNodes(theNode, NetworkNodeDAO.METADATA_NODE_KEY, "1");
+         if (theNodes.hasNext()) {
+             NetworkNodeTransferObject returnedNode = theNodes.next();
+             System.out.println("3: returned nameSpace: " + returnedNode.getNameSpace());
+             System.out.println("3: returned nodeId: " + returnedNode.getNodeId());
+             System.out.println("3: returned dataStoreId: " + returnedNode.getDataStoreId());
+             System.out.println("3: returned attributes: " + returnedNode.getAttributes());
+             TestCase.assertTrue("dataStoreIds don't match", theNode.getDataStoreId().compareTo(returnedNode.getDataStoreId()) == 0);
 
              // Now let's delete this node
-             propResult = theNetworkNodeDAO.deleteNetworkNode(theNode); 
+             propResult = theNetworkNodeDAO.deleteNetworkNode(theNode);
              TestCase.assertTrue("propResult not true", propResult == true);
-         }  
+         }
 
          // Now let's test multiple insertions, gets and deletes
          System.out.println("starting multiple insertions");
@@ -142,7 +152,7 @@ public class NetworkTest {
      boolean returnCode;
 
      NetworkDAOFactory theNeo4jFactory = 
-        NetworkDAOFactory.getNetworkDAOFactory(NetworkDAOFactory.NEO4JDB, "testData");
+        NetworkDAOFactory.getNetworkDAOFactory(NetworkDAOFactory.NEO4JDB, "testData-V3");
      try {
          NetworkNodeDAO theNetworkNodeDAO = theNeo4jFactory.getNetworkNodeDAO();
          NetworkRelationshipDAO theNetworkRelationshipDAO = theNeo4jFactory.getNetworkRelationshipDAO();
