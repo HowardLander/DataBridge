@@ -111,15 +111,13 @@ else
    echo "in engines/ingest"
 fi
 
-case "$1" in
-    start)
+start_ingest() {
     if is_ingest_running; then
         echo "Ingest engine already running"
     else
         echo "Starting ingest engine"
         cd "$DATABRIDGE_BIN"
         echo "Ingest engine startup at "`date -u` >> ${ingest_stdout_file}
-#       sudo -u "$user" $cmd >> "$stdout_log" 2>> "$stderr_log" &
         $JAVA -cp ${INGEST_ENGINE_CLASS_PATH} org.renci.databridge.engines.ingest.IngestEngine ${DATABRIDGE_CONFIG_DIR}/DataBridge.conf >> "$ingest_stdout_file" 2>> "$ingest_stderr_file" &
         echo $! > "$ingest_pid_file"
         if ! is_ingest_running; then
@@ -127,36 +125,9 @@ case "$1" in
             exit 1
         fi
     fi
-    if is_relevance_running; then
-        echo "Relevance engine already running"
-    else
-        echo "Starting relevance engine"
-        cd "$DATABRIDGE_BIN"
-        echo "Relevance engine startup at "`date -u` >> ${relevance_stdout_file}
-#       sudo -u "$user" $cmd >> "$stdout_log" 2>> "$stderr_log" &
-        $JAVA -cp ${RELEVANCE_ENGINE_CLASS_PATH} org.renci.databridge.engines.relevance.RelevanceEngine ${DATABRIDGE_CONFIG_DIR}/DataBridge.conf >> "$relevance_stdout_file" 2>> "$relevance_stderr_file" &
-        echo $! > "$relevance_pid_file"
-        if ! is_relevance_running; then
-            echo "Unable to start relevance engine, see $relevance_stdout_file and $relevance_stderr_file"
-            exit 1
-        fi
-    fi
-    if is_network_running; then
-        echo "Network engine already running"
-    else
-        echo "Starting network engine"
-        cd "$DATABRIDGE_BIN"
-        echo "Network engine startup at "`date -u` >> ${network_stdout_file}
-#       sudo -u "$user" $cmd >> "$stdout_log" 2>> "$stderr_log" &
-        $JAVA -cp ${NETWORK_ENGINE_CLASS_PATH} org.renci.databridge.engines.network.NetworkEngine ${DATABRIDGE_CONFIG_DIR}/DataBridge.conf >> "$network_stdout_file" 2>> "$network_stderr_file" &
-        echo $! > "$network_pid_file"
-        if ! is_network_running; then
-            echo "Unable to start network engine, see $network_stdout_file and $network_stderr_file"
-            exit 1
-        fi
-    fi
-    ;;
-    stop)
+}
+
+stop_ingest() {
     # Stop the ingest engine
     if is_ingest_running; then
         echo -n "Stopping ingest engine.."
@@ -184,8 +155,25 @@ case "$1" in
     else
         echo "Ingest engine not running"
     fi
+}
 
-    # Stop the relevance engine
+start_relevance() {
+    if is_relevance_running; then
+        echo "Relevance engine already running"
+    else
+        echo "Starting relevance engine"
+        cd "$DATABRIDGE_BIN"
+        echo "Relevance engine startup at "`date -u` >> ${relevance_stdout_file}
+        $JAVA -cp ${RELEVANCE_ENGINE_CLASS_PATH} org.renci.databridge.engines.relevance.RelevanceEngine ${DATABRIDGE_CONFIG_DIR}/DataBridge.conf >> "$relevance_stdout_file" 2>> "$relevance_stderr_file" &
+        echo $! > "$relevance_pid_file"
+        if ! is_relevance_running; then
+            echo "Unable to start relevance engine, see $relevance_stdout_file and $relevance_stderr_file"
+            exit 1
+        fi
+    fi
+}
+
+stop_relevance() {
     if is_relevance_running; then
         echo -n "Stopping relevance engine.."
         kill `get_relevance_pid`
@@ -212,7 +200,25 @@ case "$1" in
     else
         echo "Relevance engine not running"
     fi
+}
 
+start_network() {
+    if is_network_running; then
+        echo "Network engine already running"
+    else
+        echo "Starting network engine"
+        cd "$DATABRIDGE_BIN"
+        echo "Network engine startup at "`date -u` >> ${network_stdout_file}
+        $JAVA -cp ${NETWORK_ENGINE_CLASS_PATH} org.renci.databridge.engines.network.NetworkEngine ${DATABRIDGE_CONFIG_DIR}/DataBridge.conf >> "$network_stdout_file" 2>> "$network_stderr_file" &
+        echo $! > "$network_pid_file"
+        if ! is_network_running; then
+            echo "Unable to start network engine, see $network_stdout_file and $network_stderr_file"
+            exit 1
+        fi
+    fi
+}
+
+stop_network() {
     # Stop the network engine
     if is_network_running; then
         echo -n "Stopping network engine.."
@@ -240,34 +246,75 @@ case "$1" in
     else
         echo "Network engine not running"
     fi
+}
+
+if [ "$#" -ge 2 ]; then
+    target=$2
+else
+    target=all
+fi
+
+case "$1" in
+    start)
+       if [ "$target" == "all" ] || [ $target == "ingest" ]; then
+          start_ingest
+       fi
+
+       if [ "$target" == "all" ] || [ $target == "relevance" ]; then
+          start_relevance
+       fi
+
+       if [ "$target" == "all" ] || [ $target == "network" ]; then
+          start_network
+       fi
     ;;
+
+    stop)
+       if [ "$target" == "all" ] || [ $target == "ingest" ]; then
+          stop_ingest
+       fi
+       if [ "$target" == "all" ] || [ $target == "relevance" ]; then
+          stop_relevance
+       fi
+       if [ "$target" == "all" ] || [ $target == "network" ]; then
+          stop_network
+       fi
+    ;;
+
     restart)
-    $0 stop
-    if is_running; then
-        echo "Unable to stop, will not attempt to start"
-        exit 1
-    fi
-    $0 start
+       $0 stop $target
+       if is_running; then
+           echo "Unable to stop, will not attempt to start"
+           exit 1
+       fi
+       $0 start $target
     ;;
+
     status)
-    if is_ingest_running; then
-        echo "Ingest engine running"
-    else
-        echo "Ingest engine stopped"
-    fi
-    if is_relevance_running; then
-        echo "Relevance engine running"
-    else
-        echo "Relevance engine stopped"
-    fi
-    if is_network_running; then
-        echo "Network engine running"
-    else
-        echo "Network engine stopped"
-    fi
+       if [ "$target" == "all" ] || [ $target == "ingest" ]; then
+          if is_ingest_running; then
+              echo "Ingest engine running"
+          else
+              echo "Ingest engine stopped"
+          fi
+       fi
+       if [ "$target" == "all" ] || [ $target == "relevance" ]; then
+          if is_relevance_running; then
+              echo "Relevance engine running"
+          else
+              echo "Relevance engine stopped"
+          fi
+       fi
+       if [ "$target" == "all" ] || [ $target == "network" ]; then
+          if is_network_running; then
+              echo "Network engine running"
+          else
+              echo "Network engine stopped"
+          fi
+       fi
     ;;
     *)
-    echo "Usage: $0 {start|stop|restart|status}"
+    echo "Usage: $0 {start|stop|restart|status} {all(default)|ingest|relevance|network}"
     exit 1
     ;;
 esac
