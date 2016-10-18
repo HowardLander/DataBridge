@@ -7,6 +7,8 @@ public class SimilarityInstanceTransferObject {
     private int    version;
     private String nameSpace;
     private String output;      // currently a file, could later be a database.
+    private long count;
+    private String params;
     private int insertTime;     // Seconds since the epoch
     private String dataStoreId; // The id generated at insertion time.
     
@@ -148,6 +150,46 @@ public class SimilarityInstanceTransferObject {
     public void setOutput(String output)
     {
         this.output = output;
+    }
+    
+    /**
+     * Get count.
+     *
+     * @return count as long.
+     */
+    public long getCount()
+    {
+        return count;
+    }
+    
+    /**
+     * Set count.
+     *
+     * @param count the value to set.
+     */
+    public void setCount(long count)
+    {
+        this.count = count;
+    }
+    
+    /**
+     * Get params.
+     *
+     * @return params as String.
+     */
+    public String getParams()
+    {
+        return params;
+    }
+    
+    /**
+     * Set params.
+     *
+     * @param params the value to set.
+     */
+    public void setParams(String params)
+    {
+        this.params = params;
     }
 }
 

@@ -396,21 +396,38 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
         String outputFile = null;
      while (actionIt.hasNext()) {
-        // For each of the actions we find we want to retrieve the className so we can pass it along.
         actionObject = actionIt.next();
 
         // Headers to pass forward
         HashMap<String, String> passedHeaders = new HashMap<String, String>();
 
-        // Get the class from the action object
-        HashMap<String, String> actionHeaders = actionObject.getHeaders();
-        passedHeaders.put(RelevanceEngineMessage.CLASS,
-                          (String) actionHeaders.get(RelevanceEngineMessage.CLASS));
-
+        // These are invariant to the next message
         passedHeaders.put(NetworkListenerMessage.NAME_SPACE, nameSpace);
         passedHeaders.put(NetworkListenerMessage.SIMILARITY_ID, similarityId);
-        this.logger.log(Level.INFO, "passing headers to processRunSnaAlgorithmJavaMessage: " + passedHeaders);
-        processRunSnaAlgorithmJavaMessage(passedHeaders, extra);
+
+        // Headers from the action object
+        HashMap<String, String> actionHeaders = actionObject.getHeaders();
+
+        this.logger.log(Level.INFO, "actionObject: " + actionObject);
+
+        // Look at the next message to decide what to next.
+        String nextMessage = actionObject.getNextMessage();
+        if (nextMessage.contentEquals("") || 
+            nextMessage.contentEquals(NetworkEngineMessage.RUN_SNA_ALGORITHM_JAVA_NETWORKDB)) {
+           passedHeaders.put(NetworkEngineMessage.CLASS,
+                          (String) actionHeaders.get(RelevanceEngineMessage.CLASS));
+           this.logger.log(Level.INFO, "passing headers to processRunSnaAlgorithmJavaMessage: " + 
+               passedHeaders);
+           processRunSnaAlgorithmJavaMessage(passedHeaders, extra);
+        } else if (nextMessage.contentEquals(NetworkEngineMessage.RUN_SNA_ALGORITHM_FILEIO_NETWORKDB)) {
+           passedHeaders.put(NetworkEngineMessage.EXECUTABLE,
+                          (String) actionHeaders.get(NetworkEngineMessage.EXECUTABLE));
+           passedHeaders.put(NetworkEngineMessage.PARAMS,
+                          (String) actionHeaders.get(NetworkEngineMessage.PARAMS));
+           this.logger.log(Level.INFO, "passing headers to processRunSnaAlgorithmFileIOMessage: " + 
+               passedHeaders);
+           processRunSnaAlgorithmFileIOMessage(passedHeaders, extra);
+        }
      }
   }
 
@@ -484,6 +501,15 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          String fullSimClassName = similarityObject.getClassName();
          String simClass = fullSimClassName.substring(fullSimClassName.lastIndexOf('.') + 1); 
 
+         // If there are any params we want to add them as well
+         String simParams = similarityObject.getParams();
+         String paramString = "";
+         // We don't want the '|' char in the file name so we replace it
+         if ((simParams != null) && (simParams.isEmpty() == false)) {
+            simParams = simParams.replace('|', '-');
+            paramString = "-" + simParams;
+         }
+
          // Let's get the last element of the sna class name for the file name
          String fullSNAClassName = snaObject.getClassName();
          String SNAClass = null;
@@ -521,7 +547,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
                Date now = new Date();
                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
                String dateString = format.format(now);
-               String labeledFileName = nameSpace + "-" + simClass + "-" + SNAClass + "-" + dateString + ".json";
+               String labeledFileName = nameSpace + "-" + simClass + paramString + "-" + SNAClass + "-" + dateString + ".json";
                fileName = outputFile + labeledFileName;
             } catch (Exception e) {
                e.printStackTrace();
@@ -678,6 +704,23 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
             JsonLink theLink = new JsonLink(index1, index2, thisDyad.getSimilarity());
             theJson.addLink(theLink);
          }
+      }
+
+      // One final thing: the viz app we are using is unhappy if link values are greater than 1. So
+      // we are going to find the maximum link value and if it's greater than 1 we are going to scale them
+      // all.
+      double linkMax = 0.;
+      for (JsonLink jsn: theJson.links) {
+         if (jsn.value > linkMax) {
+            linkMax = jsn.value;
+         } 
+      } 
+
+      if (linkMax > 1) {
+         // We'll need to do the scaling.
+         for (JsonLink jsn: theJson.links) {
+            jsn.value = jsn.value / linkMax;
+         } 
       }
 
       try {

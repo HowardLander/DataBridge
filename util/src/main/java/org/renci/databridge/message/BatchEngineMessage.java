@@ -8,6 +8,7 @@ import org.renci.databridge.util.AMQPMessageType;
 public class BatchEngineMessage implements AMQPMessageType {
   public static final String CLASS = "className";
   public static final String NAME_SPACE = "nameSpace";
+  public static final String PARAMS = "params";
   public static final String NAME = "name";
   public static final String OUTPUT_FILE = "outputFile";
   public static final String START_INDEX = "startIndex";

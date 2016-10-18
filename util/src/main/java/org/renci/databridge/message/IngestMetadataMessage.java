@@ -18,6 +18,7 @@ public class IngestMetadataMessage implements AMQPMessageType {
   // Message types for the ingest engine
   public static final String INSERT_METADATA_JAVA_URI_METADATADB = "Insert.Metadata.Java.URI.MetadataDB";
   public static final String INSERT_METADATA_JAVA_FILES_METADATADB = "Insert.Metadata.Java.Files.MetadataDB";
+  public static final String INSERT_METADATA_JAVA_BINARYFILES_METADATADB = "Insert.Metadata.Java.BinaryFiles.MetadataDB";
   @Override
   public String getBindHeaders () {
      return bindHeaders;

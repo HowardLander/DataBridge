@@ -132,6 +132,12 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
+      // 4) the params telling us which metadata to use for the comparison
+      String params = stringHeaders.get(BatchEngineMessage.PARAMS);    
+      if (null == params) {
+         this.logger.log (Level.SEVERE, "No params in message");
+         return;
+
       // Process the array of extra objects
       Object extraArray[] = (Object[]) extra;
 
@@ -371,6 +377,7 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
             String thisOutFile = labeledTmpDir + "/" + nameSpace + ".out." + Integer.toString(i);
             String theContent = CreateSimilarityMatrixSubsetJavaBatchFile.getSendHeaders(className, 
                                                                                          nameSpace, 
+                                                                                         params,
                                                                                          thisOutFile,
                                                                                          startIndex,
                                                                                          opsThisBatch,

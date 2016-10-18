@@ -62,6 +62,12 @@ public class MongoSimilarityInstanceDAO implements SimilarityInstanceDAO {
                    theSimilarityInstance.setMethod((String)theEntry.get("method"));
                    theSimilarityInstance.setVersion((int)theEntry.get("version"));
                    theSimilarityInstance.setOutput((String)theEntry.get("output"));
+   
+                   // Added this because there were some entries with no params or count
+                   String params = (theEntry.get("params") != null) ? (String) theEntry.get("params") : "";
+                   theSimilarityInstance.setParams(params);
+                   long count = (theEntry.get("count") != null) ? (long)theEntry.get("count") : 0;
+                   theSimilarityInstance.setCount(count);
                }
            } catch (MongoException e) {
                // should send this back using the message logs eventually
@@ -100,6 +106,8 @@ public class MongoSimilarityInstanceDAO implements SimilarityInstanceDAO {
           thisDoc.put("method", theSimilarityInstance.getMethod());
           thisDoc.put("version", theSimilarityInstance.getVersion());
           thisDoc.put("output", theSimilarityInstance.getOutput());
+          thisDoc.put("count", theSimilarityInstance.getCount());
+          thisDoc.put("params", theSimilarityInstance.getParams());
           DB theDB = MongoDAOFactory.getTheDB();
           DBCollection theTable = theDB.getCollection(MongoName);
           theTable.insert(thisDoc);
@@ -137,6 +145,12 @@ public class MongoSimilarityInstanceDAO implements SimilarityInstanceDAO {
                theSimilarityInstance.setMethod((String)theEntry.get("method"));
                theSimilarityInstance.setVersion((int)theEntry.get("version"));
                theSimilarityInstance.setOutput((String)theEntry.get("output"));
+   
+               // Added this because there were some entries with no params or count
+               String params = (theEntry.get("params") != null) ? (String) theEntry.get("params") : "";
+               theSimilarityInstance.setParams(params);
+               long count = (theEntry.get("count") != null) ? (long)theEntry.get("count") : 0;
+               theSimilarityInstance.setCount(count);
             }
         } catch (MongoException e) {
             // should send this back using the message logs eventually

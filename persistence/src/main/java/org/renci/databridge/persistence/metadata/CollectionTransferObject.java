@@ -242,5 +242,52 @@ public class CollectionTransferObject {
     {
         this.insertTime = insertTime;
     }
+    
+    /**
+     * This function returns the set of strings associated with the fieldName given. The
+     * interesting part is that the fieldName can be either one of the primary field names
+     * like URL, title or description or it can be one of the keys in the "extra" data.  This
+     * allows the user to not know where the data they are asking for is stored.
+     *
+     * @return keywords as ArrayList<String>.
+     */
+    public String getDataByFieldName(String fieldName)
+    {
+        String theData = null;
+  
+        switch (fieldName) {
+           // First we check to see if the user has requested one of the fields of this object.
+           case "URL" :
+              theData = this.URL;
+              break;
+
+           case "title" :
+              theData = this.title;
+              break;
+
+           case "description" :
+              theData = this.description;
+              break;
+
+           case "producer" :
+              theData = this.producer;
+              break;
+
+           case "subject" :
+              theData = this.subject;
+              break;
+
+           case "keywords" :
+              theData = String.join(" ", this.keywords);
+              break;
+
+           default:
+              // If we didn't find it in the defined fields of the objects, maybe it's in the extra field
+              if (extra.containsKey(fieldName)) {
+                 theData = this.extra.get(fieldName);
+              }
+        }
+        return theData;
+    }
 }
 

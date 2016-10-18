@@ -91,7 +91,7 @@ public class AnalyzeSimilarityFile {
 
         System.out.println("\tcollectionIds: ");
         for (String theId: readData.getCollectionIds()) {
-            System.out.println("\tthisId: " + theId);
+            System.out.println("\t\tthisId: " + theId);
         }
      }  catch (Exception e) {
          e.printStackTrace();
@@ -111,7 +111,7 @@ public class AnalyzeSimilarityFile {
         for (int i = 0; i < theMatrix.rows(); i++) {
             System.out.println("Row: " + i);
             if (theMatrix.maxInRow(i) > 0.) {
-               org.la4j.vector.Vector thisRow = theMatrix.getRow(i);
+               org.la4j.Vector thisRow = theMatrix.getRow(i);
                System.out.println(thisRow.toString());
                thisRow.each(theVectorClass);
             } else {

@@ -14,7 +14,7 @@ import javax.xml.bind.JAXBException;
 import org.renci.databridge.util.AMQPComms;
 import org.renci.databridge.util.AMQPMessage;
 import org.renci.databridge.util.AMQPMessageHandler;
-import org.renci.databridge.formatter.MetadataFormatter;
+import org.renci.databridge.formatter.*;
 import org.renci.databridge.persistence.metadata.MetadataObject;
 import org.renci.databridge.persistence.metadata.MetadataDAOFactory;
 import org.renci.databridge.persistence.metadata.CollectionDAO;
@@ -62,6 +62,9 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
      } else if
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_FILES_METADATADB) == 0) {
         processInsertMetadataFilesMessage(stringHeaders, extra);
+     } else if
+         (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_BINARYFILES_METADATADB) == 0) {
+        processInsertBinaryMetadataFilesMessage(stringHeaders, extra);
      } else {
          logger.log(Level.WARNING, "unimplemented messageName: " + messageName);
      }
@@ -197,6 +200,64 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
        }
     }
+
+  /**
+   * Handle the INSERT_METADATA_JAVA_BINARYFILES_METADATADB message.  
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects
+   */
+    public void processInsertBinaryMetadataFilesMessage(Map<String, String> stringHeaders, Object extra) {
+
+       String className = stringHeaders.get (IngestMetadataMessage.CLASS);
+       String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
+       boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
+       String inputDir = stringHeaders.get (IngestMetadataMessage.INPUT_DIR);
+
+       // instantiate third-party BinaryIngestor implementation 
+       BinaryIngester ingester = null;
+       try {
+          ingester = (BinaryIngester) Class.forName (className).newInstance (); 
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
+         e.printStackTrace();
+         return;
+      }
+
+       ingester.setLogger (this.logger);
+       this.logger.log (Level.INFO, "inputDir token:  " + IngestMetadataMessage.INPUT_DIR);
+       this.logger.log (Level.INFO, "inputDir:  " + inputDir);
+      
+       // dispatch to third-party formatter 
+       List<MetadataObject> metadataObjects = null;
+       try {
+           metadataObjects = ingester.binaryToMetadata (inputDir);
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't perform format operation", e);
+         return;
+       }
+
+       for (MetadataObject mo : metadataObjects) {
+         try {
+           persist (mo, nameSpace);
+           this.logger.log (Level.FINE, "Inserted MetadataObject.");
+         } catch (Exception e) {
+           this.logger.log (Level.SEVERE, "Can't insert MetadataObject.", e);
+           return;
+         }
+       }
+
+       if (fireEvent) {
+         // send ProcessedMetadataToMetadataDB message 
+         AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
+         String headers = ProcessedMetadataToMetadataDB.getSendHeaders (nameSpace);
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         ac.shutdownConnection ();     
+         this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
+       }
+    }
+
+
   public void handleException (Exception exception) {
 
     this.logger.log (Level.WARNING, "handler received exception: ", exception);

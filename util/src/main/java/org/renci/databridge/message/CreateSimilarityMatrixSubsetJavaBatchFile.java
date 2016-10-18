@@ -17,13 +17,14 @@ public class CreateSimilarityMatrixSubsetJavaBatchFile extends BatchEngineMessag
    *
    * @param className the className to use for the comparison
    * @param nameSpace the nameSpace of the data to be compared
+   * @param params the params that control what metadata to use
    * @param outputFile the file name for the similarity output
    * @param startIndex the startIndex for the metadata
    * @param count the number of json files to process
    * @param inputDir where to find the json files to process
    * @param dimension the dimension of the array
    */
-  public static String getSendHeaders(String className, String nameSpace, String outputFile, 
+  public static String getSendHeaders(String className, String nameSpace, String params, String outputFile, 
                                       int startIndex, int count, String inputDir, long dimension) {
       StringBuilder sb = new StringBuilder();
       sb.append(BatchEngineMessage.NAME);
@@ -37,6 +38,10 @@ public class CreateSimilarityMatrixSubsetJavaBatchFile extends BatchEngineMessag
       sb.append(BatchEngineMessage.NAME_SPACE);
       sb.append(":");
       sb.append(nameSpace);
+      sb.append(";");
+      sb.append(BatchEngineMessage.PARAMS);
+      sb.append(":");
+      sb.append(params);
       sb.append(";");
       sb.append(BatchEngineMessage.OUTPUT_FILE);
       sb.append(":");

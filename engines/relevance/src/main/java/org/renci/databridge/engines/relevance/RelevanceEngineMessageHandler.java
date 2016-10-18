@@ -227,6 +227,40 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
+      // 4) the params aren't always needed
+      String params = stringHeaders.get(RelevanceEngineMessage.PARAMS);    
+      if (null == params) {
+          params = "";
+      }
+
+      // 5) the engine params aren't always needed
+      boolean normalize = false;
+      boolean distance = false;
+      double  maxValue = 1.;
+      String engineParams = stringHeaders.get(RelevanceEngineMessage.ENGINE_PARAMS);    
+      if (null == engineParams) {
+          engineParams = "";
+      } else {
+          if (engineParams.indexOf(RelevanceEngineMessage.NORMALIZE) != -1) {
+             normalize = true;
+          } 
+          if (engineParams.indexOf(RelevanceEngineMessage.DISTANCE) != -1) {
+             distance = true;
+          } 
+      }
+
+      this.logger.log (Level.INFO, "normalize: " + normalize);
+      this.logger.log (Level.INFO, "distance: " + distance);
+      long count;
+      // 6) the count. This is optional, if no count is specified do the whole nameSpace
+      String countString = stringHeaders.get(RelevanceEngineMessage.COUNT);    
+      if (null == countString) {
+         // This is OK
+         count  = -1;
+      } else {
+         count = Long.parseLong(countString);
+      }
+
       // Process the array of extra objects
       Object extraArray[] = (Object[]) extra;
 
@@ -261,6 +295,8 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       theSimilarityInstance.setClassName(className);
       theSimilarityInstance.setMethod("compareCollections");
       theSimilarityInstance.setOutput("file://" + outputFile);
+      theSimilarityInstance.setCount(count);
+      theSimilarityInstance.setParams(params);
 
       // let's find the highest version for this combination of nameSpace, className and method (if any)
       HashMap<String, String> versionMap = new HashMap<String, String>();
@@ -298,6 +334,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
       long nCollections = theCollectionDAO.countCollections(searchMap);
       this.logger.log (Level.INFO, "number of collections: " + nCollections);
+
       if (nCollections <= 0) {
          // Nothing to do, we can stop now
          this.logger.log (Level.INFO, "nCollections <= 0, so nothing to do");
@@ -329,7 +366,12 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       // you can't really copy java iterators.
       int counter = 1;
       int rowCounter = 0;
+      double numCompared = 0;
       while (iterator1.hasNext()) { 
+         if (count > 0 && numCompared >= count) {
+            // we've reached the termination condition
+            break;
+         }
          CollectionTransferObject cto1 = iterator1.next();
          CollectionTransferObject cto2 = null;
          collectionIds.add(cto1.getDataStoreId());
@@ -353,7 +395,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
             // Now we have our 2 CollectionTransferObjects, so we want to call the method.
             try {
-               similarity =  (double) thisProcessor.compareCollections(cto1, cto2);
+               similarity =  (double) thisProcessor.compareCollections(cto1, cto2, params);
+               if (normalize) {
+                   // We'll need the max value.
+                   if (similarity > maxValue) {
+                      maxValue = similarity;
+                   }
+               }
                if (similarity > 0.0) {
                   this.logger.log (Level.INFO, "adding ids: " + cto1.getDataStoreId() + " " + cto2.getDataStoreId());
                   this.logger.log (Level.INFO, "rowCounter: " + rowCounter + " colCounter: " + colCounter + " sim: " + similarity);
@@ -364,7 +412,12 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
                   this.logger.log (Level.INFO, "setting (" + rowCounter + "," + colCounter + ") to -1");
                   theSimFile.setSimilarityValue(rowCounter, colCounter, -1);
                }
+               numCompared ++;
                colCounter++;
+               if (count > 0 && numCompared >= count) {
+                  // we've reached the termination condition
+                  break;
+               }
             } catch (Exception e) {
                this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" + e.getMessage(), e);
                return;
@@ -372,6 +425,31 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          }
          counter ++;
          rowCounter ++;
+      }
+
+      // Now that we have set the values in theSimFile, we can do any of the needed adjustments
+      if (normalize || distance) {
+         // Look at every value.
+         org.la4j.matrix.sparse.CRSMatrix localMatrix = theSimFile.getSimilarityMatrix();
+         this.logger.log (Level.INFO, "processing matrix, max Value is: " + maxValue);
+         this.logger.log (Level.INFO, "rows: " + localMatrix.rows());
+         this.logger.log (Level.INFO, "cols: " + localMatrix.columns());
+         for (int row = 0; row < localMatrix.rows(); row ++) {
+            for (int col = 0; col < localMatrix.columns(); col ++) {
+               double localValue = localMatrix.get(row, col);
+               if (normalize) {
+                  localValue = localValue / maxValue;
+               }
+               if (distance) {
+                  if (localValue > 0) {
+                     // leave the zero values unchanged...
+                     localValue = 1. - localValue;
+                  }
+               }
+               localMatrix.set(row, col, localValue);
+            }
+         }
+         theSimFile.setSimilarityMatrix(localMatrix);
       }
       theSimFile.setCollectionIds(collectionIds);
       try {

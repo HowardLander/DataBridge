@@ -18,7 +18,7 @@ import org.renci.databridge.util.*;
  *  -properties <properties>   properties file
  * 
  *  Example mvn command line:
- *   mvn -e exec:java -Dexec.mainClass=org.renci.databridge.tools.AddAction -Dexec.arguments=tools.conf,Processed.Metadata.To.MetadataDB,test_action_1,"outputFile:/home/howard/generatedNet/;className:org.renci.databridge.contrib.similarity.ncat.Measure"
+ *   mvn -e exec:java -Dexec.mainClass=org.renci.databridge.tools.AddAction -Dexec.arguments="-nameSpace",clinicalTrials-100,"-message",Processed.Metadata.To.NetworkFile,"-properties",/projects/databridge/howard/DataBridge/config/DataBridge.conf,"-headers",unused:header
  */
 
 public class AddAction {
@@ -28,12 +28,14 @@ public class AddAction {
        Option properties = OptionBuilder.withArgName("properties").hasArg().withDescription("properties file").create("properties");
     //   Option database = OptionBuilder.withArgName("database").hasArg().withDescription("use as mongo database").create("database");
        Option message = OptionBuilder.withArgName("message").hasArg().withDescription("message name").create("message");
+       Option next = OptionBuilder.withArgName("next").hasArg().withDescription("next message name").create("next");
        Option nameSpace = OptionBuilder.withArgName("nameSpace").hasArg().withDescription("the nameSpace").create("nameSpace");
        Option headers = OptionBuilder.withArgName("headers").hasArg().withDescription("the headers").create("headers");
        Option help = new Option("help", "print this message");
        options.addOption(properties);
      //  options.addOption(database);
        options.addOption(message);
+       options.addOption(next);
        options.addOption(nameSpace);
        options.addOption(headers);
        options.addOption(help);
@@ -90,14 +92,19 @@ public class AddAction {
         // insert the action 
         ActionTransferObject theAction = new ActionTransferObject();
         theAction.setCurrentMessage(theLine.getOptionValue("message"));
+        String nextMessage = (theLine.getOptionValue("next") != null) ? 
+               theLine.getOptionValue("next") : "";
+        theAction.setNextMessage(nextMessage);
         theAction.setNameSpace(theLine.getOptionValue("nameSpace"));
         HashMap<String, String> actionHeaders = new HashMap<String, String>();
         String[] pairs = theLine.getOptionValue("headers").split(";");
 
         for (int i = 0; i < pairs.length; i++) {
-           String[] thisPair = pairs[i].split(":");
-           System.out.println("thisPair: " + thisPair);
-           actionHeaders.put(thisPair[0], thisPair[1]);
+           /* I know this looks a little confusing, but it handles the case where there are
+              one or more ':' chars in the value portion of the header, which can happen */
+           int firstColon = pairs[i].indexOf(':');
+           actionHeaders.put(pairs[i].substring(0, firstColon), 
+                             pairs[i].substring(firstColon + 1, pairs[i].length()));
         }
         theAction.setHeaders(actionHeaders);
         ActionDAO theActionDAO = theFactory.getActionDAO();

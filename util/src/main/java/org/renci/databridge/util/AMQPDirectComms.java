@@ -207,6 +207,7 @@ public class AMQPDirectComms extends AMQPComms {
          } catch (Exception e){
             // Not much we can do with the exception ...
             e.printStackTrace();
+            System.exit(3);
          }
      }
 
@@ -223,6 +224,7 @@ public class AMQPDirectComms extends AMQPComms {
          } catch (Exception e){
             // Not much we can do with the exception ...
             this.logger.log (Level.SEVERE, "Caught Exception sending acknowledgment: " + e.getMessage());
+            System.exit(4);
          }
      }
 
@@ -269,6 +271,7 @@ public class AMQPDirectComms extends AMQPComms {
          } catch (Exception e){
             // Not much we can do with the exception ...
             e.printStackTrace();
+            System.exit(2);
          }
 
          // let's not forget to return the received message.
@@ -322,6 +325,7 @@ public class AMQPDirectComms extends AMQPComms {
          } catch (Exception e){
             // Not much we can do with the exception ...
             e.printStackTrace();
+            System.exit(1);
          }
 
          // let's not forget to return the received message or null.

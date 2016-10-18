@@ -10,5 +10,6 @@ import org.renci.databridge.persistence.metadata.*;
 public interface SimilarityProcessor {
 
     double compareCollections(CollectionTransferObject collection1, 
-                              CollectionTransferObject collection2);
+                              CollectionTransferObject collection2,
+                              String params);
 }

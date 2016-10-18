@@ -32,6 +32,7 @@
         <artifactId>databridge-persistence</artifactId>
         <version>1.0-BETA</version>
     </dependency>
+
   </dependencies>
 
   <build>

@@ -10,6 +10,11 @@ public class RelevanceEngineMessage implements AMQPMessageType {
   public static final String NAME_SPACE = "nameSpace";
   public static final String NAME = "name";
   public static final String OUTPUT_FILE = "outputFile";
+  public static final String ENGINE_PARAMS = "engineParams";
+  public static final String PARAMS = "params";
+  public static final String COUNT = "count";
+  public static final String NORMALIZE = "normalize";
+  public static final String DISTANCE = "distance";
 
   public static final String bindHeaders = "type:databridge;subtype:relevance;x-match:all";
 

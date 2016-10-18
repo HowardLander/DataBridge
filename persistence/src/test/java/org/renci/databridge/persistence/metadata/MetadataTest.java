@@ -60,6 +60,23 @@ public class MetadataTest {
      theCollection.setExtra(extra);
 
      try {
+         // Let's try the getDataByFieldName call
+         String field = theCollection.getDataByFieldName("author");
+         System.out.println("field: " + field);
+         TestCase.assertTrue("Failed to get author", field.compareTo("Howard Lander")== 0);
+
+         field = theCollection.getDataByFieldName("description");
+         System.out.println("field: " + field);
+         TestCase.assertTrue("Failed to get description", field.compareTo("here's an example description")== 0);
+
+         field = theCollection.getDataByFieldName("producer");
+         System.out.println("field: " + field);
+         TestCase.assertTrue("Failed to get producer", field.compareTo("producer")== 0);
+
+         field = theCollection.getDataByFieldName("subject");
+         System.out.println("field: " + field);
+         TestCase.assertTrue("Failed to get subject", field.compareTo("physics")== 0);
+
          CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
          result = theCollectionDAO.insertCollection(theCollection);
          System.out.println("done with insert");
@@ -172,6 +189,7 @@ public class MetadataTest {
         MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
      ActionTransferObject theAction = new ActionTransferObject();
      theAction.setCurrentMessage("Insert.Metadata.Java.URI.MetadataDB");
+     theAction.setNextMessage("Run.SNA.Algorithm.FileIO.NetworkDB");
      theAction.setNameSpace("junit_test");
      HashMap<String, String> actionHeaders = new HashMap<String, String>();
      actionHeaders.put("className", "org.renci.databridgecontrib.ingest.mockingest");
@@ -191,6 +209,7 @@ public class MetadataTest {
          if (actionIt.hasNext() ) {
             ActionTransferObject returnedObject = actionIt.next();
             System.out.println("Found nameSpace: " + returnedObject.getNameSpace());
+            System.out.println("Found nextMessage: " + returnedObject.getNextMessage());
             if (returnedObject.getNameSpace().compareTo("junit_test") == 0) {
                found = true;
             }
@@ -223,6 +242,8 @@ public class MetadataTest {
      theSimilarityInstance.setMethod("compareCollections");
      theSimilarityInstance.setOutput("/home/howard/testOutput");
      theSimilarityInstance.setVersion(1);
+     theSimilarityInstance.setCount(211);
+     theSimilarityInstance.setParams("test1");
 
      try {
          SimilarityInstanceDAO theSimilarityInstanceDAO = theMongoFactory.getSimilarityInstanceDAO();
@@ -248,7 +269,7 @@ public class MetadataTest {
              System.out.println("className: " + getObj.getClassName());
              System.out.println("insertTime is " + getObj.getInsertTime());
              long now = System.currentTimeMillis()/1000;
-             TestCase.assertTrue("insertTime is unreasonable", (now - getObj.getInsertTime()) < 5 );
+             TestCase.assertTrue("insertTime is unreasonable (" + (now - getObj.getInsertTime()) + ")" , (now - getObj.getInsertTime()) < 5 );
              TestCase.assertTrue("classname doesn't match", 
                  getObj.getClassName().compareTo("MockSimilarity") == 0);
              TestCase.assertTrue("nameSpaces don't match", 
@@ -257,6 +278,9 @@ public class MetadataTest {
                  getObj.getOutput().compareTo("/home/howard/testOutput") == 0);
              TestCase.assertTrue("ids don't match", 
                  getObj.getMethod().compareTo("compareCollections") == 0);
+             TestCase.assertTrue("params don't match", 
+                 getObj.getParams().compareTo("test1") == 0);
+             TestCase.assertTrue("count doesn't match", getObj.getCount() == 211);
 
              // Now we'll try to delete the object
              HashMap<String, String> deleteMap = new HashMap<String, String>();

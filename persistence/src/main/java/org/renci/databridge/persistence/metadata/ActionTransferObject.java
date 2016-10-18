@@ -4,6 +4,7 @@ import  java.util.*;
 public class ActionTransferObject {
     private String currentMessage; // The message currently being executed.
     private String nameSpace;      // The name space on which the current message is executing
+    private String nextMessage = "";    // the message to execute.
     private HashMap<String, String> headers; // Headers for the action message
     private int insertTime;     // Seconds since the epoch
     private String dataStoreId; // The id generated at insertion time.
@@ -11,7 +12,7 @@ public class ActionTransferObject {
     @Override
     public String toString ()
     {
-        return "{" + getClass ().getName () + ": currentMessage: " + getCurrentMessage () + ", nameSpace: " + getNameSpace () + ", headers: " + getHeaders () + ", dataStoreId: " + getDataStoreId () + ", insertTime: " + getInsertTime() + "}";
+        return "{" + getClass ().getName () + ": currentMessage: " + getCurrentMessage () + ": nextMessage: " + getNextMessage () + ", nameSpace: " + getNameSpace () + ", headers: " + getHeaders () + ", dataStoreId: " + getDataStoreId () + ", insertTime: " + getInsertTime() + "}";
     }
 
     
@@ -113,6 +114,26 @@ public class ActionTransferObject {
     public void setHeaders(HashMap<String, String> headers)
     {
         this.headers = headers;
+    }
+    
+    /**
+     * Get nextMessage.
+     *
+     * @return nextMessage as String.
+     */
+    public String getNextMessage()
+    {
+        return nextMessage;
+    }
+    
+    /**
+     * Set nextMessage.
+     *
+     * @param nextMessage the value to set.
+     */
+    public void setNextMessage(String nextMessage)
+    {
+        this.nextMessage = nextMessage;
     }
 }
 

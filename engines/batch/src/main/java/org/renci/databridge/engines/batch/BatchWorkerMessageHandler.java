@@ -98,6 +98,7 @@ public class BatchWorkerMessageHandler implements AMQPMessageHandler {
       // Grab everything we need from the headers
       String className = stringContent.get(BatchEngineMessage.CLASS);    
       String nameSpace = stringContent.get(BatchEngineMessage.NAME_SPACE);    
+      String params = stringContent.get(BatchEngineMessage.PARAMS);    
       String outputFile = stringContent.get(BatchEngineMessage.OUTPUT_FILE);    
       String startIndexString = stringContent.get(BatchEngineMessage.START_INDEX);
       String countString = stringContent.get(BatchEngineMessage.COUNT);
@@ -258,7 +259,7 @@ public class BatchWorkerMessageHandler implements AMQPMessageHandler {
                 // execute the class.
                 double similarity = 0.;
                 similarity =  
-                   (double) thisProcessor.compareCollections(ctoMap.get(index1), ctoMap.get(index2));
+                   (double) thisProcessor.compareCollections(ctoMap.get(index1), ctoMap.get(index2), params);
                 String resultString = 
                     Integer.toString(index1) + "," + Integer.toString(index2) + "," + Double.toString(similarity);
                 bw.write(resultString);

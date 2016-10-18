@@ -54,6 +54,9 @@ public class MongoActionDAO implements ActionDAO {
                    theAction = new ActionTransferObject();
                    DBObject theEntry = cursor.next();
                    theAction.setCurrentMessage((String)theEntry.get("currentMessage"));
+                   String nextMessage = 
+                       (theEntry.get("nextMessage") != null) ? (String) theEntry.get("nextMessage") : "";
+                   theAction.setNextMessage(nextMessage);
                    theAction.setNameSpace((String)theEntry.get("nameSpace"));
                    theAction.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
                    theAction.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
@@ -103,6 +106,7 @@ public class MongoActionDAO implements ActionDAO {
           
           thisDoc.put(MongoIdFieldName, theId);
           thisDoc.put("currentMessage", theAction.getCurrentMessage());
+          thisDoc.put("nextMessage", theAction.getNextMessage());
           thisDoc.put("nameSpace", theAction.getNameSpace());
           HashMap <String, String> headers = theAction.getHeaders();
 

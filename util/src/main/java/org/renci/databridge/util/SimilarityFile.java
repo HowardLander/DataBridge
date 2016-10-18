@@ -9,6 +9,8 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
@@ -89,7 +91,7 @@ public class SimilarityFile {
       *                must be equal or an IllegalArgumentException is thrown.
       */
      public SimilarityFile(double[][] values, String nameSpace) throws IllegalArgumentException {
-        similarityMatrix = new org.la4j.matrix.sparse.CRSMatrix(values);
+        similarityMatrix = org.la4j.matrix.sparse.CRSMatrix.from2DArray(values);
 
         /* Remember that this is a similarity matrix, meaning that, in the non-sparse, form
            each dataset is compared to every other data set.  That means the matrix has to be
@@ -157,11 +159,17 @@ public class SimilarityFile {
       */
      private void readTheSimilarityFromInputObject(ObjectInputStream input) throws Exception {
 
+         byte[] bytes = null;
+         ByteArrayOutputStream bos = null;
+         ObjectOutputStream oos = null;
+
          try {
+             int matrixSize = input.readInt();
+             byte [] matrixBytes = new byte[matrixSize];
+             input.readFully(matrixBytes, 0, matrixSize);
+             this.similarityMatrix = org.la4j.matrix.sparse.CRSMatrix.fromBinary(matrixBytes);
              this.nameSpace = (String) input.readObject();
              this.similarityInstanceId = (String) input.readObject();
-             this.similarityMatrix = new org.la4j.matrix.sparse.CRSMatrix();
-             this.similarityMatrix.readExternal(input);
              this.collectionIds = (java.util.ArrayList<String>) input.readObject();
          } catch (Exception e) {
              throw e;
@@ -235,9 +243,11 @@ public class SimilarityFile {
             FileOutputStream fos = new FileOutputStream(new File(filePath));
             OutputStream bufferedStream = new BufferedOutputStream(fos);
             ObjectOutputStream outStream = new ObjectOutputStream(bufferedStream);
+            byte [] bytes = similarityMatrix.toBinary();
+            outStream.writeInt(bytes.length);
+            outStream.write(bytes);
             outStream.writeObject(nameSpace);
             outStream.writeObject(similarityInstanceId);
-            similarityMatrix.writeExternal(outStream);
             outStream.writeObject(collectionIds);
             outStream.close();
          } catch (Exception e) {
