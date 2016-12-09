@@ -406,7 +406,6 @@ public class BatchEngineMessageHandler implements AMQPMessageHandler {
                  if (am != null) {
                      // The message handler needs the property file so it can send action messages, so we
                      // store it in an array of Objects along with the needed factory.
-                     logger.log(Level.INFO, "received a message: " + am.getContent());
                      String message = am.getContent();
                      if (0 == message.compareTo(AMQPComms.MESSAGE_FAILURE)) {
                         // The call falled for some reason. As long as we have not exceeded

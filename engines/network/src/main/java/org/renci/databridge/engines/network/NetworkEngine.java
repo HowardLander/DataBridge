@@ -47,6 +47,21 @@ public class NetworkEngine {
                 new NetworkEngineMessageListener (props, new NetworkListenerMessage(), 
                                                   new NetworkEngineMessageHandler(), logger);
             networkListener.start ();
+
+            // Start a third thread to listen for rpc type messages.
+            // We need to reset the org.renci.databridge.primaryQueue property. This is the queue
+            // this listener will listen to.
+            props.setProperty("org.renci.databridge.rpcQueue",
+                              props.getProperty("org.renci.databridge.networkEngine.rpcQueue"));
+            logger.log(Level.INFO, 
+                "rpcQueue set to: " + props.getProperty("org.renci.databridge.networkEngine.rpcQueue"));
+
+            NetworkEngineRPCListener rpcListener = 
+                new NetworkEngineRPCListener (props, new NetworkListenerMessage(), 
+                                                  new NetworkEngineRPCHandler(), logger);
+            rpcListener.start ();
+
+            rpcListener.join ();
             networkListener.join (); // keeps main thread from exiting 
             aml.join (); // keeps main thread from exiting 
         } catch (Exception ex) {

@@ -211,6 +211,7 @@ public class AMQPComms {
       *  Code to publish a message 
       *
       *  @param  theMessage The user provided AMQPMessage.
+      *  @param  headers The headers for the message
       *  @param  persistence Whether or not to set MessageProperties.PERSISTENT_TEXT_PLAIN in the message.
       */
      public void publishMessage(AMQPMessage theMessage, String headers, Boolean persistence) {
@@ -221,6 +222,7 @@ public class AMQPComms {
                 // Add a map entry for each of these headers
                 String[] thisSplitHeader = thisHeader.split(":", 2);
                 publishMap.put(thisSplitHeader[0], thisSplitHeader[1]);
+            System.out.println("Adding headers: " + thisSplitHeader[0] + " " + thisSplitHeader[1]);
             }
    
             AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
@@ -238,6 +240,8 @@ public class AMQPComms {
             // Use the builder to create the BasicProperties object.
             AMQP.BasicProperties theProps = builder.build();
 
+            System.out.println("exchange: " + theExchange);
+            System.out.println("routingkey: " + routingKey);
             theChannel.basicPublish(theExchange, routingKey, theProps, theMessage.getBytes());
    
          } catch (Exception e){

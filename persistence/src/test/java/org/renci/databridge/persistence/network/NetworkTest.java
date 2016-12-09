@@ -207,6 +207,12 @@ public class NetworkTest {
              theNetworkRelationshipDAO.getNetworkRelationships(node1);
          if (theRels.hasNext()) {
              NetworkRelationshipTransferObject returnedTransfer = theRels.next();
+             System.out.println("node1: " +  returnedTransfer.getNodeId1());
+             TestCase.assertTrue("node1 wrong: " + returnedTransfer.getNodeId1(), 
+                                 returnedTransfer.getNodeId1().equals(node1.getDataStoreId()));
+             System.out.println("node2: " +  returnedTransfer.getNodeId2());
+             TestCase.assertTrue("node2 wrong: " + returnedTransfer.getNodeId2(), 
+                                 returnedTransfer.getNodeId2().equals(node2.getDataStoreId()));
              System.out.println("returned type: " +  returnedTransfer.getType());
              System.out.println("returned attrs: " + returnedTransfer.getAttributes());
              TestCase.assertTrue("type wrong: ", returnedTransfer.getType().compareTo("Similarity") ==0);

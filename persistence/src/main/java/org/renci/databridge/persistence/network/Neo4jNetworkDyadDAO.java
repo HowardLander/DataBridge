@@ -106,7 +106,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                           // we skip it all and stillLooking will remain true.
                           if (returnSingletons == true) {
                               // Why are we check for INCOMING relationships? The reason is to see if this
-                              // node is truly unrelated to others, or if all it's relationships are INCOMING
+                              // node is truly a singleton, or if all it's relationships are INCOMING
                               // and so it wasn't caught in the previous test. We handle these two
                               // cases differently.  If the node is truly unrelated to others, we want to
                               // return it in the next call, in case the caller has any use for unrelated

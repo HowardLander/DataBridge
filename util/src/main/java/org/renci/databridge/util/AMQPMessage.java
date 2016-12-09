@@ -20,6 +20,9 @@ public class AMQPMessage {
      /** The message properties */
      private BasicProperties properties;
 
+     /** The replyQueue */
+     private String replyQueue;
+
      /** The actual message */
      private byte[] bytes;
 
@@ -271,5 +274,25 @@ public class AMQPMessage {
      public void setDirectComms(AMQPDirectComms comms)
      {
          this.comms = comms;
+     }
+     
+     /**
+      * Get replyQueue.
+      *
+      * @return replyQueue as String.
+      */
+     public String getReplyQueue()
+     {
+         return replyQueue;
+     }
+     
+     /**
+      * Set replyQueue.
+      *
+      * @param replyQueue the value to set.
+      */
+     public void setReplyQueue(String replyQueue)
+     {
+         this.replyQueue = replyQueue;
      }
 }

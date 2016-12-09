@@ -40,7 +40,7 @@ public class NetworkRelationshipTransferObject {
      *
      * @param nodeId the value to set.
      */
-    public void setNodeId1(String nodeId)
+    public void setNodeId1(String nodeId1)
     {
         this.nodeId1 = nodeId1;
     }
