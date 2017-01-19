@@ -2,6 +2,8 @@ package org.renci.databridge.persistence.metadata;
 
 import java.io.*;
 import java.util.*;
+import org.apache.log4j.Logger;
+import org.apache.log4j.Level;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -32,13 +34,14 @@ public class MetadataTest {
   @Test
   public void testCollectionDAO () throws Exception {
 
+     Logger.getRootLogger().setLevel(Level.OFF);
      System.out.println("");
      System.out.println("");
      System.out.println("beginning testCollectionDAO");
      boolean result;
 
      MetadataDAOFactory theMongoFactory = 
-        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
      CollectionTransferObject theCollection = new CollectionTransferObject();
      theCollection.setURL("http://www.renci.org");
      theCollection.setTitle("title");
@@ -78,8 +81,9 @@ public class MetadataTest {
          TestCase.assertTrue("Failed to get subject", field.compareTo("physics")== 0);
 
          CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
+         System.out.println("after theMongoFactory.getCollectionDAO");
          result = theCollectionDAO.insertCollection(theCollection);
-         System.out.println("done with insert");
+         System.out.println("done with insert, result is " + result);
          System.out.println("inserted Id is: " + theCollection.getDataStoreId());
          System.out.println("testing get");
 
@@ -180,13 +184,14 @@ public class MetadataTest {
   @Test
   public void testActionDAO () throws Exception {
 
+     Logger.getRootLogger().setLevel(Level.OFF);
      System.out.println("");
      System.out.println("");
      System.out.println("beginning testActionDAO");
      boolean result;
 
      MetadataDAOFactory theMongoFactory = 
-        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
      ActionTransferObject theAction = new ActionTransferObject();
      theAction.setCurrentMessage("Insert.Metadata.Java.URI.MetadataDB");
      theAction.setNextMessage("Run.SNA.Algorithm.FileIO.NetworkDB");
@@ -229,13 +234,14 @@ public class MetadataTest {
   @Test
   public void testSimilarityInstanceDAO () throws Exception {
 
+     Logger.getRootLogger().setLevel(Level.OFF);
      System.out.println("");
      System.out.println("");
      System.out.println("beginning testSimilarityInstanceDAO");
      boolean result;
 
      MetadataDAOFactory theMongoFactory = 
-        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
      SimilarityInstanceTransferObject theSimilarityInstance = new SimilarityInstanceTransferObject();
      theSimilarityInstance.setNameSpace("junit_test");
      theSimilarityInstance.setClassName("MockSimilarity");
@@ -355,13 +361,14 @@ public class MetadataTest {
   @Test
   public void testSNAInstanceDAO () throws Exception {
 
+     Logger.getRootLogger().setLevel(Level.OFF);
      System.out.println("");
      System.out.println("");
      System.out.println("beginning testSNAInstanceDAO");
      boolean result;
 
      MetadataDAOFactory theMongoFactory = 
-        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
      SNAInstanceTransferObject theSNAInstance = new SNAInstanceTransferObject();
      theSNAInstance.setNameSpace("junit_test");
      theSNAInstance.setClassName("MockSNAClass");
@@ -497,11 +504,12 @@ public class MetadataTest {
 
   @Test(expected=UnsupportedOperationException.class)
   public void testRemove () throws Exception {
+     Logger.getRootLogger().setLevel(Level.OFF);
      System.out.println("");
      System.out.println("");
      System.out.println("beginning testRemove");
      MetadataDAOFactory theMongoFactory = 
-        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
      CollectionTransferObject theCollection = new CollectionTransferObject();
      CollectionDAO theCollectionDAO = theMongoFactory.getCollectionDAO();
      HashMap<String, String> searchMap = new HashMap<String, String>();
@@ -514,13 +522,14 @@ public class MetadataTest {
   @Test
   public void testMissingValue () throws Exception {
 
+     Logger.getRootLogger().setLevel(Level.OFF);
      System.out.println("");
      System.out.println("");
      System.out.println("beginning testMissingValue");
      boolean result;
 
      MetadataDAOFactory theMongoFactory = 
-        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
      CollectionTransferObject theCollection = new CollectionTransferObject();
      theCollection.setURL("http://www.renci.org");
      //theCollection.setTitle("title");
@@ -564,13 +573,14 @@ public class MetadataTest {
   @Test
   public void testFileDAO () throws Exception {
 
+     Logger.getRootLogger().setLevel(Level.OFF);
      System.out.println("");
      System.out.println("");
      System.out.println("beginning testFileDAO");
      boolean result;
 
      MetadataDAOFactory theMongoFactory = 
-        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
      CollectionTransferObject theCollection = new CollectionTransferObject();
      theCollection.setURL("http://www.renci.org");
      theCollection.setTitle("title");
@@ -637,6 +647,7 @@ public class MetadataTest {
 
   @Test
   public void testVariableDAO () throws Exception {
+     Logger.getRootLogger().setLevel(Level.OFF);
 
      System.out.println("");
      System.out.println("");
@@ -644,7 +655,7 @@ public class MetadataTest {
      boolean result;
 
      MetadataDAOFactory theMongoFactory = 
-        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
      CollectionTransferObject theCollection = new CollectionTransferObject();
      theCollection.setURL("http://www.renci.org");
      theCollection.setTitle("title");

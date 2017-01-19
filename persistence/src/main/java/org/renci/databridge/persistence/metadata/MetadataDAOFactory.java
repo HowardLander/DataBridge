@@ -16,11 +16,13 @@ public abstract class MetadataDAOFactory {
     public static MetadataDAOFactory getMetadataDAOFactory(int factoryType,
                                                            String db,
                                                            String host,
-                                                           int port) {
+                                                           int port,
+                                                           String user,
+                                                           String password) {
     
         switch (factoryType) {
             case MONGODB:
-                return new MongoDAOFactory(db, host, port);
+                return new MongoDAOFactory(db, host, port, user, password);
             default: 
                 return null;
         }

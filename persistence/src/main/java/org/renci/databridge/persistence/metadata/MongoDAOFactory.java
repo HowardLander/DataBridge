@@ -7,6 +7,8 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.MongoException;
 
 public class MongoDAOFactory extends MetadataDAOFactory {
@@ -14,25 +16,30 @@ public class MongoDAOFactory extends MetadataDAOFactory {
     private static MongoClient theClient = null;
     private static String db;
     private static String host;
+    private static String user;
+    private static String password;
     private static int port;
 
-    public MongoDAOFactory(String db, String host, int port) {
+    public MongoDAOFactory(String db, String host, int port, String user, String password) {
        this.db = db;
        this.host = host;
        this.port = port;
+       this.user = user;
+       this.password = password;
     }
 
     public static DB getTheDB() {
         DB theDB = null;
+        MongoCredential theCredential = null;
+        ServerAddress theAddress = null;
         try {
             if (null == theClient) {
-                theClient = new MongoClient(host, port);
+                theCredential = MongoCredential.createCredential(user, db, password.toCharArray());
+                theAddress = new ServerAddress(host, port);
+                theClient = new MongoClient(theAddress, Arrays.asList(theCredential));
             }
             theDB = theClient.getDB(db);
-        } catch (UnknownHostException e) {
-            // should send this back using the message logs eventually
-            e.printStackTrace();
-        } catch (MongoException e) {
+        } catch (Exception e) {
             // should send this back using the message logs eventually
             e.printStackTrace();
         }

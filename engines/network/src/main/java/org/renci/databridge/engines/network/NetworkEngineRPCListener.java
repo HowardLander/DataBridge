@@ -70,6 +70,8 @@ public class NetworkEngineRPCListener extends Thread {
     String dbName;
     String dbHost;
     int    dbPort;
+    String dbUser;
+    String dbPwd;
     String networkDBLocation;
     String networkDBType;
 
@@ -81,6 +83,8 @@ public class NetworkEngineRPCListener extends Thread {
         dbName = theProps.getProperty("org.renci.databridge.relevancedb.dbName", "test");
         dbHost = theProps.getProperty("org.renci.databridge.relevancedb.dbHost", "localhost");
         dbPort = Integer.parseInt(theProps.getProperty("org.renci.databridge.relevancedb.dbPort", "27017"));
+        dbUser = theProps.getProperty("org.renci.databridge.relevancedb.dbUser", "localhost");
+        dbPwd = theProps.getProperty("org.renci.databridge.relevancedb.dbPassword", "localhost");
         networkDBLocation = theProps.getProperty("org.renci.databridge.networkdb.location", "testData");
         networkDBType = theProps.getProperty("org.renci.databridge.networkdb.dbType", "neo4j");
     } catch (Exception ex) { 
@@ -95,7 +99,7 @@ public class NetworkEngineRPCListener extends Thread {
 
     if (dbType.compareToIgnoreCase("mongo") == 0) {
         metadataFactory = MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, 
-                                                              dbName, dbHost, dbPort);
+                                                              dbName, dbHost, dbPort, dbUser, dbPwd);
         if (null == metadataFactory) {
            this.logger.log (Level.SEVERE, "Couldn't produce the MetadataDAOFactory");
            return;

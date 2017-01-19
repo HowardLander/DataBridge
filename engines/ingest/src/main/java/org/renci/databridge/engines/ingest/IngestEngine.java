@@ -42,6 +42,8 @@ System.out.println ("pathToAmqpPropsFile: " + pathToAmqpPropsFile);
     String dbName = p.getProperty ("org.renci.databridge.relevancedb.dbName", "test2");
     String dbHost = p.getProperty ("org.renci.databridge.relevancedb.dbHost", "localhost");
     int dbPort = Integer.parseInt (p.getProperty ("org.renci.databridge.relevancedb.dbPort", "27017"));
+    String dbUser = p.getProperty("org.renci.databridge.relevancedb.dbUser", "localhost");
+    String dbPwd = p.getProperty("org.renci.databridge.relevancedb.dbPassword", "localhost");
 
     p.setProperty("org.renci.databridge.primaryQueue",
                   p.getProperty("org.renci.databridge.ingestEngine.primaryQueue"));
@@ -53,7 +55,7 @@ System.out.println ("pathToAmqpPropsFile: " + pathToAmqpPropsFile);
       dbType = MetadataDAOFactory.MONGODB;
     }
 
-    AMQPMessageListener aml = new AMQPMessageListener (p, new IngestMetadataMessage (), new IngestMetadataAMQPMessageHandler (dbType, dbName, dbHost, dbPort, pathToAmqpPropsFile), logger);
+    AMQPMessageListener aml = new AMQPMessageListener (p, new IngestMetadataMessage (), new IngestMetadataAMQPMessageHandler (dbType, dbName, dbHost, dbPort, dbUser, dbPwd, pathToAmqpPropsFile), logger);
 
     aml.start ();
     aml.join (); // keeps main thread from exiting

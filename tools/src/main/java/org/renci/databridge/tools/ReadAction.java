@@ -23,6 +23,8 @@ public class ReadAction {
     String dbName;
     String dbHost;
     int    dbPort;
+    String dbUser;
+    String dbPwd;
 
     MetadataDAOFactory theFactory = null;
 
@@ -35,11 +37,13 @@ public class ReadAction {
         dbName = prop.getProperty("org.renci.databridge.relevancedb.dbName", "test");
         dbHost = prop.getProperty("org.renci.databridge.relevancedb.dbHost", "localhost");
         dbPort = Integer.parseInt(prop.getProperty("org.renci.databridge.relevancedb.dbPort", "27017"));
+        dbUser = prop.getProperty("org.renci.databridge.relevancedb.dbUser", "localhost");
+        dbPwd =  prop.getProperty("org.renci.databridge.relevancedb.dbPassword", "localhost");
 
         // Connect to the mongo database
         if (dbType.compareToIgnoreCase("mongo") == 0) {
             theFactory = MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB,
-                                                                  dbName, dbHost, dbPort);
+                                                                  dbName, dbHost, dbPort, dbUser, dbPwd);
             if (null == theFactory) {
                System.out.println("Couldn't produce the MetadataDAOFactory");
                return;

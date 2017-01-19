@@ -18,8 +18,9 @@ public class LoadSomeData {
      System.out.println("Inserting test Collection data");
      boolean result;
 
+     // This won't work (in fact we maybe could get rid of this)
      MetadataDAOFactory theMongoFactory = 
-        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017);
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27017, "a", "b");
      CollectionTransferObject theCollection = new CollectionTransferObject();
      theCollection.setURL("http://www.renci.org");
      theCollection.setTitle("title");

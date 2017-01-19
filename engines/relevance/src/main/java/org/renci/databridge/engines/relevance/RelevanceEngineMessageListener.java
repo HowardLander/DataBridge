@@ -69,6 +69,8 @@ public class RelevanceEngineMessageListener extends Thread {
     String dbName;
     String dbHost;
     int    dbPort;
+    String dbUser;
+    String dbPwd;
 
     MetadataDAOFactory theFactory = null;
 
@@ -77,6 +79,8 @@ public class RelevanceEngineMessageListener extends Thread {
         dbName = theProps.getProperty("org.renci.databridge.relevancedb.dbName", "test");
         dbHost = theProps.getProperty("org.renci.databridge.relevancedb.dbHost", "localhost");
         dbPort = Integer.parseInt(theProps.getProperty("org.renci.databridge.relevancedb.dbPort", "27017"));
+        dbUser = theProps.getProperty("org.renci.databridge.relevancedb.dbUser", "localhost");
+        dbPwd = theProps.getProperty("org.renci.databridge.relevancedb.dbPassword", "localhost");
     } catch (Exception ex) { 
         this.logger.log (Level.SEVERE, "Could not retrieve needed properties");
         return;
@@ -89,7 +93,7 @@ public class RelevanceEngineMessageListener extends Thread {
 
     if (dbType.compareToIgnoreCase("mongo") == 0) {
         theFactory = MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, 
-                                                              dbName, dbHost, dbPort);
+                                                              dbName, dbHost, dbPort, dbUser, dbPwd);
         if (null == theFactory) {
            this.logger.log (Level.SEVERE, "Couldn't produce the MetadataDAOFactory");
            return;

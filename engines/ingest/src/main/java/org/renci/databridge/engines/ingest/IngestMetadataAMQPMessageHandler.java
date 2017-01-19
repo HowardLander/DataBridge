@@ -40,9 +40,11 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
   protected MetadataDAOFactory metadataDAOFactory;
   protected String pathToAmqpPropsFile;
 
-  public IngestMetadataAMQPMessageHandler (int dbType, String dbName, String dbHost, int dbPort, String pathToAmqpPropsFile) { 
+  public IngestMetadataAMQPMessageHandler (int dbType, String dbName, String dbHost, int dbPort, 
+                                           String dbUser, String dbPwd, String pathToAmqpPropsFile) { 
 
-    MetadataDAOFactory mdf = MetadataDAOFactory.getMetadataDAOFactory (dbType, dbName, dbHost, dbPort);
+    MetadataDAOFactory mdf = 
+       MetadataDAOFactory.getMetadataDAOFactory (dbType, dbName, dbHost, dbPort, dbUser, dbPwd);
     this.metadataDAOFactory = mdf;
     this.pathToAmqpPropsFile = pathToAmqpPropsFile;
 
