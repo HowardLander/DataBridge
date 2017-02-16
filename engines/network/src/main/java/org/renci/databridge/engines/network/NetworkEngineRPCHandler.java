@@ -4,6 +4,7 @@ import org.renci.databridge.persistence.metadata.*;
 import org.renci.databridge.persistence.network.*;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.LinkedList;
 import com.rabbitmq.client.*;
 import java.lang.Thread;
 import java.lang.Exception;
@@ -53,7 +54,32 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
   public static final int DEFAULT_VERSION = -1;
   
   /**
+   * Private class used to represent the CollectionTransferObject plus the similarity to the
+   * user provided Collection. Used in a linked list to maintain "most" similar collections.
+   */
+  class TransferSimilarity {
+     public double similarity;
+     public CollectionTransferObject theCollection;
+
+    /**
+      * Constructor that includes all of the fields
+      * @param 
+      * @param 
+      */
+     public TransferSimilarity(double similarity, CollectionTransferObject theCollection) {
+        this.similarity = similarity;
+        this.theCollection = theCollection;
+     }
+
+     public String toString() {
+         return (this.similarity + " " + this.theCollection);
+     }
+  }
+
+  
+  /**
    * Private class used to represent a collection resulting from our similarity search. 
+   * A list of these objects is what's passed to the GSON builder.
    */
   class SimilarCollection {
      public String dataStoreId;
@@ -292,8 +318,10 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
          // Remember we are actually looking for the "count" closest relationships. Let's store them
          int nInList = 0;
         
-         TreeMap<Double, CollectionTransferObject> relsToReturn = 
-            new TreeMap<Double, CollectionTransferObject>();
+  //       TreeMap<Double, CollectionTransferObject> relsToReturn = 
+  //          new TreeMap<Double, CollectionTransferObject>();
+
+         LinkedList<TransferSimilarity> relsToReturn = new LinkedList<TransferSimilarity>();
          HashMap<String,Object> relMap = new HashMap<String,Object>();
 
          while (theRelationships.hasNext()) {
@@ -301,7 +329,7 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
             relMap = thisRel.getAttributes();
             double thisSimValue = 
                (double) relMap.get(NetworkRelationshipDAO.METADATA_SIMILARITY_PROPERTY_NAME);
-            if (nInList < count) {
+            if (relsToReturn.size() < count) {
                // we don't have as many as the user wants, so add this one in
                // We have to store the collection transfer object, but we don't know which one
                // we want.  Luckily we have the dataStoreId of the one the user sent.
@@ -316,15 +344,30 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
                      theNetworkNodeDAO.getNetworkNode(thisRel.getNodeId1());
                   getObj = theCollectionDAO.getCollectionById(theOtherNode.getNodeId());
                }
-               relsToReturn.put(thisSimValue, getObj);
-               nInList ++;
+               // This loop runs the linked list and puts this one in the correct place
+               TransferSimilarity tsToAdd = new TransferSimilarity(thisSimValue, getObj);
+               int i = 0;
+               for (i = 0; i < relsToReturn.size(); i++) {
+                  TransferSimilarity thisTs = relsToReturn.get(i);
+                  if (thisTs.similarity < tsToAdd.similarity) {
+                      break;
+                  }
+               }
+               // Now i has the index of the last value greater than the current, or 0 if it's
+               // the first CTO being added.
+               relsToReturn.add(i, tsToAdd);
             } else {
+               int i = 0;
                // We have all the user asked for, so we just replace the least one or do nothing
-               Double firstKey = relsToReturn.firstKey();
-               if (firstKey.doubleValue() < thisSimValue) {
-                  // The least similar in the map is less similar than the one we just found. So we 
-                  // delete it from the map and add the one we just found in it's place.
-                  relsToReturn.remove(firstKey);
+               // and we know that the first "count" of these are sorted high to low.
+               TransferSimilarity leastSimilar = relsToReturn.getLast();
+               Double firstKey = leastSimilar.similarity;
+               if (firstKey < thisSimValue) {
+                  // The least similar in the list is less similar than the one we just found. So we 
+                  // add it to the correct place in the list and delete the least similar in the list.
+                  // We know we need to delete the last lement of the list so let's delete it now.
+                  relsToReturn.removeLast();
+
                   if (returnedNode.getDataStoreId().equals(thisRel.getNodeId1())) {
                      // the collection we want is the other one
                      NetworkNodeTransferObject theOtherNode = 
@@ -335,7 +378,18 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
                         theNetworkNodeDAO.getNetworkNode(thisRel.getNodeId1());
                      getObj = theCollectionDAO.getCollectionById(theOtherNode.getNodeId());
                   }
-                  relsToReturn.put(thisSimValue, getObj);
+
+                  // find the place in the list at which to insert the new object.
+                  for (i = 0; i < relsToReturn.size(); i++) {
+                     TransferSimilarity thisTs = relsToReturn.get(i);
+                     if (thisTs.similarity < thisSimValue) {
+                         break;
+                     }
+                  }
+                  // i is now the index at which to insert the new transfer similarity object.
+                  // Add the new object at the correct place in the list as determined above.
+                  TransferSimilarity tsToAdd = new TransferSimilarity(thisSimValue, getObj);
+                  relsToReturn.add(i, tsToAdd);
                }
             }
          }
@@ -346,9 +400,10 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
          // Let's make an ArrayList to store all of the data ready to be JSON formatted.
          ArrayList<SimilarCollection> theSimilars = new ArrayList<SimilarCollection>();
 
-         for (Map.Entry<Double, CollectionTransferObject> entry : relsToReturn.entrySet()) {
-            Double simValue = entry.getKey();
-            CollectionTransferObject theCollection = entry.getValue();
+         for (int i = 0; i < relsToReturn.size(); i++) {
+            TransferSimilarity thisTs = relsToReturn.get(i);
+            Double simValue = thisTs.similarity;
+            CollectionTransferObject theCollection = thisTs.theCollection;
             SimilarCollection thisSimilar = new SimilarCollection(theCollection.getDataStoreId(),
                                                                   theCollection.getURL(),
                                                                   theCollection.getTitle(),

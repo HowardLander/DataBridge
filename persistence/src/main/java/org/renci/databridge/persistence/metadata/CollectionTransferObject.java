@@ -4,12 +4,13 @@ import  java.util.*;
 public class CollectionTransferObject {
     private String URL;
     private String title;
-    private String description; // Free text metadata about the study
-    private String producer;    // Producer of the collection
-    private String subject;     // Subject of the study
+    private String description;            // Free text metadata about the study
+    private String producer;               // Producer of the collection
+    private String subject;                // Subject of the study
     private ArrayList<String>   keywords;  // The keywords
     private HashMap<String, String> extra;
-    private int insertTime;     // Seconds since the epoch
+    private int insertTime;                // Seconds since the epoch
+    private ArrayList<FileTransferObject>  fileList;  // The keywords
 
     // These attributes are specific to the DataBridge
     private String nameSpace;
@@ -156,6 +157,27 @@ public class CollectionTransferObject {
     {
         this.keywords = keywords;
     }
+    
+    /**
+     * Get fileList.
+     *
+     * @return fileList as ArrayList<FileTransferObject>.
+     */
+    public ArrayList<FileTransferObject> getFileList()
+    {
+        return fileList;
+    }
+    
+    /**
+     * Set fileList.
+     *
+     * @param fileList the value to set.
+     */
+    public void setFileList(ArrayList<FileTransferObject> fileList)
+    {
+        this.fileList = fileList;
+    }
+    
     
     /**
      * Get URL.

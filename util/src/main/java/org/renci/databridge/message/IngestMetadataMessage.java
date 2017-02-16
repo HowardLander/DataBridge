@@ -13,12 +13,15 @@ public class IngestMetadataMessage implements AMQPMessageType {
   public static final String NAME_SPACE = "nameSpace";
   public static final String FIRE_EVENT = "fireEvent";
   public static final String INPUT_URI = "inputURI";
+  public static final String INPUT_FILE = "inputFile";
   public static final String INPUT_DIR = "inputDir";
+  public static final String PARAMS = "params";
 
   // Message types for the ingest engine
   public static final String INSERT_METADATA_JAVA_URI_METADATADB = "Insert.Metadata.Java.URI.MetadataDB";
   public static final String INSERT_METADATA_JAVA_FILES_METADATADB = "Insert.Metadata.Java.Files.MetadataDB";
   public static final String INSERT_METADATA_JAVA_BINARYFILES_METADATADB = "Insert.Metadata.Java.BinaryFiles.MetadataDB";
+  public static final String INSERT_METADATA_JAVA_FILEWITHPARAMS_METADATADB = "Insert.Metadata.Java.FileWithParams.MetadataDB";
   @Override
   public String getBindHeaders () {
      return bindHeaders;

@@ -74,6 +74,36 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
   }
 
   /**
+   * Add the associated files and variables to the given CollectionTransferObject.
+   * 
+   * @param theFileDAO Data Access Object for files
+   * @param theVariableDAO Data Access Object for variables
+   * @param cto The CollectionTransferObject to which the files and variables will be attached
+   */
+  public void addFilesAndVariables(FileDAO theFileDAO, 
+                                   VariableDAO theVariableDAO, 
+                                   CollectionTransferObject cto) {
+     // Add in all of the Files and Variables for the collection transfer objects.
+     Iterator<FileTransferObject> theFileIterator = theFileDAO.getFiles(cto);
+     ArrayList<FileTransferObject> theFileList = new ArrayList<FileTransferObject>();
+     while (theFileIterator.hasNext()) {
+        ArrayList<VariableTransferObject> theVarList = new ArrayList<VariableTransferObject>();
+        FileTransferObject thisFile = theFileIterator.next();
+        theFileList.add(thisFile);
+        Iterator<VariableTransferObject> theVarIterator = theVariableDAO.getVariables(thisFile);
+        // Add each of the vars for this file
+        while (theVarIterator.hasNext()) {
+           VariableTransferObject thisVar = theVarIterator.next();
+           theVarList.add(thisVar);
+        }
+        // Add the vars to the file
+        thisFile.setVariableList(theVarList);
+     }
+     // add the files to the collection object
+     cto.setFileList(theFileList);
+  }
+
+  /**
    * Handle the PROCESSED_METADATA_TO_METADATADB message.  Primarily, we are going to search
    * the action table and call the processCreateSimilarityMessage code for each matching
    * action. There is some remapping of the headers involved as well.
@@ -237,6 +267,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       boolean normalize = false;
       boolean distance = false;
       double  maxValue = 1.;
+      boolean includeAll = false;
       String engineParams = stringHeaders.get(RelevanceEngineMessage.ENGINE_PARAMS);    
       if (null == engineParams) {
           engineParams = "";
@@ -246,6 +277,9 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
           } 
           if (engineParams.indexOf(RelevanceEngineMessage.DISTANCE) != -1) {
              distance = true;
+          } 
+          if (engineParams.indexOf(RelevanceEngineMessage.INCLUDE_ALL) != -1) {
+             includeAll = true;
           } 
       }
 
@@ -289,6 +323,21 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          return;
       }
 
+      FileDAO theFileDAO = null; 
+      VariableDAO theVariableDAO = null; 
+      if (includeAll) {
+         // We'll need DAO's for the files and variables
+         theFileDAO = theFactory.getFileDAO();
+         if (null == theFileDAO) {
+             this.logger.log (Level.SEVERE, "FileDAO is null");
+             return;
+          }
+         theVariableDAO = theFactory.getVariableDAO();
+         if (null == theVariableDAO) {
+             this.logger.log (Level.SEVERE, "VariableDAO is null");
+             return;
+          }
+      }
       // Let's add the SimilarityInstance.
       SimilarityInstanceTransferObject theSimilarityInstance = new SimilarityInstanceTransferObject();
       theSimilarityInstance.setNameSpace(nameSpace);
@@ -395,6 +444,11 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
             // Now we have our 2 CollectionTransferObjects, so we want to call the method.
             try {
+               if (includeAll) {
+                   // Add in all of the Files and Variables for the collection transfer objects.
+                   addFilesAndVariables(theFileDAO, theVariableDAO, cto1);
+                   addFilesAndVariables(theFileDAO, theVariableDAO, cto2);
+               }
                similarity =  (double) thisProcessor.compareCollections(cto1, cto2, params);
                if (normalize) {
                    // We'll need the max value.

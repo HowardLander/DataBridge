@@ -65,6 +65,9 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_FILES_METADATADB) == 0) {
         processInsertMetadataFilesMessage(stringHeaders, extra);
      } else if
+         (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_FILEWITHPARAMS_METADATADB) == 0) {
+        processInsertMetadataFileWithParamsMessage(stringHeaders, extra);
+     } else if
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_BINARYFILES_METADATADB) == 0) {
         processInsertBinaryMetadataFilesMessage(stringHeaders, extra);
      } else {
@@ -233,6 +236,72 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        List<MetadataObject> metadataObjects = null;
        try {
            metadataObjects = ingester.binaryToMetadata (inputDir);
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't perform format operation", e);
+         return;
+       }
+
+       for (MetadataObject mo : metadataObjects) {
+         try {
+           persist (mo, nameSpace);
+           this.logger.log (Level.FINE, "Inserted MetadataObject.");
+         } catch (Exception e) {
+           this.logger.log (Level.SEVERE, "Can't insert MetadataObject.", e);
+           return;
+         }
+       }
+
+       if (fireEvent) {
+         // send ProcessedMetadataToMetadataDB message 
+         AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
+         String headers = ProcessedMetadataToMetadataDB.getSendHeaders (nameSpace);
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         ac.shutdownConnection ();     
+         this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
+       }
+    }
+
+  /**
+   * Handle the INSERT_METADATA_JAVA_FILEWITHPARAMS_METADATADB message.
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects
+   */
+    public void processInsertMetadataFileWithParamsMessage(Map<String, String> stringHeaders, Object extra) {
+
+       String className = stringHeaders.get (IngestMetadataMessage.CLASS);
+       String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
+       boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
+       String inputFile = stringHeaders.get (IngestMetadataMessage.INPUT_FILE);
+       String params = stringHeaders.get (IngestMetadataMessage.PARAMS);
+
+       // instantiate third-party MetadataFormatter implementation 
+       MetadataFormatter mf = null;
+       try {
+          mf = (MetadataFormatter) Class.forName (className).newInstance (); 
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
+         e.printStackTrace();
+         return;
+      }
+
+       mf.setLogger (this.logger);
+       byte [] bytes = null;
+       this.logger.log (Level.INFO, "input file:  " + IngestMetadataMessage.INPUT_FILE);
+      
+       try {
+          String filePlusParams = inputFile + "&" + params;
+          this.logger.log (Level.INFO, "filePLusParams:  " + filePlusParams);
+          bytes = mf.getBytes((Object) filePlusParams);
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Problems with the input file:  " + inputFile, e );
+         return;
+      }
+
+       // dispatch to third-party formatter 
+       List<MetadataObject> metadataObjects = null;
+       try {
+           metadataObjects = mf.format (bytes);
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't perform format operation", e);
          return;

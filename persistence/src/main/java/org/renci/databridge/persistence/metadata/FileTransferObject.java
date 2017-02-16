@@ -7,6 +7,7 @@ public class FileTransferObject {
     private String description; // Free text metadata about the study
     private HashMap<String, String> extra;
     private int insertTime;     // Seconds since the epoch
+    private ArrayList<VariableTransferObject> variableList;
 
     // These attributes are specific to the DataBridge
     private String nameSpace;
@@ -201,5 +202,26 @@ public class FileTransferObject {
     {
         this.insertTime = insertTime;
     }
+
+    /**
+     * Get variableList.
+     *
+     * @return variableList as ArrayList<VariableTransferObject>.
+     */
+    public ArrayList<VariableTransferObject> getVariableList()
+    {
+        return variableList;
+    }
+
+    /**
+     * Set variableList.
+     *
+     * @param variableList the value to set.
+     */
+    public void setVariableList(ArrayList<VariableTransferObject> variableList)
+    {
+        this.variableList = variableList;
+    }
+
 }
 
