@@ -83,6 +83,10 @@ public class MongoDAOFactory extends MetadataDAOFactory {
         return new MongoActionDAO();
     } 
 
+    public NameSpaceDAO getNameSpaceDAO() {
+        return new MongoNameSpaceDAO();
+    } 
+
     /**
      * Get db.
      *

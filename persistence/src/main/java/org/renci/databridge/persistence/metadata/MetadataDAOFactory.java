@@ -11,6 +11,7 @@ public abstract class MetadataDAOFactory {
     public abstract SimilarityInstanceDAO getSimilarityInstanceDAO();
     public abstract SNAInstanceDAO getSNAInstanceDAO();
     public abstract ActionDAO getActionDAO();
+    public abstract NameSpaceDAO getNameSpaceDAO();
     public abstract void closeTheDB();
 
     public static MetadataDAOFactory getMetadataDAOFactory(int factoryType,

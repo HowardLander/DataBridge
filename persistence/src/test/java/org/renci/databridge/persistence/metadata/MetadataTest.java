@@ -750,6 +750,46 @@ public class MetadataTest {
      }
   }
 
+  @Test
+  public void testNameSpaceDAO () throws Exception {
+     Logger.getRootLogger().setLevel(Level.OFF);
+
+     System.out.println("");
+     System.out.println("");
+     System.out.println("beginning testNameSpaceDAO");
+     boolean result;
+
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
+     NameSpaceTransferObject theNameSpace = new NameSpaceTransferObject();
+     theNameSpace.setNameSpace("testNamespace");
+     theNameSpace.setDescription("here's an example description");
+
+     try {
+         NameSpaceDAO theNameSpaceDAO = theMongoFactory.getNameSpaceDAO();
+         result = theNameSpaceDAO.insertNameSpace(theNameSpace);
+         System.out.println("done with insert");
+         System.out.println("inserted Id is: " + theNameSpace.getDataStoreId());
+         System.out.println("testing get");
+
+         Iterator<NameSpaceTransferObject> nameSpaceIterator = theNameSpaceDAO.getNameSpaces();
+         System.out.println ("Do we have next? " +  nameSpaceIterator.hasNext());
+
+         if (nameSpaceIterator.hasNext()) {
+             NameSpaceTransferObject getObj = nameSpaceIterator.next(); 
+             System.out.println("found nameSpace: " + getObj.getNameSpace()); 
+             TestCase.assertTrue("nameSpace is wrong",  getObj.getNameSpace().compareTo("testNamespace") == 0);
+
+
+             // Let's delete the nameSpace
+             int nDeleted = theNameSpaceDAO.deleteNameSpace(getObj);
+             System.out.println("nDeleted: " + nDeleted); 
+             TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+         }
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
+  }
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
