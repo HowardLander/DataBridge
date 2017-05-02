@@ -12,6 +12,7 @@ public class NetworkResultsMessage implements AMQPMessageType {
 
   // Message types for the network engine listener
   public static final String RETURN_CLOSEST_MATCHES_IN_NETWORK ="Return.Closest.Matches.In.Network";
+  public static final String RETURN_RUN_SNA_ALGORITHM = "Return.Run.SNA.Algorithm";
 
   @Override
   public String getBindHeaders () {

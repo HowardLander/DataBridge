@@ -1193,59 +1193,72 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
      * @param stringHeaders A map of the headers provided in the message
      * @param extra An object containing the needed DAO objects
      */
-  public void processRunSnaAlgorithmFileIOMessage( Map<String, String> stringHeaders, Object extra) {
+  public String processRunSnaAlgorithmFileIOMessage( Map<String, String> stringHeaders, Object extra) {
+
+      String returnString = null;
+
       // We need several pieces of information before we can continue.  This info has to 
       // all be in the headers or we are toast.
 
       // 1) the exectable name
       String executable = stringHeaders.get(NetworkEngineMessage.EXECUTABLE);    
       if (null == executable) {
-         this.logger.log (Level.SEVERE, "No executable in message");
-         return;
+         returnString = new String("No executable in message");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       }
 
       // 2) the name space
       String nameSpace = stringHeaders.get(NetworkEngineMessage.NAME_SPACE);    
       if (null == nameSpace) {
-         this.logger.log (Level.SEVERE, "No name space in message");
-         return;
+         returnString = new String("No name space in message");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       }
 
       // 3) the similarityId
       String similarityId = stringHeaders.get(NetworkEngineMessage.SIMILARITY_ID);    
       if (null == similarityId) {
-         this.logger.log (Level.SEVERE, "No similarityId in message");
-         return;
+         returnString = new String("No similarityId in message");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       }
 
       // 4) any extra params to pass.  This can be null
       String params = stringHeaders.get(NetworkEngineMessage.PARAMS);    
+      if (params == null) {
+         params = new String("");
+      }
 
-      // In this case the extra parameter is an array of 2 objects, which are the metadata and
+      // In this case the extra parameter is an array of 3 objects, which are the metadata and
       // network factories plus the Properties object used to send the next message.
       Object[] extraArray = (Object[]) extra;
 
       MetadataDAOFactory metadataFactory = (MetadataDAOFactory) extraArray[0];
       if (null == metadataFactory) {
-         this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
-         return;
+         returnString = new String("MetadataDAOFactory is null");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       } 
       CollectionDAO theCollectionDAO = metadataFactory.getCollectionDAO();
       if (null == theCollectionDAO) {
-         this.logger.log (Level.SEVERE, "CollectionDAO is null");
-         return;
+         returnString = new String("CollectionDAO is null");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       } 
 
       NetworkDAOFactory networkFactory = (NetworkDAOFactory) extraArray[1];
       if (null == networkFactory) {
-         this.logger.log (Level.SEVERE, "NetworkDAOFactory is null");
-         return;
+         returnString = new String("NetworkDAOFactory is null");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       } 
 
       Properties theProps = (Properties) extraArray[2];
       if (null == theProps) {
-         this.logger.log (Level.SEVERE, "Properties object is null");
-         return;
+         returnString = new String("Properties object is null");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       }
 
       // We need a directory for the output and input files.
@@ -1254,14 +1267,16 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
       SNAInstanceDAO theSNAInstanceDAO = metadataFactory.getSNAInstanceDAO();
       if (null == theSNAInstanceDAO) {
-         this.logger.log (Level.SEVERE, "SNAInstanceDAO is null");
-         return;
+         returnString = new String("SNAInstanceDAO is null");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       }
 
       NetworkNodeDAO theNetworkNodeDAO = networkFactory.getNetworkNodeDAO();
       if (null == theSNAInstanceDAO) {
-         this.logger.log (Level.SEVERE, "SNAInstanceDAO is null");
-         return;
+         returnString = new String("NetworkNodeDAO is null");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       }
 
       // Let's add the SNAInstance.
@@ -1297,10 +1312,12 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
 
       try {
          boolean result = theSNAInstanceDAO.insertSNAInstance(theSNAInstance);
+         returnString = new String(theSNAInstance.getDataStoreId());
          this.logger.log(Level.INFO, "Inserted Instance: " + theSNAInstance.getDataStoreId());
       } catch (Exception e) {
-         this.logger.log (Level.SEVERE, "Can't insert SNA instance");
-         return;
+         returnString = new String("Can't insert SNA instance");
+         this.logger.log (Level.SEVERE, returnString);
+         return returnString;
       }
 
       NetworkDyadDAO theNetworkDyadDAO = networkFactory.getNetworkDyadDAO();
@@ -1364,10 +1381,13 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
           Process theProcess = theBuilder.start();
           int returnCode = theProcess.waitFor();
           if (returnCode != 0) {
-             this.logger.log (Level.SEVERE, "Executable " + executable + "failed: see " + log.getAbsolutePath());
-             inputTmpFile.delete(); 
+             returnString = new String("Executable ");
+             returnString = returnString.concat(executable);
+             returnString = returnString.concat("failed: see ");
+             returnString = returnString.concat(log.getAbsolutePath());
+             this.logger.log (Level.SEVERE, returnString);
              outputTmpFile.delete(); 
-             return;
+             return returnString;
           }
 
           // Step 4: read the output file. Each line is index,cluster
@@ -1432,9 +1452,10 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
           }
           
       } catch (Exception e) {
-          this.logger.log (Level.SEVERE, 
-                           "Exception in processRunSnaAlgorithmFileIOMessage: "  + e.getMessage(), e);
-          return;
+         returnString = new String("Exception in processRunSnaAlgorithmFileIOMessage");
+         this.logger.log (Level.SEVERE, 
+                          "Exception in processRunSnaAlgorithmFileIOMessage: "  + e.getMessage(), e);
+          return returnString;
       }
 
       // Assuming we get this far, we want to send out the next message
@@ -1452,6 +1473,7 @@ public class NetworkEngineMessageHandler implements AMQPMessageHandler {
          if (null != ac) {
              ac.shutdownConnection ();
          }
+         return returnString;
       }
   }
  

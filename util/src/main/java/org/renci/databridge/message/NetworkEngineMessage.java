@@ -18,6 +18,8 @@ public class NetworkEngineMessage implements AMQPMessageType {
   public static final String PARAMS = "params";
   public static final String EXECUTABLE = "executable";
   public static final String COUNT = "count";
+  public static final String CLASS_TYPE = "class";
+  public static final String TYPE = "type";
 
   // Message types for the network engine
   public static final String INSERT_SIMILARITYMATRIX_JAVA_URI_NETWORKDB = "Insert.SimilarityMatrix.Java.URI.NetworkDB";
@@ -25,6 +27,7 @@ public class NetworkEngineMessage implements AMQPMessageType {
   public static final String RUN_SNA_ALGORITHM_FILEIO_NETWORKDB = "Run.SNA.Algorithm.FileIO.NetworkDB";
   public static final String CREATE_JSON_FILE_NETWORKDB_URI = "Create.JSON.File.NetworkDB.URI";
   public static final String FIND_CLOSEST_MATCHES_IN_NETWORK = "Find.Closest.Matches.In.Network";
+  public static final String RUN_SNA_ALGORITHM_RPC_NETWORKDB = "Run.SNA.Algorithm.RPC.NetworkDB";
 
   public static final String bindHeaders = "type:databridge;subtype:network;x-match:all";
 

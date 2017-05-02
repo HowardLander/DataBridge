@@ -131,10 +131,13 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
       // Call the function appropriate for the message
       if (messageName.compareTo(NetworkEngineMessage.FIND_CLOSEST_MATCHES_IN_NETWORK) == 0) {
          processFindClosestMatchesInNetwork(stringHeaders, extra, amqpMessage);
+      } else if (messageName.compareTo(NetworkEngineMessage.RUN_SNA_ALGORITHM_RPC_NETWORKDB) == 0) {
+         processRunSNAAlgorithmRPCNetworkDB(stringHeaders, extra, amqpMessage);
       } else {
          this.logger.log (Level.WARNING, "unimplemented messageName: " + messageName);
       }
   }
+
     /**
      * Handle the FIND_CLOSEST_MATCHES_IN_NETWORK message finding the relevant
      * @param stringHeaders A map of the headers provided in the message
@@ -194,7 +197,7 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
          version = Integer.parseInt(stringVersion);
       }
 
-      // In this case the extra parameter is an array of 2 objects, which are the metadata and
+      // In this case the extra parameter is an array of 3 objects, which are the metadata and
       // network factories plus the Properties object used to send the next message.
       Object[] extraArray = (Object[]) extra;
 
@@ -434,6 +437,112 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
          this.logger.log (Level.INFO, "Send headers: " + headers);
          ac.publishMessage ( thisMessage, headers, true);
          this.logger.log (Level.INFO, "Sent ReturnClosestMatchesInNetwork message.");
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage(), e);
+      } finally {
+         if (null != ac) {
+             ac.shutdownConnection ();
+         }
+      }
+  }
+
+    /**
+     * Handle the RUN_SNA_ALGORITHM_RPC_NETWORKDB  message finding the relevant.  This code 
+     * parses the incoming message, calls the appropriate routine from the network engine
+     * and returns the status and other info as needed to the client portion of the RPC connection.
+     * @param stringHeaders A map of the headers provided in the message
+     * @param extra An object containing the needed DAO objects
+     * @param amqpMessage The tag incoming message, needed to populate the outgoing message
+     */
+  public void processRunSNAAlgorithmRPCNetworkDB( Map<String, String> stringHeaders, Object extra, 
+                                                  AMQPMessage inMessage) {
+      String returnString = null;
+
+      // We need several pieces of information before we can continue.  This info has to 
+      // all be in the headers or we are toast.
+      // 1) the executable name
+      String className = stringHeaders.get(NetworkEngineMessage.CLASS);    
+      if (null == className) {
+         this.logger.log (Level.SEVERE, "No class name in message");
+         return;
+      }
+
+      // 2) the name space
+      String nameSpace = stringHeaders.get(NetworkEngineMessage.NAME_SPACE);    
+      if (null == nameSpace) {
+         this.logger.log (Level.SEVERE, "No name space in message");
+         return;
+      }
+
+      // 3) the dataset for which we are going to look for the closest matches.
+      String similarityId = stringHeaders.get(NetworkEngineMessage.SIMILARITY_ID);    
+      if (null == similarityId) {
+         this.logger.log (Level.SEVERE, "No similarityId in message");
+         return;
+      }
+
+      // 4) The params are to be passed along to the network algotithm. Null is OK.
+      String params = stringHeaders.get(NetworkEngineMessage.PARAMS);    
+
+      // 5) The type of the executable.  Must be either "executable" or "class" (case invariant)
+      String type = stringHeaders.get(NetworkEngineMessage.TYPE);
+      if (null == type) {
+         this.logger.log (Level.SEVERE, "No type in message");
+         return;
+      }
+
+      // In this case the extra parameter is an array of 3 objects, which are the metadata and
+      // network factories plus the Properties object used to send the next message. As it happens,
+      // in this code we only need the third object.
+      Object[] extraArray = (Object[]) extra;
+
+      Properties theProps = (Properties) extraArray[2];
+      if (null == theProps) {
+         this.logger.log (Level.SEVERE, "Properties object is null");
+         return;
+      }
+
+
+      // We declare an instance of the non-RPC handler so we can call it to
+      // service the incoming message.
+      NetworkEngineMessageHandler basicHandler = new NetworkEngineMessageHandler();
+      if (type.equalsIgnoreCase(NetworkEngineMessage.EXECUTABLE)) {
+         this.logger.log (Level.FINE, "Calling processRunSnaAlgorithmFileIOMessage");
+         // This call uses the "EXECUTABLE" header instead of class name. So we add that header
+         stringHeaders.put(NetworkEngineMessage.EXECUTABLE, className);
+         returnString = basicHandler.processRunSnaAlgorithmFileIOMessage(stringHeaders, extra);
+         this.logger.log (Level.FINE, "processRunSnaAlgorithmFileIOMessage returned: " + returnString);
+      } else if (type.equalsIgnoreCase(NetworkEngineMessage.CLASS_TYPE)) {
+      } else {
+         this.logger.log (Level.SEVERE, "Unsupported Algoritm Type: " + type);
+      }
+
+      // Let's create a Gson object to use to convert our results struct to json
+      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).setPrettyPrinting().serializeNulls().disableHtmlEscaping().create();
+
+      // We are also going to want a results structure.
+      NetworkRPCResultsMessage theResults = new NetworkRPCResultsMessage();
+
+      // Assuming we get this far, we want to send out the next message
+      AMQPRpcComms ac = null;
+      try {
+         ac = new AMQPRpcComms (theProps);
+         // At this point we can also ack the original message
+         //ac.ackMessage(inMessage);
+         AMQPMessage thisMessage = new AMQPMessage();
+         thisMessage.setTag(inMessage.getTag());
+         this.logger.log (Level.INFO, "setting tag: " + inMessage.getTag());
+         thisMessage.setReplyQueue(inMessage.getReplyQueue());
+         this.logger.log (Level.INFO, "setting replyQueue: " + inMessage.getReplyQueue());
+         theResults.setResults(returnString);
+         theResults.setStatus(NetworkRPCResultsMessage.STATUS_OK);
+         String theJsonResults = gson.toJson(theResults);
+         thisMessage.setContent(theJsonResults);
+         thisMessage.setBytes(theJsonResults.getBytes());
+         String headers = ReturnRunSNAAlgorithm.getSendHeaders ("DataBridge_OK");
+         this.logger.log (Level.INFO, "Send headers: " + headers);
+         ac.publishMessage ( thisMessage, headers, true);
+         this.logger.log (Level.INFO, "Sent ReturnRunSNAAlgorithm message.");
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage(), e);
       } finally {
