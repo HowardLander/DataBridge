@@ -6,13 +6,24 @@ import xlrd
 from xlrd import open_workbook
 import sys
 
-DBfN   = Namespace("http:/maven.renci.org/ontologies/databridgeforneuroscience.owl")
+def addANode(graph, subject, object):
+   subjectURI = URIRef(DBfN[subject])
+   objectURI = URIRef(DBfN[object])
+   if (subjectURI, RDFS.subClassOf, objectURI) in graph:
+      print subject, "already added"
+   else:
+      graph.add((subjectURI, RDF.type, OWL.Class))
+      graph.add((subjectURI, RDFS.subClassOf, objectURI))
+      graph.add((subjectURI, RDFS.label, Literal(subject)))
+      graph.add((subjectURI, RDFS.comment, Literal(subject)))
+
+DBfN   = Namespace("http:/maven.renci.org/ontologies/databridgeforneuroscience/")
 graph = Graph()
-Clinical = Literal("Clinical")
-graph.add((Clinical, RDF.type, OWL.Class))
-graph.add((Clinical, RDFS.subClassOf, OWL.Thing))
-graph.add((Clinical, RDFS.label, Literal(uuid.uuid4())))
-graph.add((Clinical, RDFS.comment, Literal("Highest level of ontology")))
+#Clinical = URIRef("Clinical")
+graph.add((DBfN.Clinical, RDF.type, OWL.Class))
+graph.add((DBfN.Clinical, RDFS.subClassOf, OWL.Thing))
+graph.add((DBfN.Clinical, RDFS.label, Literal("Clinical")))
+graph.add((DBfN.Clinical, RDFS.comment, Literal("Highest level of ontology")))
 workbook = sys.argv[1]
 outFile = sys.argv[2]
 
@@ -23,35 +34,11 @@ for s in wb.sheets():
           if (s.cell(row,1).value != ""):
              thisValue = (s.cell(row,0).value)
              theseValues = thisValue.split('>')
-             print "length of theseValue: " + str(len(theseValues))
-             thisLiteral = Literal(theseValues[1]);
-             if (thisLiteral, RDFS.subClassOf, Clinical) in graph:
-                print "already added"
-             else:
-                graph.add((thisLiteral, RDF.type, OWL.Class))
-                graph.add((thisLiteral, RDFS.subClassOf, Clinical))
-                graph.add((thisLiteral, RDFS.label, Literal(uuid.uuid4())))
-                graph.add((thisLiteral, RDFS.comment, Literal(theseValues[1])))
+             addANode(graph, theseValues[1], "Clinical")
              if (len(theseValues) >= 3):
-                previousLiteral = thisLiteral
-                thisLiteral = Literal(theseValues[2]);
-                if (thisLiteral, RDFS.subClassOf, previousLiteral) in graph:
-                   print "already added"
-                else:
-                   graph.add((thisLiteral, RDF.type, OWL.Class))
-                   graph.add((thisLiteral, RDFS.subClassOf, previousLiteral))
-                   graph.add((thisLiteral, RDFS.label, Literal(uuid.uuid4())))
-                   graph.add((thisLiteral, RDFS.comment, Literal(theseValues[2])))
+                addANode(graph, theseValues[2], theseValues[1])
              if (len(theseValues) >= 4):
-                previousLiteral = thisLiteral
-                thisLiteral = Literal(theseValues[3]);
-                if (thisLiteral, RDFS.subClassOf, previousLiteral) in graph:
-                   print "already added"
-                else:
-                   graph.add((thisLiteral, RDF.type, OWL.Class))
-                   graph.add((thisLiteral, RDFS.subClassOf, previousLiteral))
-                   graph.add((thisLiteral, RDFS.label, Literal(uuid.uuid4())))
-                   graph.add((thisLiteral, RDFS.comment, Literal(theseValues[3])))
+                addANode(graph, theseValues[3], theseValues[2])
 
 graph.bind("owl", OWL)
 graph.bind("DBfN", DBfN)
