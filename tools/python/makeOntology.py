@@ -17,7 +17,7 @@ def addANode(graph, subject, object):
       graph.add((subjectURI, RDFS.label, Literal(subject)))
       graph.add((subjectURI, RDFS.comment, Literal(subject)))
 
-DBfN   = Namespace("http:/maven.renci.org/ontologies/databridgeforneuroscience/")
+DBfN   = Namespace("http://maven.renci.org/ontologies/databridgeforneuroscience/")
 graph = Graph()
 #Clinical = URIRef("Clinical")
 graph.add((DBfN.Clinical, RDF.type, OWL.Class))
