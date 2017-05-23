@@ -275,6 +275,12 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        String inputFile = stringHeaders.get (IngestMetadataMessage.INPUT_FILE);
        String params = stringHeaders.get (IngestMetadataMessage.PARAMS);
 
+      // The params could be null.  This isn't neccessarily the most elegant way to 
+      // handle this, but it allows the lower level code to function correctly.
+      if (params == null) {
+         params = new String("");
+      }
+
        // instantiate third-party MetadataFormatter implementation 
        MetadataFormatter mf = null;
        try {

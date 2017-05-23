@@ -15,6 +15,5 @@ import org.renci.databridge.persistence.metadata.*;
  */
 public interface SignatureProcessor {
 
-    CollectionTransferObject compareCollections(CollectionTransferObject theCollection, 
-                              String params);
+    CollectionTransferObject extractSignature(CollectionTransferObject theCollection, String params);
 }
