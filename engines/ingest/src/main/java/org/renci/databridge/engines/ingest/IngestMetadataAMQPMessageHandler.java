@@ -23,9 +23,11 @@ import org.renci.databridge.persistence.metadata.FileDAO;
 import org.renci.databridge.persistence.metadata.FileTransferObject;
 import org.renci.databridge.persistence.metadata.VariableDAO;
 import org.renci.databridge.persistence.metadata.VariableTransferObject;
+import org.renci.databridge.persistence.metadata.SignatureProcessor;
 import org.renci.databridge.message.IngestMetadataMessage;
 import org.renci.databridge.message.IngestListenerMessage;
 import org.renci.databridge.message.ProcessedMetadataToMetadataDB;
+import org.renci.databridge.persistence.metadata.*;
 
 /**
  * Handles "ingest metadata" DataBridge message by calling relevant third-party metadata formatter and persisting it. 
@@ -70,6 +72,9 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
      } else if
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_BINARYFILES_METADATADB) == 0) {
         processInsertBinaryMetadataFilesMessage(stringHeaders, extra);
+     } else if
+         (messageName.compareTo(IngestMetadataMessage.CREATE_METADATA_SIGNATURE_JAVA_METADATADB) == 0) {
+        createMetadataSignatureJavaMetadataDbMessage(stringHeaders, extra);
      } else {
          logger.log(Level.WARNING, "unimplemented messageName: " + messageName);
      }
@@ -334,6 +339,82 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        }
     }
 
+  /**
+   * Handle the CREATE_METADATA_SIGNATURE_JAVA_METADATADB
+   * @param stringHeaders A map of the headers provided in the message
+   * @param extra An object containing the needed DAO objects
+   */
+    public void 
+       createMetadataSignatureJavaMetadataDbMessage(Map<String, String> stringHeaders, Object extra) {
+
+       String className = stringHeaders.get (IngestMetadataMessage.CLASS);
+       String sourceNameSpace = stringHeaders.get (IngestMetadataMessage.SOURCE_NAME_SPACE);
+       String targetNameSpace = stringHeaders.get (IngestMetadataMessage.TARGET_NAME_SPACE);
+       boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
+       String params = stringHeaders.get (IngestMetadataMessage.PARAMS);
+
+      // The params could be null.  This isn't neccessarily the most elegant way to 
+      // handle this, but it allows the lower level code to function correctly.
+      if (params == null) {
+         params = new String("");
+      }
+
+       // instantiate third-party SignatureProcess
+       SignatureProcessor theProcessor = null;
+       try {
+          theProcessor = (SignatureProcessor) Class.forName (className).newInstance (); 
+       } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
+         e.printStackTrace();
+         return;
+      }
+
+       theProcessor.setLogger (this.logger);
+
+       // For each collection in the name space we call the signature processor, than persist the result.
+       CollectionDAO cd = this.metadataDAOFactory.getCollectionDAO();
+       FileDAO fd = this.metadataDAOFactory.getFileDAO();
+       HashMap<String, String> searchMap = new HashMap<String, String>();
+       searchMap.put("nameSpace", sourceNameSpace);
+       Iterator<CollectionTransferObject> theCollections = cd.getCollections(searchMap);
+       try {
+          while (theCollections.hasNext()) {
+             CollectionTransferObject inputCTO = theCollections.next();
+
+             // We have to add the FileTransferObjects manually, which may be a weakness in the
+             // CollectionDAO 
+             ArrayList<FileTransferObject> fileArrayList = new ArrayList<FileTransferObject>();
+             Iterator<FileTransferObject> theFiles = fd.getFiles(inputCTO);
+             while (theFiles.hasNext()) {
+                fileArrayList.add(theFiles.next());
+             }
+             // Add the files to the CTO
+             inputCTO.setFileList(fileArrayList);
+
+             CollectionTransferObject returnCTO = theProcessor.extractSignature(inputCTO, params);
+             MetadataObject thisMeta = new MetadataObject();
+             thisMeta.setCollectionTransferObject(returnCTO);
+             thisMeta.setFileTransferObjects(returnCTO.getFileList());
+             persist (thisMeta, targetNameSpace);
+             this.logger.log (Level.FINE, "Inserted MetadataObject.");
+           }
+        } catch (Exception e) {
+           this.logger.log (Level.SEVERE, "Can't insert MetadataObject.", e);
+           return;
+        }
+
+       if (fireEvent) {
+         // send ProcessedMetadataToMetadataDB message 
+         AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
+         String headers = ProcessedMetadataToMetadataDB.getSendHeaders (targetNameSpace);
+         this.logger.log (Level.FINER, "Send headers: " + headers);
+         ac.publishMessage (new AMQPMessage (), headers, true);
+         ac.shutdownConnection ();     
+         this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
+       }
+    }
+
+
 
   public void handleException (Exception exception) {
 
@@ -363,18 +444,28 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          FileDAO fd = this.metadataDAOFactory.getFileDAO ();
          fd.insertFile (fto);
          this.logger.log (Level.FINE, "Inserted FTO id: '" + fto.getDataStoreId () + "'");
+         List<VariableTransferObject> vtos = fto.getVariableList ();
+         if (vtos != null) {
+            for (VariableTransferObject vto : vtos) {
+              vto.setFileDataStoreId(fto.getDataStoreId());
+              VariableDAO vd = this.metadataDAOFactory.getVariableDAO ();
+              vd.insertVariable (vto);
+              this.logger.log (Level.FINE, "Inserted VTO id: '" + vto.getDataStoreId () + "'");
+            }
+         }
        }
     }
-
+/* This code is commented out because it doesn't seem to properly preserve the relationship
+   hierarchy between files and variables. Variables exist inside of files. See the code above 
     List<VariableTransferObject> vtos = metadataObject.getVariableTransferObjects ();
     if (vtos != null) {
        for (VariableTransferObject vto : vtos) {
-         // vto.setFileDataStoreId ();
          VariableDAO vd = this.metadataDAOFactory.getVariableDAO ();
          vd.insertVariable (vto);
          this.logger.log (Level.FINE, "Inserted VTO id: '" + vto.getDataStoreId () + "'");
        }
     }
+ */
 
   }
 

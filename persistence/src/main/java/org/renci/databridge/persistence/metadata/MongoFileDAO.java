@@ -66,14 +66,16 @@ public class MongoFileDAO implements FileDAO {
                    @SuppressWarnings("unchecked")
                    ArrayList<BasicDBObject> extraList = (ArrayList<BasicDBObject>) theEntry.get(MongoExtraName);
                    HashMap<String, String> extra = new HashMap<String, String>();
-                   for (BasicDBObject extraObj : extraList) {
-                       // Get the key set.  We sort of expect there to be only one but...
-                       Set<String> keys = extraObj.keySet();
-                       for (String thisKey : keys) {
-                           extra.put(thisKey, (String) extraObj.get(thisKey));
-                       }
+                   if (extraList != null) {
+                      for (BasicDBObject extraObj : extraList) {
+                          // Get the key set.  We sort of expect there to be only one but...
+                          Set<String> keys = extraObj.keySet();
+                          for (String thisKey : keys) {
+                              extra.put(thisKey, (String) extraObj.get(thisKey));
+                          }
+                      }
+                      theFile.setExtra(extra);
                    }
-                   theFile.setExtra(extra);
                }
            } catch (MongoException e) {
                // should send this back using the message logs eventually
