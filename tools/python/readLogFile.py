@@ -3,6 +3,14 @@ import sys
 import subprocess
 import signal
 
+# example usage:
+# ./readLogFile.py "INFO: headers" /projects/databridge/howard/DataBridge/log/ingest.log Insert.Metadata
+# to find and display all of the Insert.Metadata.* messages.
+#
+# ./readLogFile.py "INFO: headers" /projects/databridge/howard/DataBridge/log/ingest.log
+# to read and display all messages in the ingest.log.
+# Note that this also works on gzipped files since it is using zgrep
+
 def printMsg(msgDict):
      print msgDict['name']
      print '\t','type: ',msgDict['type']
