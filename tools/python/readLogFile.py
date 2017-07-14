@@ -13,8 +13,14 @@ import signal
 
 def printMsg(msgDict):
      print msgDict['name']
-     print '\t','type: ',msgDict['type']
-     print '\t','subtype: ',msgDict['subtype']
+     if 'type' in msgDict.keys():
+        print '\t','type: ',msgDict['type']
+     else:
+        print 'no type field, message may have failed'
+     if 'subtype' in msgDict.keys():
+        print '\t','subtype: ',msgDict['subtype']
+     else:
+        print 'no subtype field, message may have failed'
      for key,value in msgDict.items():
         if ((key != 'name') and (key != 'type') and (key != 'subtype')):
            print '\t',key,': ',value
