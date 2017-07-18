@@ -1,5 +1,5 @@
 package org.renci.databridge.util;
-
+import org.renci.databridge.message.*;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -26,6 +26,41 @@ public class CommsTest {
     public static void tearDownAfterClass() throws Exception {
        System.out.println("In the AfterClass");
     }
+
+    @Test
+    public void testValidation() {
+        System.out.println("*********************************************");
+        System.out.println("Testing validateStringProperties");
+        AMQPMessage theMessage = new AMQPMessage();
+        HashMap<String,String> stringHeaders = new HashMap<String,String>();
+        HashMap<String,String> validationMap = new HashMap<String,String>();
+
+        stringHeaders.put("type", "executable");
+        stringHeaders.put("similarityId", "12");
+        stringHeaders.put("nameSpace", "test");
+        validationMap.put("type", "");
+        validationMap.put("similarityId", "");
+        validationMap.put("nameSpace", "");
+
+        String result = theMessage.validateStringContent(stringHeaders, validationMap);
+        System.out.println("result of validation is: " + result);
+        TestCase.assertTrue("validation failure " + result, 
+                             result.compareTo(DatabridgeMessage.STATUS_OK) == 0);
+ 
+        String nameSpace = validationMap.get("nameSpace");
+        System.out.println("nameSpace is: " + nameSpace);
+        TestCase.assertTrue("validation failure " + nameSpace, 
+                            nameSpace.compareTo("test") == 0);
+
+        validationMap.put("className", "");
+        validationMap.put("subtype", "");
+        String result2 = theMessage.validateStringContent(stringHeaders, validationMap);
+        TestCase.assertTrue("validation failure " + result2, 
+                            result2.compareTo("DataBridge_Error: The message is missing the following required fields:  subtype className") == 0);
+        System.out.println("result of second validation is: " + result2);
+        System.out.println("*********************************************");
+    }
+
     @Test
     public void testProperties() {
         System.out.println("Testing the properties");

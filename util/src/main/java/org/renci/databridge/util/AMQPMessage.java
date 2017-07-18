@@ -1,4 +1,5 @@
 package org.renci.databridge.util;
+import org.renci.databridge.message.*;
 import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import java.util.Map;
@@ -153,26 +154,36 @@ public class AMQPMessage {
          }
          return stringHeaders;
      }
+
      /**
-      * Get String Content.
+      * Validate the string headers against a map of desired headers. Return a string indicating
+      * either success or failure. If it's success the 
+      * values are returned in the "value" portion of the validation Map
       *
-      * @return Message body whose value is a string as a Map<java.lang.String,java.lang.String>
+      * @param stringHeaders The set of headers to validate
+      * @param validationMap The set of headers to validate
+      *
+      * @return either DatabridgeMessage.STATUS_OK or DatabridgeMessage.STATUS_ERROR plus a message
+      * detailing which of the validation headers is missing.
       */
-     public Map<String,String> getStringContent()
+     public String validateStringContent(Map<String,String> stringHeaders, Map<String,String> validationMap)
      {
-         Map<String, String> stringMessages = null;
-         if (content != null) {
-            // Note that we expect the message to be all strings in the form key1:value1;key2:value2;
-            stringMessages = new HashMap<String, String>();
-
-            String[] contentArray = content.split(";");
-
-            for (int i = 0; i < contentArray.length; i++ ) {
-                 String[] thisContent = contentArray[i].split(":"); 
-                 stringMessages.put(thisContent[0], thisContent[1]);
-            }
+        String successReturn = DatabridgeMessage.STATUS_OK;
+        String failureReturn = DatabridgeMessage.STATUS_ERROR + 
+           ": The message is missing the following required fields: ";
+        String returnValue = successReturn;
+        // Loop through all of the keys in the validation map.
+        for (String validationKey : validationMap.keySet()) {
+           String validationValue = stringHeaders.get(validationKey);
+           if (null == validationValue) {
+              failureReturn = failureReturn + " " + validationKey;
+              returnValue = failureReturn; 
+           } else {
+             // copy the value from the stringHeaders to the validationMap
+             validationMap.put(validationKey, validationValue);
+           }
         }
-        return stringMessages;
+        return returnValue;
      }
 
      /**
