@@ -30,7 +30,7 @@ public class CommsTest {
     @Test
     public void testValidation() {
         System.out.println("*********************************************");
-        System.out.println("Testing validateStringProperties");
+        System.out.println("Testing validateStringHeaders");
         AMQPMessage theMessage = new AMQPMessage();
         HashMap<String,String> stringHeaders = new HashMap<String,String>();
         HashMap<String,String> validationMap = new HashMap<String,String>();
@@ -42,7 +42,7 @@ public class CommsTest {
         validationMap.put("similarityId", "");
         validationMap.put("nameSpace", "");
 
-        String result = theMessage.validateStringContent(stringHeaders, validationMap);
+        String result = theMessage.validateStringHeaders(stringHeaders, validationMap);
         System.out.println("result of validation is: " + result);
         TestCase.assertTrue("validation failure " + result, 
                              result.compareTo(DatabridgeMessage.STATUS_OK) == 0);
@@ -54,7 +54,7 @@ public class CommsTest {
 
         validationMap.put("className", "");
         validationMap.put("subtype", "");
-        String result2 = theMessage.validateStringContent(stringHeaders, validationMap);
+        String result2 = theMessage.validateStringHeaders(stringHeaders, validationMap);
         TestCase.assertTrue("validation failure " + result2, 
                             result2.compareTo("DataBridge_Error: The message is missing the following required fields:  subtype className") == 0);
         System.out.println("result of second validation is: " + result2);

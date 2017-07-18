@@ -166,7 +166,7 @@ public class AMQPMessage {
       * @return either DatabridgeMessage.STATUS_OK or DatabridgeMessage.STATUS_ERROR plus a message
       * detailing which of the validation headers is missing.
       */
-     public String validateStringContent(Map<String,String> stringHeaders, Map<String,String> validationMap)
+     public String validateStringHeaders(Map<String,String> stringHeaders, Map<String,String> validationMap)
      {
         String successReturn = DatabridgeMessage.STATUS_OK;
         String failureReturn = DatabridgeMessage.STATUS_ERROR + 
