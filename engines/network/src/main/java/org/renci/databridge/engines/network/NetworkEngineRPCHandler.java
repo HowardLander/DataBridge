@@ -521,7 +521,7 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).setPrettyPrinting().serializeNulls().disableHtmlEscaping().create();
 
       // We are also going to want a results structure.
-      NetworkRPCResultsMessage theResults = new NetworkRPCResultsMessage();
+      DatabridgeResultsMessage theResults = new DatabridgeResultsMessage(true, "");
 
       // Assuming we get this far, we want to send out the next message
       AMQPRpcComms ac = null;
@@ -535,7 +535,7 @@ public class NetworkEngineRPCHandler implements AMQPMessageHandler {
          thisMessage.setReplyQueue(inMessage.getReplyQueue());
          this.logger.log (Level.INFO, "setting replyQueue: " + inMessage.getReplyQueue());
          theResults.setResults(returnString);
-         theResults.setStatus(NetworkRPCResultsMessage.STATUS_OK);
+         theResults.setStatus(DatabridgeResultsMessage.STATUS_OK);
          String theJsonResults = gson.toJson(theResults);
          thisMessage.setContent(theJsonResults);
          thisMessage.setBytes(theJsonResults.getBytes());

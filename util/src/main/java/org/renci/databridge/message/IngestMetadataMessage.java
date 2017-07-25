@@ -28,6 +28,8 @@ public class IngestMetadataMessage implements AMQPMessageType {
                             "Insert.Metadata.Java.BinaryFiles.MetadataDB";
   public static final String INSERT_METADATA_JAVA_FILEWITHPARAMS_METADATADB = 
                             "Insert.Metadata.Java.FileWithParams.MetadataDB";
+  public static final String INSERT_METADATA_JAVA_FILEWITHPARAMS_METADATADB_RPC = 
+                            "Insert.Metadata.Java.FileWithParams.MetadataDB.RPC";
   public static final String CREATE_METADATA_SIGNATURE_JAVA_METADATADB = 
                             "Create.Metadata.Signature.Java.MetadataDB";
   @Override

@@ -45,7 +45,7 @@ public class CommsTest {
         String result = theMessage.validateStringHeaders(stringHeaders, validationMap);
         System.out.println("result of validation is: " + result);
         TestCase.assertTrue("validation failure " + result, 
-                             result.compareTo(DatabridgeMessage.STATUS_OK) == 0);
+                             result.compareTo(DatabridgeResultsMessage.STATUS_OK) == 0);
  
         String nameSpace = validationMap.get("nameSpace");
         System.out.println("nameSpace is: " + nameSpace);

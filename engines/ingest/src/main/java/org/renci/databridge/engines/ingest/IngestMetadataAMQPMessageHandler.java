@@ -24,6 +24,7 @@ import org.renci.databridge.persistence.metadata.FileTransferObject;
 import org.renci.databridge.persistence.metadata.VariableDAO;
 import org.renci.databridge.persistence.metadata.VariableTransferObject;
 import org.renci.databridge.persistence.metadata.SignatureProcessor;
+import org.renci.databridge.message.DatabridgeResultsMessage;
 import org.renci.databridge.message.IngestMetadataMessage;
 import org.renci.databridge.message.IngestListenerMessage;
 import org.renci.databridge.message.ProcessedMetadataToMetadataDB;
@@ -57,6 +58,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
      Map<String, String> stringHeaders = amqpMessage.getStringHeaders ();
      this.logger.log (Level.INFO, "headers: " + stringHeaders);
      String messageName = stringHeaders.get(IngestMetadataMessage.NAME);
+     DatabridgeResultsMessage results = null;
 
      if (null == messageName) {
         logger.log(Level.WARNING, "messageName is missing");
@@ -68,7 +70,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
         processInsertMetadataFilesMessage(stringHeaders, extra);
      } else if
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_FILEWITHPARAMS_METADATADB) == 0) {
-        processInsertMetadataFileWithParamsMessage(stringHeaders, extra);
+        results = processInsertMetadataFileWithParamsMessage(stringHeaders, extra);
      } else if
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_BINARYFILES_METADATADB) == 0) {
         processInsertBinaryMetadataFilesMessage(stringHeaders, extra);
@@ -271,8 +273,10 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
    * Handle the INSERT_METADATA_JAVA_FILEWITHPARAMS_METADATADB message.
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects
+   * @return A DatabridgeResultsMessage containing the results of the operation
    */
-    public void processInsertMetadataFileWithParamsMessage(Map<String, String> stringHeaders, Object extra) {
+    public DatabridgeResultsMessage 
+       processInsertMetadataFileWithParamsMessage(Map<String, String> stringHeaders, Object extra) {
 
        String className = stringHeaders.get (IngestMetadataMessage.CLASS);
        String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
@@ -293,7 +297,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
          e.printStackTrace();
-         return;
+         return (new DatabridgeResultsMessage(false, "Can't instantiate class " + className));
       }
 
        mf.setLogger (this.logger);
@@ -306,7 +310,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
           bytes = mf.getBytes((Object) filePlusParams);
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Problems with the input file:  " + inputFile, e );
-         return;
+         return (new DatabridgeResultsMessage(false, "Problems with the input file:  " + inputFile));
       }
 
        // dispatch to third-party formatter 
@@ -315,7 +319,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
            metadataObjects = mf.format (bytes);
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't perform format operation", e);
-         return;
+         return (new DatabridgeResultsMessage(false, "Can't perform format operation"));
        }
 
        for (MetadataObject mo : metadataObjects) {
@@ -324,7 +328,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
            this.logger.log (Level.FINE, "Inserted MetadataObject.");
          } catch (Exception e) {
            this.logger.log (Level.SEVERE, "Can't insert MetadataObject.", e);
-           return;
+           return (new DatabridgeResultsMessage(false, "Can't insert MetadataObject."));
          }
        }
 
@@ -337,6 +341,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          ac.shutdownConnection ();     
          this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
        }
+       return (new DatabridgeResultsMessage(true, "Metadata successfully inserted"));
     }
 
   /**

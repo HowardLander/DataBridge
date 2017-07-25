@@ -58,7 +58,15 @@ System.out.println ("pathToAmqpPropsFile: " + pathToAmqpPropsFile);
     AMQPMessageListener aml = new AMQPMessageListener (p, new IngestMetadataMessage (), new IngestMetadataAMQPMessageHandler (dbType, dbName, dbHost, dbPort, dbUser, dbPwd, pathToAmqpPropsFile), logger);
 
     aml.start ();
+
+    p.setProperty("org.renci.databridge.rpcQueue",
+                  p.getProperty("org.renci.databridge.ingestEngine.rpcQueue"));
+
+    AMQPMessageListener amlRPC = new AMQPMessageListener (AMQPMessageListener.MODE_RPC, p, new IngestMetadataMessage (), new IngestEngineRPCHandler (dbType, dbName, dbHost, dbPort, dbUser, dbPwd, pathToAmqpPropsFile), logger);
+
+    amlRPC.start ();
     aml.join (); // keeps main thread from exiting
+    amlRPC.join (); // keeps thread from exiting
 
   }
 

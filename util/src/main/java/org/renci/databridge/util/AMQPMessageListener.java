@@ -15,10 +15,13 @@ import java.io.IOException;
 public class AMQPMessageListener extends Thread {
 
   protected static final long LISTENER_TIMEOUT_MS = 1000;
+  public static final int MODE_NORMAL = 1;
+  public static final int MODE_RPC = 2;
 
   protected AMQPComms amqpComms;
   protected AMQPMessageType amqpMessageType;
   protected AMQPMessageHandler amqpMessageHandler;
+  protected int mode = MODE_NORMAL;
   protected Logger logger;
 
   /** 
@@ -53,6 +56,32 @@ public class AMQPMessageListener extends Thread {
 
   }
 
+  /**
+   * @param mode either MODE_NORMAL or MODE_RPC
+   * @param props properties object
+   * @param amqpMessageType
+   * @param amqpMessageHandler
+   * @param logger can be null.
+   */
+  public AMQPMessageListener (int mode, Properties props, AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) throws IOException {
+
+    this (amqpMessageType, amqpMessageHandler, logger);
+    this.mode = mode;
+
+    // creating AMQPComms here becausec passing it in would enable reusing
+    // the same AMQPComms instance, which is not safe across multiple clients
+    if (mode == MODE_NORMAL) {
+       System.out.println("creating a traditional comms object");
+       this.amqpComms = new AMQPComms (props);
+    } else {
+       System.out.println("creating an RPC comms object");
+       logger.log(Level.INFO, "creating an RPC comms object");
+       this.amqpComms = new AMQPRpcComms (props);
+    }
+
+  }
+
+
   protected AMQPMessageListener (AMQPMessageType amqpMessageType, AMQPMessageHandler amqpMessageHandler, Logger logger) {
     this.amqpMessageType = amqpMessageType;
     this.amqpMessageHandler = amqpMessageHandler;
@@ -71,12 +100,15 @@ public class AMQPMessageListener extends Thread {
   @Override
   public void run () {
 
-    String bindHeaders = this.amqpMessageType.getBindHeaders ();
-
-    this.amqpComms.bindTheQueue (bindHeaders);
-    System.out.println ("Binding: " + bindHeaders);
-    if (this.logger != null) {
-      this.logger.log (Level.FINE, "Bound '" + bindHeaders + "' to AMQPComms");
+    if (this.mode == MODE_NORMAL) {
+       String bindHeaders = this.amqpMessageType.getBindHeaders ();
+       System.out.println ("Binding: " + bindHeaders);
+       this.amqpComms.bindTheQueue (bindHeaders);
+       if (this.logger != null) {
+         this.logger.log (Level.FINE, "Bound '" + bindHeaders + "' to AMQPComms");
+       }
+    } else {
+         this.logger.log (Level.INFO, "RPC Queue is not bound");
     }
 
     while (!terminate) { 

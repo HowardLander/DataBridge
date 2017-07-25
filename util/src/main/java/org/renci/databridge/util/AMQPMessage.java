@@ -56,6 +56,22 @@ public class AMQPMessage {
          bytes = theBytes;
      }
 
+     /**
+      * Static factory method to produce a message we can send back using our RPC
+      * implementation
+      *
+      *  @param  inMessage the input message from which to extract the reply info
+      *  @param  results the content of the message
+      */
+     public static AMQPMessage initRPCReplyMessage(AMQPMessage inMessage, String theResults) {
+         AMQPMessage thisMessage = new AMQPMessage();
+         thisMessage.setTag(inMessage.getTag());
+         thisMessage.setReplyQueue(inMessage.getReplyQueue());
+         thisMessage.setContent(theResults);
+         thisMessage.setBytes(theResults.getBytes());
+         return thisMessage;
+     }
+
      
      /**
       * Get bytes for the message.
@@ -163,13 +179,13 @@ public class AMQPMessage {
       * @param stringHeaders The set of headers to validate
       * @param validationMap The set of headers to validate
       *
-      * @return either DatabridgeMessage.STATUS_OK or DatabridgeMessage.STATUS_ERROR plus a message
-      * detailing which of the validation headers is missing.
+      * @return either DatabridgeResultMessage.STATUS_OK or DatabridgeResultMessage.STATUS_ERROR 
+      * plus a message detailing which of the validation headers is missing.
       */
      public String validateStringHeaders(Map<String,String> stringHeaders, Map<String,String> validationMap)
      {
-        String successReturn = DatabridgeMessage.STATUS_OK;
-        String failureReturn = DatabridgeMessage.STATUS_ERROR + 
+        String successReturn = DatabridgeResultsMessage.STATUS_OK;
+        String failureReturn = DatabridgeResultsMessage.STATUS_ERROR + 
            ": The message is missing the following required fields: ";
         String returnValue = successReturn;
         // Loop through all of the keys in the validation map.
