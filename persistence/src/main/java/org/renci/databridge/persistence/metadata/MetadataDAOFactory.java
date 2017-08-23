@@ -12,6 +12,7 @@ public abstract class MetadataDAOFactory {
     public abstract SNAInstanceDAO getSNAInstanceDAO();
     public abstract ActionDAO getActionDAO();
     public abstract NameSpaceDAO getNameSpaceDAO();
+    public abstract LaneDAO getLaneDAO();
     public abstract void closeTheDB();
 
     public static MetadataDAOFactory getMetadataDAOFactory(int factoryType,

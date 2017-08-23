@@ -182,6 +182,125 @@ public class MetadataTest {
   }
 
   @Test
+  public void testLaneDAO () throws Exception {
+
+     Logger.getRootLogger().setLevel(Level.OFF);
+     System.out.println("");
+     System.out.println("");
+     System.out.println("beginning testLaneDAO");
+     boolean result;
+
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
+     LaneTransferObject theLane = new LaneTransferObject();
+     theLane.setCreatorId("55d5f0753525be4d0d8f8a5c");
+     theLane.setIngestImpl("testIngest.class");
+     theLane.setIngestParams("IngestParams");
+     theLane.setSignatureImpl("testSignature.class");
+     theLane.setSignatureParams("SignatureParams");
+     theLane.setSimilarityImpl("testSimilarity.class");
+     theLane.setSimilarityParams("SimilarityParams");
+     theLane.setSNAImpl("testSNA.class");
+     theLane.setSNAParams("SNAParams");
+     ArrayList<String> nameSpaces = new ArrayList<String>();
+
+     nameSpaces.add("NameSpace1");
+     nameSpaces.add("NameSpace2");
+     nameSpaces.add("NameSpace3");
+     theLane.setNameSpaces(nameSpaces);
+
+     try {
+         LaneDAO theLaneDAO = theMongoFactory.getLaneDAO();
+         System.out.println("after theMongoFactory.getLaneDAO");
+         result = theLaneDAO.insertLane(theLane);
+         System.out.println("done with insert, result is " + result);
+         System.out.println("inserted Id is: " + theLane.getDataStoreId());
+         System.out.println("testing get");
+
+         // Test the retrieval by id code
+         LaneTransferObject idObject = theLaneDAO.getLaneById(theLane.getDataStoreId());
+
+         // Did we return anything?
+         TestCase.assertTrue("idObject is null", idObject != null);
+
+         // Do the fields match
+         TestCase.assertTrue("id fields don't march", 
+            idObject.getDataStoreId().compareTo(theLane.getDataStoreId())== 0);
+         TestCase.assertTrue("IngestImpl fields don't march", 
+            idObject.getIngestImpl().compareTo(theLane.getIngestImpl()) == 0);
+         System.out.println("insertTime is " + idObject.getInsertTime());
+         long now = System.currentTimeMillis()/1000;
+         TestCase.assertTrue("insertTime is unreasonable", (now - idObject.getInsertTime()) < 5 );
+         System.out.println("theLaneDAO.getCollectionById tests passed");
+
+         HashMap<String, String> searchMap = new HashMap<String, String>();
+         searchMap.put("ingestImpl", "testIngest.class");
+         searchMap.put("signatureImpl", "testSignature.class");
+         Iterator<LaneTransferObject> laneIterator = theLaneDAO.getLanes(searchMap);
+         System.out.println ("Do we have next? " +  laneIterator.hasNext());
+
+         if (laneIterator.hasNext()) {
+             LaneTransferObject getObj = laneIterator.next(); 
+             System.out.println("namepaces");
+             System.out.println(getObj.getNameSpaces());
+             String firstNameSpace = getObj.getNameSpaces().get(0);
+             TestCase.assertTrue("First nameSpace not found", 
+                 firstNameSpace.compareTo("NameSpace1") == 0);
+             TestCase.assertTrue("SNAImpls don't match", 
+                 theLane.getSNAImpl().compareTo(getObj.getSNAImpl()) == 0);
+             System.out.println("retrieved SNAImpl: " + getObj.getSNAImpl());
+             TestCase.assertTrue("SNAParams don't match", 
+                 theLane.getSNAParams().compareTo(getObj.getSNAParams()) == 0);
+             System.out.println("retrieved SNAParams: " + getObj.getSNAParams());
+
+             // Now we'll try to delete the object
+             HashMap<String, String> deleteMap = new HashMap<String, String>();
+             deleteMap.put("_id", getObj.getDataStoreId());
+             int nDeleted = theLaneDAO.deleteLane(deleteMap);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+
+             // One more insert so we can try deleteCollectionById
+             result = theLaneDAO.insertLane(theLane);
+             nDeleted = theLaneDAO.deleteLane(theLane);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted by Id not 1", nDeleted == 1);
+         }
+
+         // Now let's test multiple insertions, gets and deletes
+         for (int i = 0; i < 5; i ++) {
+             theLane.setCreatorId(Integer.toString(i));
+             result = theLaneDAO.insertLane(theLane);
+         }
+
+         // let's test the count collections code.
+         HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
+         nameSpaceMap.put("SNAParams", "SNAParams");
+         long theCount = theLaneDAO.countLanes(nameSpaceMap);
+         System.out.println("countLanes found " + theCount + " matches");
+         TestCase.assertTrue("count of Lanes found not 5", theCount == 5);
+         
+
+         int nFound = 0;
+         int nDeleted = 0;
+         int totalDeleted = 0;
+         Iterator<LaneTransferObject> nameSpaceIterator = theLaneDAO.getLanes(nameSpaceMap);
+         while (nameSpaceIterator.hasNext()) {
+             LaneTransferObject getObj = nameSpaceIterator.next(); 
+             nDeleted = theLaneDAO.deleteLane(getObj);
+             System.out.println("nDeleted: " + nDeleted);
+             nFound ++;
+             totalDeleted += nDeleted;
+         }
+         System.out.println("number found:" + nFound);
+         TestCase.assertTrue("total found not 5", nFound == 5);
+         TestCase.assertTrue("totalDeleted by Id not 5", totalDeleted == 5);
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
+  }
+
+  @Test
   public void testActionDAO () throws Exception {
 
      Logger.getRootLogger().setLevel(Level.OFF);
