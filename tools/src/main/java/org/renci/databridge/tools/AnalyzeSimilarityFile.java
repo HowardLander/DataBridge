@@ -17,10 +17,13 @@ import java.nio.file.*;
  *  -inputFile <inputFile>     The name of the file to analyze
  *  -operation <operation>     one of "stats", "histogram", matrix
  *  -bins <operation>          number of bins for the histogram
+ *  -properties <propertyFile> Property file (currently only used if op is CSV)
+ *  -outputFile <outputFile>   Output file (currently only used if op is CSV)
  *  -help                      print this message
  *
  *  Example mvn command line:
  *   mvn -e exec:java -Dexec.mainClass=org.renci.databridge.tools.AnalyzeSimilarityFile -Dexec.arguments="-inputFile",similarityFile,"-operation",operation
+ * mvn -e exec:java -Dexec.mainClass=org.renci.databridge.tools.AnalyzeSimilarityFile -Dexec.arguments="-inputFile",/home/howard/DbFNNetwork-v7.2.net,"-operation",CSV,"-properties",/projects/databridge/howard/DataBridge/config/DataBridge.conf,-outputFile",test.csv
  */
 
 public class AnalyzeSimilarityFile {
@@ -29,6 +32,7 @@ public class AnalyzeSimilarityFile {
   public static int nonZeros = 0;
   public static long[] histogram = null;
   public static int nBins = 0;
+  public static final String CSV = "csv";  
   public static final String STATS = "stats";  
   public static final String MATRIX = "matrix";  
   public static final String HISTOGRAM = "histogram";  
@@ -37,10 +41,14 @@ public class AnalyzeSimilarityFile {
        Options options = new Options();
        Option inputFile = OptionBuilder.withArgName("inputFile").hasArg().withDescription("input file").create("inputFile");
       Option operation = OptionBuilder.withArgName("operation").hasArg().withDescription("operation").create("operation");
+      Option properties = OptionBuilder.withArgName("properties").hasArg().withDescription("properties file").create("properties");
+      Option outputFile = OptionBuilder.withArgName("outputFile").hasArg().withDescription("outputFile file").create("outputFile");
       Option histArg = OptionBuilder.withArgName("bins").hasArg().withDescription("bins").create("bins");
        Option help = new Option("help", "print this message");
        options.addOption(inputFile);
        options.addOption(operation);
+       options.addOption(properties);
+       options.addOption(outputFile);
        options.addOption(histArg);
        options.addOption(help);
 
@@ -93,6 +101,75 @@ public class AnalyzeSimilarityFile {
         for (String theId: readData.getCollectionIds()) {
             System.out.println("\t\tthisId: " + theId);
         }
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
+  }
+
+
+  public static void operationCSV(String inputFile, String outputFile, CollectionDAO theCollectionDAO) {
+     try {
+        SimilarityFile readData = new SimilarityFile();
+        readData.readFromDisk(inputFile);
+        String nameSpace = readData.getNameSpace();
+        org.la4j.matrix.sparse.CRSMatrix theMatrix = readData.getSimilarityMatrix();
+        PrintWriter pw = new PrintWriter(new File(outputFile));
+
+        // It may help to remember that the matrix must be symetric
+        int dimension = theMatrix.rows();
+        String studyNames[] = new String[dimension];
+
+        // Print the header line. It's going to be the namespace, followed by each of the study names
+        StringBuilder headerString = new StringBuilder();
+        headerString.append(nameSpace);
+        int index = 0;
+        for (String theId: readData.getCollectionIds()) {
+            CollectionTransferObject theCTO = theCollectionDAO.getCollectionById(theId);
+            headerString.append(",");
+            headerString.append(theCTO.getTitle());
+            studyNames[index] = theCTO.getTitle();
+            index++;
+        }
+
+        pw.write(headerString.toString());
+        pw.write("\n");
+
+        double completeMatrix[][] = new double[dimension][dimension];
+
+        VectorOp theVectorClass = new VectorOp();
+        for (int i = 0; i < theMatrix.rows(); i++) {
+           StringBuilder rowString = new StringBuilder();
+           rowString.append(studyNames[i]);
+            if (theMatrix.maxInRow(i) > 0.) {
+               org.la4j.Vector thisRow = theMatrix.getRow(i);
+               for (int j = i; j < dimension; j++) {
+                  completeMatrix[i][j] = thisRow.get(j);
+                  completeMatrix[j][i] = thisRow.get(j);
+                  completeMatrix[i][i] = 1.0;
+               }
+            } else {
+               for (int j = 0; j < dimension; j++) {
+                  if (i == j) {
+                     completeMatrix[i][i] = 1.0;
+                  } else {
+                     completeMatrix[i][i] = 0.0;
+                  }
+               }
+            }
+        }
+ 
+        for (int i = 0; i < theMatrix.rows(); i++) {
+           StringBuilder rowString = new StringBuilder();
+           rowString.append(studyNames[i]);
+           for (int j = 0; j < dimension; j++) {
+              rowString.append(",");
+              rowString.append(completeMatrix[i][j]);
+           }
+           pw.write(rowString.toString());
+           pw.write("\n");
+         }
+
+         pw.close();
      }  catch (Exception e) {
          e.printStackTrace();
      }
@@ -169,6 +246,7 @@ public class AnalyzeSimilarityFile {
 
      CommandLine theLine = processArgs(args); 
      inputFile = theLine.getOptionValue("inputFile");
+     String outputFile = theLine.getOptionValue("outputFile");
      operation = theLine.getOptionValue("operation");
 
      System.out.println("\nReading file " + inputFile); 
@@ -178,6 +256,39 @@ public class AnalyzeSimilarityFile {
            operationStats(inputFile);
         } else if (operation.equalsIgnoreCase(MATRIX)) {
            operationMatrix(inputFile);
+        } else if (operation.equalsIgnoreCase(CSV)) {
+           String dbType;
+           String dbName;
+           String dbHost;
+           int    dbPort;
+           String dbUser;
+           String dbPwd;
+           MetadataDAOFactory theFactory = null;
+        
+           // open the preferences file
+           Properties prop = new Properties();
+           prop.load(new FileInputStream(theLine.getOptionValue("properties")));
+           dbType = prop.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
+           dbName = prop.getProperty("org.renci.databridge.relevancedb.dbName", "test");
+           dbHost = prop.getProperty("org.renci.databridge.relevancedb.dbHost", "localhost");
+           dbPort = Integer.parseInt(prop.getProperty("org.renci.databridge.relevancedb.dbPort", "27017"));
+           dbUser = prop.getProperty("org.renci.databridge.relevancedb.dbUser", "localhost");
+           dbPwd = prop.getProperty("org.renci.databridge.relevancedb.dbPassword", "localhost");
+    
+           // Connect to the mongo database
+           if (dbType.compareToIgnoreCase("mongo") == 0) {
+               theFactory = MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB,
+                                                                     dbName, dbHost, dbPort, dbUser, dbPwd);
+               if (null == theFactory) {
+                  System.out.println("Couldn't produce the MetadataDAOFactory");
+                  return;
+               }
+           }
+    
+           // We'll need a collection DAO object.
+           CollectionDAO theCollectionDAO = theFactory.getCollectionDAO();
+           operationCSV(inputFile, outputFile, theCollectionDAO);
+           theFactory.closeTheDB();
         } else if (operation.equalsIgnoreCase(HISTOGRAM)) {
            nBins = Integer.parseInt(theLine.getOptionValue("bins"));
            histogram = new long[nBins];
