@@ -4,6 +4,7 @@ import  java.util.*;
 public class LaneTransferObject {
     private ArrayList<String> nameSpaces;    // the name spaces associated with this lane
     private String name;                     // A user provided name for the lane.
+    private String description;              // A user provided description for the lane.
     private String ingestImpl;               // the ingest implementation
     private String ingestParams;             // the ingest parameters
     private String signatureImpl;            // the signature implementation
@@ -296,6 +297,26 @@ public class LaneTransferObject {
     public void setInsertTime(int insertTime)
     {
         this.insertTime = insertTime;
+    }
+    
+    /**
+     * Get description.
+     *
+     * @return description as String.
+     */
+    public String getDescription()
+    {
+        return description;
+    }
+    
+    /**
+     * Set description.
+     *
+     * @param description the value to set.
+     */
+    public void setDescription(String description)
+    {
+        this.description = description;
     }
 }
 

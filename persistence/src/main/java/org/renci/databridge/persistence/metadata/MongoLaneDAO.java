@@ -59,6 +59,7 @@ public class MongoLaneDAO implements LaneDAO {
                    theLane.setCreatorId(theEntry.get("creatorId").toString());
                    theLane.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                    theLane.setName((String)theEntry.get("name"));
+                   theLane.setDescription((String)theEntry.get("description"));
                    theLane.setIngestImpl((String)theEntry.get("ingestImpl"));
                    theLane.setIngestParams((String)theEntry.get("ingestParams"));
                    theLane.setSignatureParams((String)theEntry.get("signatureParams"));
@@ -110,6 +111,8 @@ public class MongoLaneDAO implements LaneDAO {
           thisDoc.put("SNAImpl", theLane.getSNAImpl());
           thisDoc.put("SNAParams", theLane.getSNAParams());
           thisDoc.put("nameSpaces", theLane.getNameSpaces());
+          thisDoc.put("name", theLane.getName());
+          thisDoc.put("description", theLane.getDescription());
 
           DB theDB = MongoDAOFactory.getTheDB();
           DBCollection theTable = theDB.getCollection(MongoName);
@@ -176,6 +179,7 @@ public class MongoLaneDAO implements LaneDAO {
                 theLane.setCreatorId(theEntry.get("creatorId").toString());
                 theLane.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                 theLane.setName((String)theEntry.get("name"));
+                theLane.setDescription((String)theEntry.get("description"));
                 theLane.setIngestImpl((String)theEntry.get("ingestImpl"));
                 theLane.setIngestParams((String)theEntry.get("ingestParams"));
                 theLane.setSignatureParams((String)theEntry.get("signatureParams"));

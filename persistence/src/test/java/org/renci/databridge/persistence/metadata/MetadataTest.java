@@ -202,6 +202,8 @@ public class MetadataTest {
      theLane.setSimilarityParams("SimilarityParams");
      theLane.setSNAImpl("testSNA.class");
      theLane.setSNAParams("SNAParams");
+     theLane.setName("testName");
+     theLane.setDescription("test description");
      ArrayList<String> nameSpaces = new ArrayList<String>();
 
      nameSpaces.add("NameSpace1");
@@ -226,6 +228,11 @@ public class MetadataTest {
          // Do the fields match
          TestCase.assertTrue("id fields don't march", 
             idObject.getDataStoreId().compareTo(theLane.getDataStoreId())== 0);
+         TestCase.assertTrue("description fields don't march", 
+            idObject.getDescription().compareTo(theLane.getDescription())== 0);
+         TestCase.assertTrue("name returned is null", idObject.getName() != null);
+         TestCase.assertTrue("name fields don't march", 
+            idObject.getName().compareTo(theLane.getName())== 0);
          TestCase.assertTrue("IngestImpl fields don't march", 
             idObject.getIngestImpl().compareTo(theLane.getIngestImpl()) == 0);
          System.out.println("insertTime is " + idObject.getInsertTime());
