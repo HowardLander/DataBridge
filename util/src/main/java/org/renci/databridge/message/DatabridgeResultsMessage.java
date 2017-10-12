@@ -12,6 +12,15 @@ public class DatabridgeResultsMessage {
    public String       results;  // If error, will contain error message
 
    /**
+    *  Default constructor
+    */
+   public DatabridgeResultsMessage() {
+      this.status = STATUS_OK;
+      this.results = "";
+   }
+  
+
+   /**
     *  Constructor that takes a boolean and a result string
     */
    public DatabridgeResultsMessage(boolean status, String results) {

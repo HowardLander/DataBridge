@@ -34,6 +34,7 @@ public class IngestEngineRPCHandler implements AMQPMessageHandler {
 
   protected MetadataDAOFactory metadataDAOFactory;
   protected String pathToAmqpPropsFile;
+  protected Properties theProps = null;
 
   protected int dbType;
   protected String dbName;
@@ -64,6 +65,72 @@ public class IngestEngineRPCHandler implements AMQPMessageHandler {
     this.dbUser = dbUser;
     this.dbPwd = dbPwd;
   }
+
+    /**
+     * Handle the FIND_CLOSEST_MATCHES_IN_NETWORK message finding the relevant
+     * @param stringHeaders A map of the headers provided in the message
+     * @param extra An object containing the needed DAO objects
+     * @param amqpMessage The tag incoming message, needed to populate the outgoing message
+     */
+  public void sendRPCReply( boolean status, String returnText, AMQPMessage inMessage) {
+
+      this.logger.log (Level.INFO, "replyQueue is: " + inMessage.getReplyQueue());
+      // Let's create a Gson object to use to convert our results struct to json
+      // We are also going to want a results structure.
+      DatabridgeResultsMessage theResults = null;
+
+      // we will want to send out the return message
+      AMQPMessage thisMessage = null;
+      AMQPRpcComms ac = null;
+      String headers = null;
+      String theJsonResults = null;
+      Properties theProps = new Properties();
+      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).setPrettyPrinting().serializeNulls().disableHtmlEscaping().create();
+      boolean loadError = false;
+      try {
+         theProps.load(new FileInputStream (this.pathToAmqpPropsFile));
+         if (null == theProps) {
+            this.logger.log (Level.SEVERE, "Properties object is null");
+         }
+         // Grap the properties we need so we can create the basic handler.
+         ac = new AMQPRpcComms (theProps);
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception trying to load prop file: " + e.getMessage(), e);
+         loadError = true;
+      }
+
+      if (loadError == false) {
+         // Get the headers for the return message
+         String messageStatus = DatabridgeResultsMessage.STATUS_OK;
+         if (status == false) {
+            messageStatus = DatabridgeResultsMessage.STATUS_ERROR;
+         } 
+         
+         // Arguably we should create a new class here, but the headers don't matter much in RPC mode.
+         headers = 
+           ReturnInsertMetadataJavaFileWithParams.getSendHeaders(messageStatus);
+         this.logger.log (Level.INFO, "Send headers: " + headers);
+
+         theJsonResults = 
+            gson.toJson(new DatabridgeResultsMessage(status, returnText));
+         thisMessage = AMQPMessage.initRPCReplyMessage(inMessage, theJsonResults);
+         this.logger.log (Level.INFO, "Return  message is ready.");
+      }
+
+      // Now at this point, we want to publish the message whether we succeeded or failed.
+      if (ac != null){
+         try { 
+            ac.publishMessage ( thisMessage, headers, true);
+            this.logger.log (Level.INFO, "Sending RPC reply");
+         } catch (Exception e) {
+             this.logger.log (Level.SEVERE, "Caught Exception sending rpc message: " + e.getMessage(), e);
+         } finally {
+             if (null != ac) {
+                 ac.shutdownConnection ();
+             }
+         }
+      }
+  }
   
   /**
    * This function essentially de-multiplexes the message by calling the
@@ -91,8 +158,119 @@ public class IngestEngineRPCHandler implements AMQPMessageHandler {
       if (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_FILEWITHPARAMS_METADATADB_RPC) 
              == 0) {
          processInsertMetadataJavaFileWithParamsMetadataDBRPC(stringHeaders, extra, amqpMessage);
+      } else if (messageName.compareTo(IngestMetadataMessage.CREATE_METADATA_SIGNATURE_JAVA_METADATADB_RPC) 
+             == 0) {
+         processCreateMetadataSignatureJavaMetadataDBRPC(stringHeaders, extra, amqpMessage);
       } else {
          this.logger.log (Level.WARNING, "unimplemented messageName: " + messageName);
+         sendRPCReply( false, "unimplemented messageName: " + messageName, amqpMessage);
+      }
+  }
+
+    /**
+     * Handle the FIND_CLOSEST_MATCHES_IN_NETWORK message finding the relevant
+     * @param stringHeaders A map of the headers provided in the message
+     * @param extra An object containing the needed DAO objects
+     * @param amqpMessage The tag incoming message, needed to populate the outgoing message
+     */
+  public void processCreateMetadataSignatureJavaMetadataDBRPC(Map<String, String> stringHeaders, 
+                                                              Object extra, 
+                                                              AMQPMessage inMessage) {
+
+      this.logger.log (Level.INFO, "replyQueue is: " + inMessage.getReplyQueue());
+      // Let's create a Gson object to use to convert our results struct to json
+      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).setPrettyPrinting().serializeNulls().disableHtmlEscaping().create();
+
+      // We are also going to want a results structure.
+      DatabridgeResultsMessage theResults = null;
+
+      // we will want to send out the return message
+      AMQPMessage thisMessage = null;
+      AMQPRpcComms ac = null;
+      String headers = null;
+      String theJsonResults = null;
+      Properties theProps = new Properties();
+      boolean loadError = false;
+      try {
+         theProps.load(new FileInputStream (this.pathToAmqpPropsFile));
+         if (null == theProps) {
+            this.logger.log (Level.SEVERE, "Properties object is null");
+         }
+         // Grap the properties we need so we can create the basic handler.
+         ac = new AMQPRpcComms (theProps);
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Caught Exception trying to load prop file: " + e.getMessage(), e);
+         return;
+      }
+
+      if (loadError == false) {
+         // We need several pieces of information before we can continue.  This info has to 
+         // all be in the headers or we are toast.
+         HashMap<String,String> validationMap = new HashMap<String,String>();
+         validationMap.put("className", "");
+         validationMap.put("sourceNameSpace", "");
+         validationMap.put("targetNameSpace", "");
+         validationMap.put("params", "");
+
+         String returnString = inMessage.validateStringHeaders(stringHeaders, validationMap);
+         if (returnString.compareTo(DatabridgeResultsMessage.STATUS_OK) != 0) {
+            // The validation failed
+            this.logger.log (Level.SEVERE, "Validation Failure: " + returnString);
+
+            // Get the headers for the return message
+            headers = 
+              ReturnInsertMetadataJavaFileWithParams.getSendHeaders(DatabridgeResultsMessage.STATUS_ERROR);
+            this.logger.log (Level.INFO, "Send headers: " + headers);
+
+            theJsonResults = 
+               gson.toJson(new DatabridgeResultsMessage(false, "Validation Failure: " + returnString));
+            thisMessage = AMQPMessage.initRPCReplyMessage(inMessage, theJsonResults);
+            this.logger.log (Level.INFO, "Sent ReturnInsertMetadataJavaFileWithParams message.");
+         } else {
+            // Validation succeeded
+            // We declare an instance of the non-RPC handler so we can call it to
+            // service the incoming message.
+            IngestMetadataAMQPMessageHandler basicHandler = 
+               new IngestMetadataAMQPMessageHandler(this.dbType, this.dbName, this.dbHost, this.dbPort,
+                                    this.dbUser, this.dbPwd, this.pathToAmqpPropsFile);
+ 
+            try { 
+               // Call the routine from the basic handler
+               theResults = basicHandler.createMetadataSignatureJavaMetadataDbMessage(stringHeaders, extra);
+
+               // Get the headers for the return message
+               headers = 
+                 ReturnInsertMetadataJavaFileWithParams.getSendHeaders (DatabridgeResultsMessage.STATUS_OK);
+   
+               theJsonResults = gson.toJson(theResults);
+               thisMessage = AMQPMessage.initRPCReplyMessage(inMessage, theJsonResults);
+            } catch (Exception e) {
+               this.logger.log (Level.SEVERE, "Caught Exception calling basic handler: " + 
+                                e.getMessage(), e);
+               // Set up a failure message
+               String basicResult = DatabridgeResultsMessage.STATUS_ERROR + 
+                  " Caught Exception calling basic handler";
+               // Arguably we should create a new class here, but the headers don't matter much in RPC mode.
+               headers = ReturnInsertMetadataJavaFileWithParams.getSendHeaders (basicResult);
+               theJsonResults = 
+                 gson.toJson(new DatabridgeResultsMessage(false, 
+                               "Caught Exception calling basic handler" + e.getMessage()));
+   
+               thisMessage = AMQPMessage.initRPCReplyMessage(inMessage, theJsonResults);
+            }
+         }
+      }
+
+      // Now at this point, we want to publish the message whether we succeeded or failed.
+      try { 
+         ac.publishMessage ( thisMessage, headers, true);
+         this.logger.log (Level.INFO, "Sent ReturnInsertMetadataJavaFileWithParams message.");
+      } catch (Exception e) {
+          this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage(), e);
+      } finally {
+          if (null != ac) {
+              ac.shutdownConnection ();
+          }
       }
   }
 
@@ -175,7 +353,7 @@ public class IngestEngineRPCHandler implements AMQPMessageHandler {
 
                // Get the headers for the return message
                headers = 
-                 ReturnInsertMetadataJavaFileWithParams.getSendHeaders (DatabridgeResultsMessage.STATUS_ERROR);
+                 ReturnInsertMetadataJavaFileWithParams.getSendHeaders (DatabridgeResultsMessage.STATUS_OK);
    
                theJsonResults = gson.toJson(theResults);
                thisMessage = AMQPMessage.initRPCReplyMessage(inMessage, theJsonResults);

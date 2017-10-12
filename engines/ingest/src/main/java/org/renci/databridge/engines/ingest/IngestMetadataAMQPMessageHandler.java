@@ -42,6 +42,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
 
   protected MetadataDAOFactory metadataDAOFactory;
   protected String pathToAmqpPropsFile;
+  public static final String SUCCESS_MESSAGE = "DataBridge_OK";
 
   public IngestMetadataAMQPMessageHandler (int dbType, String dbName, String dbHost, int dbPort, 
                                            String dbUser, String dbPwd, String pathToAmqpPropsFile) { 
@@ -50,9 +51,115 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        MetadataDAOFactory.getMetadataDAOFactory (dbType, dbName, dbHost, dbPort, dbUser, dbPwd);
     this.metadataDAOFactory = mdf;
     this.pathToAmqpPropsFile = pathToAmqpPropsFile;
-
   }
 
+  /**
+   * Insert the ingest instance record into the mongo database.
+   * @param theFactory Used to instantiate the needed IngestInstanceDAO object
+   * @param stringHeaders A map of the headers provided in the message
+   * @param dataSource The souce of the ingested data
+   */
+  public DatabridgeResultsMessage insertIngestInstanceRecord(MetadataDAOFactory theFactory, 
+                                                             Map<String, String> stringHeaders,
+                                                             String dataSource) {
+      DatabridgeResultsMessage results = new DatabridgeResultsMessage();
+
+      // Set up the transfer object
+      IngestInstanceTransferObject theIngestInstance = new IngestInstanceTransferObject();
+      theIngestInstance.setClassName(stringHeaders.get(IngestMetadataMessage.CLASS));
+      theIngestInstance.setNameSpace(stringHeaders.get(IngestMetadataMessage.NAME_SPACE));
+      theIngestInstance.setInput(dataSource);
+      theIngestInstance.setParams(stringHeaders.get(IngestMetadataMessage.PARAMS));
+      boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
+      theIngestInstance.setFireEvent(fireEvent);
+
+      // Get the needed DAO
+      IngestInstanceDAO theDAO = theFactory.getIngestInstanceDAO();
+      try {
+         // let's find the highest version for this combination of nameSpace, className and method (if any)
+         HashMap<String, String> versionMap = new HashMap<String, String>();
+         versionMap.put("nameSpace", theIngestInstance.getNameSpace());
+         versionMap.put("className", theIngestInstance.getClassName());
+
+         HashMap<String, String> sortMap = new HashMap<String, String>();
+         sortMap.put("version", IngestInstanceDAO.SORT_DESCENDING);
+         Integer limit = new Integer(1);
+
+         // This is for the case of no previous instance
+         theIngestInstance.setVersion(1);
+         Iterator<IngestInstanceTransferObject> versionIterator =
+             theDAO.getIngestInstances(versionMap, sortMap, limit);
+         if (versionIterator.hasNext()) {
+            // Found a previous instance
+            IngestInstanceTransferObject prevInstance = versionIterator.next();
+            theIngestInstance.setVersion(prevInstance.getVersion() + 1);
+         }
+         boolean result = theDAO.insertIngestInstance(theIngestInstance);
+         if (result) {
+            results.setSuccess();
+            results.setResults("Can't insert ingest instance");
+         }
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't insert ingest instance");
+         results.setError();
+         results.setResults("Can't insert ingest instance");
+      }
+      return results;
+  }
+
+  /**
+   * Insert the signature instance record into the mongo database.
+   * @param theFactory Used to instantiate the needed IngestInstanceDAO object
+   * @param stringHeaders A map of the headers provided in the message
+   * @param dataSource The souce of the ingested data
+   */
+  public DatabridgeResultsMessage insertSignatureInstanceRecord(MetadataDAOFactory theFactory, 
+                                                                Map<String, String> stringHeaders) {
+      DatabridgeResultsMessage results = new DatabridgeResultsMessage();
+
+      // Set up the transfer object
+      SignatureInstanceTransferObject theSignatureInstance = new SignatureInstanceTransferObject();
+      theSignatureInstance.setClassName(stringHeaders.get(IngestMetadataMessage.CLASS));
+      theSignatureInstance.setSourceNameSpace(stringHeaders.get(IngestMetadataMessage.SOURCE_NAME_SPACE));
+      theSignatureInstance.setTargetNameSpace(stringHeaders.get(IngestMetadataMessage.TARGET_NAME_SPACE));
+      theSignatureInstance.setParams(stringHeaders.get(IngestMetadataMessage.PARAMS));
+      boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
+      theSignatureInstance.setFireEvent(fireEvent);
+
+      // Get the needed DAO
+      SignatureInstanceDAO theDAO = theFactory.getSignatureInstanceDAO();
+      try {
+         // let's find the highest version for this combination of nameSpace, className and method (if any)
+         HashMap<String, String> versionMap = new HashMap<String, String>();
+         versionMap.put("sourceNameSpace", theSignatureInstance.getSourceNameSpace());
+         versionMap.put("targetNameSpace", theSignatureInstance.getTargetNameSpace());
+         versionMap.put("className", theSignatureInstance.getClassName());
+
+         HashMap<String, String> sortMap = new HashMap<String, String>();
+         sortMap.put("version", SignatureInstanceDAO.SORT_DESCENDING);
+         Integer limit = new Integer(1);
+
+         // This is for the case of no previous instance
+         theSignatureInstance.setVersion(1);
+         Iterator<SignatureInstanceTransferObject> versionIterator =
+             theDAO.getSignatureInstances(versionMap, sortMap, limit);
+         if (versionIterator.hasNext()) {
+            // Found a previous instance
+            SignatureInstanceTransferObject prevInstance = versionIterator.next();
+            theSignatureInstance.setVersion(prevInstance.getVersion() + 1);
+         }
+         boolean result = theDAO.insertSignatureInstance(theSignatureInstance);
+         if (result) {
+            results.setSuccess();
+            results.setResults("Can't insert signature instance");
+         }
+      } catch (Exception e) {
+         this.logger.log (Level.SEVERE, "Can't insert signature instance");
+         results.setError();
+         results.setResults("Can't insert signature instance");
+      }
+      return results;
+  }
   @Override
   public void handle (AMQPMessage amqpMessage, Object extra) throws Exception {
      Map<String, String> stringHeaders = amqpMessage.getStringHeaders ();
@@ -64,19 +171,19 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
         logger.log(Level.WARNING, "messageName is missing");
      } else if
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_URI_METADATADB) == 0) {
-        processInsertMetadataMessage(stringHeaders, extra);
+        results = processInsertMetadataMessage(stringHeaders, extra);
      } else if
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_FILES_METADATADB) == 0) {
-        processInsertMetadataFilesMessage(stringHeaders, extra);
+        results = processInsertMetadataFilesMessage(stringHeaders, extra);
      } else if
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_FILEWITHPARAMS_METADATADB) == 0) {
         results = processInsertMetadataFileWithParamsMessage(stringHeaders, extra);
      } else if
          (messageName.compareTo(IngestMetadataMessage.INSERT_METADATA_JAVA_BINARYFILES_METADATADB) == 0) {
-        processInsertBinaryMetadataFilesMessage(stringHeaders, extra);
+        results = processInsertBinaryMetadataFilesMessage(stringHeaders, extra);
      } else if
          (messageName.compareTo(IngestMetadataMessage.CREATE_METADATA_SIGNATURE_JAVA_METADATADB) == 0) {
-        createMetadataSignatureJavaMetadataDbMessage(stringHeaders, extra);
+        results = createMetadataSignatureJavaMetadataDbMessage(stringHeaders, extra);
      } else {
          logger.log(Level.WARNING, "unimplemented messageName: " + messageName);
      }
@@ -87,12 +194,14 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects
    */
-    public void processInsertMetadataMessage(Map<String, String> stringHeaders, Object extra) {
+    public DatabridgeResultsMessage processInsertMetadataMessage(Map<String, String> stringHeaders, 
+                                                                 Object extra) {
 
        String className = stringHeaders.get (IngestMetadataMessage.CLASS);
        String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
        boolean fireEvent = new Boolean (stringHeaders.get (IngestMetadataMessage.FIRE_EVENT)).booleanValue ();
        String inputURI = stringHeaders.get (IngestMetadataMessage.INPUT_URI);
+       DatabridgeResultsMessage theInsertResult = new DatabridgeResultsMessage();
 
        // @todo add a message NAME demux like in RelevanceEngineMessageHandler
 
@@ -103,7 +212,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
          e.printStackTrace();
-         return;
+         return new DatabridgeResultsMessage(false, "Can't instantiate class " + className);
       }
 
        mf.setLogger (this.logger);
@@ -113,7 +222,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't read the inputURI:  " + inputURI);
          e.printStackTrace();
-         return;
+         return new DatabridgeResultsMessage(false, "Can't read the inputURI:  " + inputURI);
       }
 
        // dispatch to third-party formatter 
@@ -123,7 +232,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't perform format operation");
          e.printStackTrace();
-         return;
+         return new DatabridgeResultsMessage(false, "Can't perform format operation");
        }
 
        for (MetadataObject mo : metadataObjects) {
@@ -133,8 +242,14 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          } catch (Exception e) {
            this.logger.log (Level.SEVERE, "Can't insert MetadataObject.");
            e.printStackTrace();
-           return;
+           return new DatabridgeResultsMessage(false, "Can't insert MetadataObject.");
          }
+       }
+
+       // Add the Ingest Instance record.
+       theInsertResult = insertIngestInstanceRecord(this.metadataDAOFactory, stringHeaders, inputURI);
+       if (theInsertResult.isSuccess() == false) {
+           return new DatabridgeResultsMessage(false, "Can't insert the IngestInstance Record.");
        }
 
        if (fireEvent) {
@@ -146,6 +261,8 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          ac.shutdownConnection ();     
          this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
        }
+
+       return new DatabridgeResultsMessage(true, this.SUCCESS_MESSAGE);
     }
 
 
@@ -154,7 +271,8 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects
    */
-    public void processInsertMetadataFilesMessage(Map<String, String> stringHeaders, Object extra) {
+    public DatabridgeResultsMessage processInsertMetadataFilesMessage(Map<String, String> stringHeaders, 
+                                                                      Object extra) {
 
        String className = stringHeaders.get (IngestMetadataMessage.CLASS);
        String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
@@ -168,7 +286,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
          e.printStackTrace();
-         return;
+         return new DatabridgeResultsMessage(false, "Can't instantiate class " + className);
       }
 
        mf.setLogger (this.logger);
@@ -180,7 +298,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
           bytes = mf.getBytes((Object) inputDir);
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Problems with the inputDir:  " + inputDir, e );
-         return;
+         return new DatabridgeResultsMessage(false, "Problems with the inputDir:  " + inputDir);
       }
 
        // dispatch to third-party formatter 
@@ -189,7 +307,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
            metadataObjects = mf.format (bytes);
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't perform format operation", e);
-         return;
+         return new DatabridgeResultsMessage(false, "Can't perform format operation");
        }
 
        for (MetadataObject mo : metadataObjects) {
@@ -198,8 +316,15 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
            this.logger.log (Level.FINE, "Inserted MetadataObject.");
          } catch (Exception e) {
            this.logger.log (Level.SEVERE, "Can't insert MetadataObject.", e);
-           return;
+           return new DatabridgeResultsMessage(false, "Can't insert MetadataObject.");
          }
+       }
+
+       // Add the Ingest Instance record.
+       DatabridgeResultsMessage theInsertResult = 
+          insertIngestInstanceRecord(this.metadataDAOFactory, stringHeaders, inputDir);
+       if (theInsertResult.isSuccess() == false) {
+           return new DatabridgeResultsMessage(false, "Can't insert the IngestInstance Record.");
        }
 
        if (fireEvent) {
@@ -211,6 +336,8 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          ac.shutdownConnection ();     
          this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
        }
+
+       return new DatabridgeResultsMessage(true, this.SUCCESS_MESSAGE);
     }
 
   /**
@@ -218,7 +345,8 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects
    */
-    public void processInsertBinaryMetadataFilesMessage(Map<String, String> stringHeaders, Object extra) {
+    public DatabridgeResultsMessage 
+       processInsertBinaryMetadataFilesMessage(Map<String, String> stringHeaders, Object extra) {
 
        String className = stringHeaders.get (IngestMetadataMessage.CLASS);
        String nameSpace = stringHeaders.get (IngestMetadataMessage.NAME_SPACE);
@@ -232,7 +360,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
          e.printStackTrace();
-         return;
+         return new DatabridgeResultsMessage(false, "Can't instantiate class " + className);
       }
 
        ingester.setLogger (this.logger);
@@ -245,7 +373,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
            metadataObjects = ingester.binaryToMetadata (inputDir);
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't perform format operation", e);
-         return;
+         return new DatabridgeResultsMessage(false, "Can't perform format operation");
        }
 
        for (MetadataObject mo : metadataObjects) {
@@ -254,8 +382,15 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
            this.logger.log (Level.FINE, "Inserted MetadataObject.");
          } catch (Exception e) {
            this.logger.log (Level.SEVERE, "Can't insert MetadataObject.", e);
-           return;
+           return new DatabridgeResultsMessage(false, "Can't insert MetadataObject.");
          }
+       }
+
+       // Add the Ingest Instance record.
+       DatabridgeResultsMessage theInsertResult = 
+          insertIngestInstanceRecord(this.metadataDAOFactory, stringHeaders, inputDir);
+       if (theInsertResult.isSuccess() == false) {
+           return new DatabridgeResultsMessage(false, "Can't insert the IngestInstance Record.");
        }
 
        if (fireEvent) {
@@ -267,6 +402,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          ac.shutdownConnection ();     
          this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
        }
+       return new DatabridgeResultsMessage(true, this.SUCCESS_MESSAGE);
     }
 
   /**
@@ -332,6 +468,13 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          }
        }
 
+       // Add the Ingest Instance record.
+       DatabridgeResultsMessage theInsertResult = 
+          insertIngestInstanceRecord(this.metadataDAOFactory, stringHeaders, inputFile);
+       if (theInsertResult.isSuccess() == false) {
+           return new DatabridgeResultsMessage(false, "Can't insert the IngestInstance Record.");
+       }
+
        if (fireEvent) {
          // send ProcessedMetadataToMetadataDB message 
          AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
@@ -349,7 +492,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects
    */
-    public void 
+    public DatabridgeResultsMessage 
        createMetadataSignatureJavaMetadataDbMessage(Map<String, String> stringHeaders, Object extra) {
 
        String className = stringHeaders.get (IngestMetadataMessage.CLASS);
@@ -371,7 +514,7 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
        } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
          e.printStackTrace();
-         return;
+         return new DatabridgeResultsMessage(false, "Can't instantiate class " + className);
       }
 
        theProcessor.setLogger (this.logger);
@@ -405,9 +548,19 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
            }
         } catch (Exception e) {
            this.logger.log (Level.SEVERE, "Can't insert MetadataObject.", e);
-           return;
+           return new DatabridgeResultsMessage(false, "Can't create the requested signature");
         }
 
+       // Add the Signature Instance record.
+       DatabridgeResultsMessage theInsertResult = 
+           insertSignatureInstanceRecord(this.metadataDAOFactory, stringHeaders);
+       if (theInsertResult.isSuccess() == false) {
+           return new DatabridgeResultsMessage(false, "Can't insert the SignatureInstance Record.");
+       }
+
+// This doesn't quite make sense as written, maybe we should send something else out
+// which is why I haven't deleted this code.
+/*
        if (fireEvent) {
          // send ProcessedMetadataToMetadataDB message 
          AMQPComms ac = new AMQPComms (this.pathToAmqpPropsFile);
@@ -417,6 +570,8 @@ public class IngestMetadataAMQPMessageHandler implements AMQPMessageHandler {
          ac.shutdownConnection ();     
          this.logger.log (Level.FINE, "Sent ProcessedMetadataToMetadataDB message.");
        }
+ */
+       return (new DatabridgeResultsMessage(true, "Signature successfully inserted"));
     }
 
 

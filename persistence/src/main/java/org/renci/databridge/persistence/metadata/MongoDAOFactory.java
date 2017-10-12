@@ -91,6 +91,14 @@ public class MongoDAOFactory extends MetadataDAOFactory {
         return new MongoLaneDAO();
     } 
 
+    public IngestInstanceDAO getIngestInstanceDAO() {
+        return new MongoIngestInstanceDAO();
+    } 
+
+    public SignatureInstanceDAO getSignatureInstanceDAO() {
+        return new MongoSignatureInstanceDAO();
+    } 
+
     /**
      * Get db.
      *

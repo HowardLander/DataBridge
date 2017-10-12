@@ -32,6 +32,8 @@ public class IngestMetadataMessage implements AMQPMessageType {
                             "Insert.Metadata.Java.FileWithParams.MetadataDB.RPC";
   public static final String CREATE_METADATA_SIGNATURE_JAVA_METADATADB = 
                             "Create.Metadata.Signature.Java.MetadataDB";
+  public static final String CREATE_METADATA_SIGNATURE_JAVA_METADATADB_RPC = 
+                            "Create.Metadata.Signature.Java.MetadataDB.RPC";
   @Override
   public String getBindHeaders () {
      return bindHeaders;

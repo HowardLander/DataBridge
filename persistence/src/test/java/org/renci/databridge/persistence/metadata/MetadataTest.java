@@ -627,6 +627,250 @@ public class MetadataTest {
      }
   }
 
+  @Test
+  public void testIngestInstanceDAO () throws Exception {
+
+     Logger.getRootLogger().setLevel(Level.OFF);
+     System.out.println("");
+     System.out.println("");
+     System.out.println("beginning testIngestInstanceDAO");
+     boolean result;
+
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
+     IngestInstanceTransferObject theIngestInstance = new IngestInstanceTransferObject();
+     theIngestInstance.setNameSpace("junit_test");
+     theIngestInstance.setClassName("MockIngest");
+     theIngestInstance.setInput("/home/howard/testOutput");
+     theIngestInstance.setVersion(1);
+     theIngestInstance.setParams("test1");
+
+     try {
+         IngestInstanceDAO theIngestInstanceDAO = theMongoFactory.getIngestInstanceDAO();
+         result = theIngestInstanceDAO.insertIngestInstance(theIngestInstance);
+         System.out.println("done with insert");
+         System.out.println("inserted Id is: " + theIngestInstance.getDataStoreId());
+         System.out.println("testing get");
+
+         // Let's try the getById
+         IngestInstanceTransferObject byId = 
+             theIngestInstanceDAO.getIngestInstanceById(theIngestInstance.getDataStoreId());
+         System.out.println("Testing getIngestInstanceById");
+         TestCase.assertTrue("nameSpaces don't match", byId.getNameSpace().compareTo("junit_test") == 0);
+
+         HashMap<String, String> searchMap = new HashMap<String, String>();
+         searchMap.put("nameSpace", "junit_test");
+         Iterator<IngestInstanceTransferObject> similarityInstanceIterator = 
+            theIngestInstanceDAO.getIngestInstances(searchMap);
+         System.out.println ("Do we have next? " +  similarityInstanceIterator.hasNext());
+
+         if (similarityInstanceIterator.hasNext()) {
+             IngestInstanceTransferObject getObj = similarityInstanceIterator.next(); 
+             System.out.println("className: " + getObj.getClassName());
+             System.out.println("insertTime is " + getObj.getInsertTime());
+             long now = System.currentTimeMillis()/1000;
+             TestCase.assertTrue("insertTime is unreasonable (" + (now - getObj.getInsertTime()) + ")" , (now - getObj.getInsertTime()) < 5 );
+             TestCase.assertTrue("classname doesn't match", 
+                 getObj.getClassName().compareTo("MockIngest") == 0);
+             TestCase.assertTrue("nameSpaces don't match", 
+                 getObj.getNameSpace().compareTo("junit_test") == 0);
+             TestCase.assertTrue("inputs don't match", 
+                 getObj.getInput().compareTo("/home/howard/testOutput") == 0);
+             TestCase.assertTrue("params don't match", 
+                 getObj.getParams().compareTo("test1") == 0);
+
+             // Now we'll try to delete the object
+             HashMap<String, String> deleteMap = new HashMap<String, String>();
+             deleteMap.put("_id", getObj.getDataStoreId());
+             int nDeleted = theIngestInstanceDAO.deleteIngestInstance(deleteMap);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+
+             // One more insert so we can try deleteCollectionById
+             result = theIngestInstanceDAO.insertIngestInstance(theIngestInstance);
+             nDeleted = theIngestInstanceDAO.deleteIngestInstance(theIngestInstance);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted by Id not 1", nDeleted == 1);
+         }
+
+         // Now let's test multiple insertions, gets and deletes
+         for (int i = 0; i < 5; i ++) {
+             theIngestInstance.setVersion(i);
+             result = theIngestInstanceDAO.insertIngestInstance(theIngestInstance);
+         }
+
+         // let's test the count collections code.
+         HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
+         nameSpaceMap.put("nameSpace", "junit_test");
+         long theCount = theIngestInstanceDAO.countIngestInstances(nameSpaceMap);
+         System.out.println("countCollections found " + theCount + " matches");
+         TestCase.assertTrue("count of collections found not 5", theCount == 5);
+
+         // Set up the search map to test the sortingi/limit code
+         HashMap<String, String> versionMap = new HashMap<String, String>();
+         versionMap.put("nameSpace", "junit_test");
+         versionMap.put("className", "MockIngest");
+         versionMap.put("method", "compareCollections");
+
+         HashMap<String, String> sortMap = new HashMap<String, String>();
+         sortMap.put("version", IngestInstanceDAO.SORT_DESCENDING);
+         Integer limit = new Integer(1);
+
+         int nFound = 0;
+         int nDeleted = 0;
+         int totalDeleted = 0;
+         int highestVersionFound = 0;
+
+         // Test the sort first before the records are deleted.
+         Iterator<IngestInstanceTransferObject> iterator1 =
+          theIngestInstanceDAO.getIngestInstances(searchMap, sortMap, limit);
+         theIngestInstance = iterator1.next();
+         System.out.println("highest version found: " + theIngestInstance.getVersion());
+
+         // This better be the highest version number (4)
+         TestCase.assertTrue("version number (" + theIngestInstance.getVersion() + ") is wrong (should be 4", theIngestInstance.getVersion() == 4);
+ 
+         Iterator<IngestInstanceTransferObject> nameSpaceIterator = 
+            theIngestInstanceDAO.getIngestInstances(nameSpaceMap);
+         IngestInstanceTransferObject getObj = null;
+         while (nameSpaceIterator.hasNext()) {
+             getObj = nameSpaceIterator.next(); 
+             System.out.println("retrieved version: " + getObj.getVersion());
+             nDeleted = theIngestInstanceDAO.deleteIngestInstance(getObj);
+             System.out.println("nDeleted: " + nDeleted);
+             nFound ++;
+             totalDeleted += nDeleted;
+         }
+         System.out.println("number found:" + nFound);
+         TestCase.assertTrue("total found not 5", nFound == 5);
+         TestCase.assertTrue("totalDeleted by Id not 5", totalDeleted == 5);
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
+  }
+
+  @Test
+  public void testSignatureInstanceDAO () throws Exception {
+
+     Logger.getRootLogger().setLevel(Level.OFF);
+     System.out.println("");
+     System.out.println("");
+     System.out.println("beginning testSignatureInstanceDAO");
+     boolean result;
+
+     MetadataDAOFactory theMongoFactory = 
+        MetadataDAOFactory.getMetadataDAOFactory(MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues");
+     SignatureInstanceTransferObject theSignatureInstance = new SignatureInstanceTransferObject();
+     theSignatureInstance.setClassName("MockSignature");
+     theSignatureInstance.setSourceNameSpace("junit_test_source");
+     theSignatureInstance.setTargetNameSpace("junit_test_target");
+     theSignatureInstance.setVersion(1);
+     theSignatureInstance.setParams("test1");
+
+     try {
+         SignatureInstanceDAO theSignatureInstanceDAO = theMongoFactory.getSignatureInstanceDAO();
+         result = theSignatureInstanceDAO.insertSignatureInstance(theSignatureInstance);
+         System.out.println("done with insert");
+         System.out.println("inserted Id is: " + theSignatureInstance.getDataStoreId());
+         System.out.println("testing get");
+
+         // Let's try the getById
+         SignatureInstanceTransferObject byId = 
+             theSignatureInstanceDAO.getSignatureInstanceById(theSignatureInstance.getDataStoreId());
+         System.out.println("Testing getSignatureInstanceById");
+         TestCase.assertTrue("nameSpaces don't match", byId.getSourceNameSpace().compareTo("junit_test_source") == 0);
+
+         HashMap<String, String> searchMap = new HashMap<String, String>();
+         searchMap.put("sourceNameSpace", "junit_test_source");
+         Iterator<SignatureInstanceTransferObject> similarityInstanceIterator = 
+            theSignatureInstanceDAO.getSignatureInstances(searchMap);
+         System.out.println ("Do we have next? " +  similarityInstanceIterator.hasNext());
+
+         if (similarityInstanceIterator.hasNext()) {
+             SignatureInstanceTransferObject getObj = similarityInstanceIterator.next(); 
+             System.out.println("className: " + getObj.getClassName());
+             System.out.println("insertTime is " + getObj.getInsertTime());
+             long now = System.currentTimeMillis()/1000;
+             TestCase.assertTrue("insertTime is unreasonable (" + (now - getObj.getInsertTime()) + ")" , (now - getObj.getInsertTime()) < 5 );
+             TestCase.assertTrue("classname doesn't match", 
+                 getObj.getClassName().compareTo("MockSignature") == 0);
+             TestCase.assertTrue("source nameSpaces don't match", 
+                 getObj.getSourceNameSpace().compareTo("junit_test_source") == 0);
+             TestCase.assertTrue("target nameSpaces don't match", 
+                 getObj.getTargetNameSpace().compareTo("junit_test_target") == 0);
+             TestCase.assertTrue("params don't match", 
+                 getObj.getParams().compareTo("test1") == 0);
+
+             // Now we'll try to delete the object
+             HashMap<String, String> deleteMap = new HashMap<String, String>();
+             deleteMap.put("_id", getObj.getDataStoreId());
+             int nDeleted = theSignatureInstanceDAO.deleteSignatureInstance(deleteMap);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted not 1", nDeleted == 1);
+
+             // One more insert so we can try deleteCollectionById
+             result = theSignatureInstanceDAO.insertSignatureInstance(theSignatureInstance);
+             nDeleted = theSignatureInstanceDAO.deleteSignatureInstance(theSignatureInstance);
+             System.out.println("nDeleted: " + nDeleted);
+             TestCase.assertTrue("nDeleted by Id not 1", nDeleted == 1);
+         }
+
+         // Now let's test multiple insertions, gets and deletes
+         for (int i = 0; i < 5; i ++) {
+             theSignatureInstance.setVersion(i);
+             result = theSignatureInstanceDAO.insertSignatureInstance(theSignatureInstance);
+         }
+
+         // let's test the count collections code.
+         HashMap<String, String> nameSpaceMap = new HashMap<String, String>();
+         nameSpaceMap.put("sourceNameSpace", "junit_test_source");
+         long theCount = theSignatureInstanceDAO.countSignatureInstances(nameSpaceMap);
+         System.out.println("countCollections found " + theCount + " matches");
+         TestCase.assertTrue("count of collections found not 5", theCount == 5);
+
+         // Set up the search map to test the sortingi/limit code
+         HashMap<String, String> versionMap = new HashMap<String, String>();
+         versionMap.put("sourceNameSpace", "junit_test_source");
+         versionMap.put("className", "MockSignature");
+         versionMap.put("method", "compareCollections");
+
+         HashMap<String, String> sortMap = new HashMap<String, String>();
+         sortMap.put("version", SignatureInstanceDAO.SORT_DESCENDING);
+         Integer limit = new Integer(1);
+
+         int nFound = 0;
+         int nDeleted = 0;
+         int totalDeleted = 0;
+         int highestVersionFound = 0;
+
+         // Test the sort first before the records are deleted.
+         Iterator<SignatureInstanceTransferObject> iterator1 =
+          theSignatureInstanceDAO.getSignatureInstances(searchMap, sortMap, limit);
+         theSignatureInstance = iterator1.next();
+         System.out.println("highest version found: " + theSignatureInstance.getVersion());
+
+         // This better be the highest version number (4)
+         TestCase.assertTrue("version number (" + theSignatureInstance.getVersion() + ") is wrong (should be 4", theSignatureInstance.getVersion() == 4);
+ 
+         Iterator<SignatureInstanceTransferObject> nameSpaceIterator = 
+            theSignatureInstanceDAO.getSignatureInstances(nameSpaceMap);
+         SignatureInstanceTransferObject getObj = null;
+         while (nameSpaceIterator.hasNext()) {
+             getObj = nameSpaceIterator.next(); 
+             System.out.println("retrieved version: " + getObj.getVersion());
+             nDeleted = theSignatureInstanceDAO.deleteSignatureInstance(getObj);
+             System.out.println("nDeleted: " + nDeleted);
+             nFound ++;
+             totalDeleted += nDeleted;
+         }
+         System.out.println("number found:" + nFound);
+         TestCase.assertTrue("total found not 5", nFound == 5);
+         TestCase.assertTrue("totalDeleted by Id not 5", totalDeleted == 5);
+     }  catch (Exception e) {
+         e.printStackTrace();
+     }
+  }
+
 
   @Test(expected=UnsupportedOperationException.class)
   public void testRemove () throws Exception {
