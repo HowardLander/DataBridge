@@ -119,7 +119,7 @@ public class CollectionTransferReadWrite {
         searchMap.put("nameSpace", nameSpace);
         Iterator<CollectionTransferObject> iterator1 = theCollectionDAO.getCollections(searchMap);
 
-        if (iterator1.hasNext()) {
+        while (iterator1.hasNext()) {
            CollectionTransferObject cto1 = iterator1.next();
            nodeWriter.write(gson.toJson(cto1));
         }

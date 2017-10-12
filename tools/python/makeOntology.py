@@ -27,11 +27,13 @@ graph.add((DBfN.Clinical, RDFS.comment, Literal("Highest level of ontology")))
 workbook = sys.argv[1]
 outFile = sys.argv[2]
 lastRow = int(sys.argv[3])
+sheet = sys.argv[4]
 
 wb = open_workbook(workbook)
 for s in wb.sheets():
-   if (s.name == 'SCZ Clin Model Groups'):
-       for row in range (2,lastRow):
+ # if (s.name == 'SCZ Clin Model Groups'):
+   if (s.name == sheet):
+       for row in range (4,lastRow):
           if (s.cell(row,1).value != ""):
              thisValue = (s.cell(row,0).value)
              theseValues = thisValue.split('>')

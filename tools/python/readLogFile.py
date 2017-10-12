@@ -46,6 +46,8 @@ for thisLine in lines:
      for thisSplitMsg in splitMsg:
   #     print thisSplitMsg
         keyValuePair = thisSplitMsg.split("=")
-        msgDict[keyValuePair[0]] = keyValuePair[1]
-     if ((targetMsg == "") or ((msgDict['name'].find(targetMsg)) != -1)):
-        printMsg(msgDict)
+        if (len(keyValuePair) >= 2):
+           msgDict[keyValuePair[0]] = keyValuePair[1]
+     if 'name' in msgDict.keys():
+        if ((targetMsg == "") or ((msgDict['name'].find(targetMsg)) != -1)):
+           printMsg(msgDict)
