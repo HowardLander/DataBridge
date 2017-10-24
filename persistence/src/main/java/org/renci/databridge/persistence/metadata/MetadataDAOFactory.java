@@ -9,6 +9,7 @@ public abstract class MetadataDAOFactory {
     public abstract FileDAO getFileDAO();
     public abstract VariableDAO getVariableDAO();
     public abstract SimilarityInstanceDAO getSimilarityInstanceDAO();
+    public abstract SimilarityAlgorithmDAO getSimilarityAlgorithmDAO();
     public abstract SNAInstanceDAO getSNAInstanceDAO();
     public abstract ActionDAO getActionDAO();
     public abstract NameSpaceDAO getNameSpaceDAO();

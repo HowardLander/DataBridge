@@ -75,6 +75,10 @@ public class MongoDAOFactory extends MetadataDAOFactory {
         return new MongoSimilarityInstanceDAO();
     } 
 
+    public SimilarityAlgorithmDAO getSimilarityAlgorithmDAO() {
+        return new MongoSimilarityAlgorithmDAO();
+    } 
+
     public SNAInstanceDAO getSNAInstanceDAO() {
         return new MongoSNAInstanceDAO();
     } 
