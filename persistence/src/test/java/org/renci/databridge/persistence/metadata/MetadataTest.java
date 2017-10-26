@@ -564,7 +564,7 @@ public class MetadataTest {
          versionMap.put("className", "MockSimilarity");
 
          HashMap<String, String> sortMap = new HashMap<String, String>();
-         sortMap.put("version", SimilarityAlgorithmDAO.SORT_DESCENDING);
+         sortMap.put("_id", SimilarityAlgorithmDAO.SORT_DESCENDING);
          Integer limit = new Integer(1);
 
          int nFound = 0;

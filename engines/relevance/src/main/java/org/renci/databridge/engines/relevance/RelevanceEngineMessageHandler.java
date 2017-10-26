@@ -263,30 +263,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
           params = "";
       }
 
-      // 5) the engine params aren't always needed
-      boolean normalize = false;
-      boolean distance = false;
-      double  maxValue = 1.;
-      boolean includeAll = false;
-      String engineParams = stringHeaders.get(RelevanceEngineMessage.ENGINE_PARAMS);    
-      if (null == engineParams) {
-          engineParams = "";
-      } else {
-          if (engineParams.indexOf(RelevanceEngineMessage.NORMALIZE) != -1) {
-             normalize = true;
-          } 
-          if (engineParams.indexOf(RelevanceEngineMessage.DISTANCE) != -1) {
-             distance = true;
-          } 
-          if (engineParams.indexOf(RelevanceEngineMessage.INCLUDE_ALL) != -1) {
-             includeAll = true;
-          } 
-      }
-
-      this.logger.log (Level.INFO, "normalize: " + normalize);
-      this.logger.log (Level.INFO, "distance: " + distance);
+      // include all used to be part of the invocation specific engine parameters. But I can't think
+      // of any good reason to not always return all the data for the collection.  I'll leave this here
+      // just in case we eventually want to re-instate it (which I suppose could happen for performance
+      // reasons).
+      boolean includeAll = true;
       long count;
-      // 6) the count. This is optional, if no count is specified do the whole nameSpace
+      // 5) the count. This is optional, if no count is specified do the whole nameSpace
       String countString = stringHeaders.get(RelevanceEngineMessage.COUNT);    
       if (null == countString) {
          // This is OK
@@ -338,6 +321,45 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
              return;
           }
       }
+
+      // the engine params aren't always needed, but instead of pulling them out of the headers,
+      // we are now going to pull them out of the persistence store for this class.  This is because,
+      // as far as we can tell, these parameters are invariant for any given class implementation.
+      boolean normalize = false;
+      boolean distance = false;
+      double  maxValue = 1.;
+
+      SimilarityAlgorithmDAO theSimilarityAlgorithmDAO = theFactory.getSimilarityAlgorithmDAO();
+      if (null == theSimilarityAlgorithmDAO) {
+         this.logger.log (Level.SEVERE, "SimilarityAlgorithmDAO is null");
+         return;
+      }
+
+      HashMap<String, String> searchMap = new HashMap<String, String>();
+      searchMap.put("className", className);
+      HashMap<String, String> sortMap = new HashMap<String, String>();
+         sortMap.put("_id", SimilarityAlgorithmDAO.SORT_DESCENDING);
+      Integer limit = new Integer(1);
+
+      // Find the most recent version of the algorithm, so we can grab any engine params.
+      Iterator<SimilarityAlgorithmTransferObject> similarityAlgorithmIterator =
+         theSimilarityAlgorithmDAO.getSimilarityAlgorithms(searchMap, sortMap, limit);
+      SimilarityAlgorithmTransferObject theSimilarityAlgorithm = similarityAlgorithmIterator.next();
+
+      String engineParams = theSimilarityAlgorithm.getEngineParams();
+      if (null == engineParams) {
+          engineParams = "";
+      } else {
+          if (engineParams.indexOf(RelevanceEngineMessage.NORMALIZE) != -1) {
+             normalize = true;
+          } 
+          if (engineParams.indexOf(RelevanceEngineMessage.DISTANCE) != -1) {
+             distance = true;
+          } 
+      }
+
+      this.logger.log (Level.INFO, "normalize: " + normalize);
+      this.logger.log (Level.INFO, "distance: " + distance);
       // Let's add the SimilarityInstance.
       SimilarityInstanceTransferObject theSimilarityInstance = new SimilarityInstanceTransferObject();
       theSimilarityInstance.setNameSpace(nameSpace);
@@ -348,19 +370,18 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       theSimilarityInstance.setParams(params);
 
       // let's find the highest version for this combination of nameSpace, className and method (if any)
-      HashMap<String, String> versionMap = new HashMap<String, String>();
-      versionMap.put("nameSpace", nameSpace);
-      versionMap.put("className", className);
-      versionMap.put("method", "compareCollections");
+      HashMap<String, String> simVersionMap = new HashMap<String, String>();
+      simVersionMap.put("nameSpace", nameSpace);
+      simVersionMap.put("className", className);
+      simVersionMap.put("method", "compareCollections");
       
-      HashMap<String, String> sortMap = new HashMap<String, String>();
-      sortMap.put("version", SimilarityInstanceDAO.SORT_DESCENDING);
-      Integer limit = new Integer(1);
+      HashMap<String, String> simSortMap = new HashMap<String, String>();
+      simSortMap.put("version", SimilarityInstanceDAO.SORT_DESCENDING);
 
       // This is for the case of no previous instance
       theSimilarityInstance.setVersion(1);
       Iterator<SimilarityInstanceTransferObject> versionIterator =
-          theSimilarityInstanceDAO.getSimilarityInstances(versionMap, sortMap, limit);
+          theSimilarityInstanceDAO.getSimilarityInstances(simVersionMap, simSortMap, limit);
       if (versionIterator.hasNext()) {
          // Found a previous instance
          SimilarityInstanceTransferObject prevInstance = versionIterator.next();
@@ -375,13 +396,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       }
       
       // Search for all of the collections in the nameSpace
-      HashMap<String, String> searchMap = new HashMap<String, String>();
-      searchMap.put("nameSpace", nameSpace);
+      HashMap<String, String> collectionSearchMap = new HashMap<String, String>();
+      collectionSearchMap.put("nameSpace", nameSpace);
  
       // We need an array list of collectionIds
       ArrayList<String> collectionIds = new ArrayList<String>();
 
-      long nCollections = theCollectionDAO.countCollections(searchMap);
+      long nCollections = theCollectionDAO.countCollections(collectionSearchMap);
       this.logger.log (Level.INFO, "number of collections: " + nCollections);
 
       if (nCollections <= 0) {
