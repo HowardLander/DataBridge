@@ -21,6 +21,7 @@ public class RelevanceEngineMessage implements AMQPMessageType {
 
   // Message types for the relevance engine
   public static final String CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI = "Create.SimilarityMatrix.Java.MetadataDB.URI";
+  public static final String CREATE_SIMILARITYMATRIX_JAVA_METADATADB_URI_RPC = "Create.SimilarityMatrix.Java.MetadataDB.URI.RPC";
 
   @Override
   public String getBindHeaders () {

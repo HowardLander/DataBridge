@@ -4,6 +4,12 @@ import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+import com.google.gson.*;
+import java.util.*;
+import java.net.*;
+import java.io.*;
 
 /**
  * This class holds the message type and byte array for a 
@@ -36,6 +42,7 @@ public class AMQPMessage {
      // The tag from the correlationId field
      private String tag;
 
+
      // The AMQPDirectComms object that produced this message.  Needed for ack/reply
      private AMQPDirectComms comms = null;
 
@@ -63,7 +70,8 @@ public class AMQPMessage {
       *  @param  inMessage the input message from which to extract the reply info
       *  @param  results the content of the message
       */
-     public static AMQPMessage initRPCReplyMessage(AMQPMessage inMessage, String theResults) {
+     public static AMQPMessage initRPCReplyMessage(AMQPMessage inMessage,
+                                                   String      theResults ){
          AMQPMessage thisMessage = new AMQPMessage();
          thisMessage.setTag(inMessage.getTag());
          thisMessage.setReplyQueue(inMessage.getReplyQueue());
@@ -72,6 +80,66 @@ public class AMQPMessage {
          return thisMessage;
      }
 
+    /**
+     * Handle the FIND_CLOSEST_MATCHES_IN_NETWORK message finding the relevant
+     * @param stringHeaders A map of the headers provided in the message
+     * @param extra An object containing the needed DAO objects
+     * @param amqpMessage The tag incoming message, needed to populate the outgoing message
+     */
+  public static void sendRPCReply( boolean status, String returnText, AMQPMessage inMessage, String propFile, String headers) {
+
+      Logger logger = Logger.getLogger ("org.renci.databridge.util");
+      logger.log (Level.INFO, "replyQueue is: " + inMessage.getReplyQueue());
+      // Let's create a Gson object to use to convert our results struct to json
+      // We are also going to want a results structure.
+      DatabridgeResultsMessage theResults = null;
+
+      // we will want to send out the return message
+      AMQPMessage thisMessage = null;
+      AMQPRpcComms ac = null;
+      String theJsonResults = null;
+      Properties theProps = new Properties();
+      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).setPrettyPrinting().serializeNulls().disableHtmlEscaping().create();
+      boolean loadError = false;
+      try {
+         theProps.load(new FileInputStream (propFile));
+         if (null == theProps) {
+            logger.log (Level.SEVERE, "Properties object is null");
+         }
+         // Grap the properties we need so we can create the basic handler.
+         ac = new AMQPRpcComms (theProps);
+      } catch (Exception e) {
+         logger.log (Level.SEVERE, "Caught Exception trying to load prop file: " + e.getMessage(), e);
+         loadError = true;
+      }
+
+      if (loadError == false) {
+         // Get the headers for the return message
+         String messageStatus = DatabridgeResultsMessage.STATUS_OK;
+         if (status == false) {
+            messageStatus = DatabridgeResultsMessage.STATUS_ERROR;
+         }
+
+         theJsonResults =
+            gson.toJson(new DatabridgeResultsMessage(status, returnText));
+         thisMessage = AMQPMessage.initRPCReplyMessage(inMessage, theJsonResults);
+         logger.log (Level.INFO, "Return  message is ready.");
+      }
+
+      // Now at this point, we want to publish the message whether we succeeded or failed.
+      if (ac != null){
+         try {
+            ac.publishMessage ( thisMessage, headers, true);
+            logger.log (Level.INFO, "Sending RPC reply");
+         } catch (Exception e) {
+             logger.log (Level.SEVERE, "Caught Exception sending rpc message: " + e.getMessage(), e);
+         } finally {
+             if (null != ac) {
+                 ac.shutdownConnection ();
+             }
+         }
+      }
+  }
      
      /**
       * Get bytes for the message.

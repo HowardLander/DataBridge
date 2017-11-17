@@ -39,7 +39,7 @@ public class RelevanceEngine {
             props.load(new FileInputStream(propFileName));
             props.setProperty("org.renci.databridge.primaryQueue", 
                               props.getProperty("org.renci.databridge.relevanceEngine.primaryQueue"));
-           logger.log(Level.INFO,
+            logger.log(Level.INFO,
                 "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
      
             RelevanceEngineMessageListener aml = 
@@ -54,7 +54,7 @@ public class RelevanceEngine {
             // this listener will listen to.
             props.setProperty("org.renci.databridge.primaryQueue", 
                               props.getProperty("org.renci.databridge.relevanceEngine.ingestQueue"));
-           logger.log(Level.INFO,
+            logger.log(Level.INFO,
                 "primaryQueue set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
 
             RelevanceEngineMessageListener ingestListener = 
@@ -64,8 +64,23 @@ public class RelevanceEngine {
 
             ingestListener.start ();
 
-            aml.join ();
+            // Start a third thread to listen for rpc messages.
+            // We need to reset the org.renci.databridge.primaryQueue property. This is the queue
+            // this listener will listen to.
+            props.setProperty("org.renci.databridge.rpcQueue",
+                              props.getProperty("org.renci.databridge.relevanceEngine.rpcQueue"));
+            logger.log(Level.INFO,
+                "primaryQueue for RPCHandler set to: " + props.getProperty("org.renci.databridge.primaryQueue"));
+
+            RelevanceEngineRPCListener rpcHandler =
+                new RelevanceEngineRPCListener (props,
+                                         new RelevanceEngineMessage(),
+                                         new RelevanceEngineRPCHandler(), logger);
+            rpcHandler.start ();
+
+            rpcHandler.join();
             ingestListener.join (); // keeps main thread from exiting 
+            aml.join ();
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Exception in main: " + ex.toString());
             System.exit(1);

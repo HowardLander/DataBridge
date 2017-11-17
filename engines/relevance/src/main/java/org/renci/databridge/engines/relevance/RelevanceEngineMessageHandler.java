@@ -110,7 +110,8 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects
    */
-  public void processMetadataToMetadataDBMessage( Map<String, String> stringHeaders, Object extra) {
+  public DatabridgeResultsMessage processMetadataToMetadataDBMessage( Map<String, String> stringHeaders, 
+                                                                     Object extra) {
 
       // We need several pieces of information before we can continue.  This info has to 
       // all be in the headers or we are toast.
@@ -119,7 +120,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       String nameSpace = stringHeaders.get(RelevanceEngineMessage.NAME_SPACE);    
       if (null == nameSpace) {
          this.logger.log (Level.SEVERE, "No name space in message");
-         return;
+         return new DatabridgeResultsMessage(false, "No name space in message");
       }
 
       // Process the array of extra objects
@@ -129,13 +130,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
       if (null == theFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
-         return;
+         return new DatabridgeResultsMessage(false, "MetadataDAOFactory is null");
       }
 
       Properties theProps = (Properties) extraArray[1];
       if (null == theProps) {
          this.logger.log (Level.SEVERE, "Properties object is null");
-         return;
+         return new DatabridgeResultsMessage(false, "Properties object is null");
       }
       String dbType = theProps.getProperty("org.renci.databridge.relevancedb.dbType", "mongo");
 
@@ -175,6 +176,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
                   boolean result = outFileObject.mkdirs();
                   if (false == result) {
                       this.logger.log (Level.WARNING, "can't create path: " + outputFile);
+                      return new DatabridgeResultsMessage(false, "can't create path: " + outputFile);
                   }
               }
               // Let's add the last element of the class name to the file name
@@ -189,6 +191,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
               fileName = outputFile + labeledFileName;
            } catch (Exception e) {
               e.printStackTrace();
+              return new DatabridgeResultsMessage(false, "Caught an exception trying to create a file" + e);
            }
         } else {
           // the user has given us a path
@@ -198,6 +201,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
         this.logger.log (Level.INFO, "passing headers to processCreateSimilarityMessage: " + passedHeaders);
         processCreateSimilarityMessage(passedHeaders, extra);
      }
+     return new DatabridgeResultsMessage(true, DatabridgeResultsMessage.STATUS_OK);
   }
 
 
@@ -206,7 +210,8 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
    * @param stringHeaders A map of the headers provided in the message
    * @param extra An object containing the needed DAO objects plus a properties
    */
-  public void processCreateSimilarityMessage( Map<String, String> stringHeaders, Object extra) {
+  public DatabridgeResultsMessage processCreateSimilarityMessage( Map<String, String> stringHeaders, 
+                                                                  Object extra) {
       // We need several pieces of information before we can continue.  This info has to 
       // all be in the headers or we are toast.
 
@@ -214,7 +219,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       String className = stringHeaders.get(RelevanceEngineMessage.CLASS);    
       if (null == className) {
          this.logger.log (Level.SEVERE, "No class name in message");
-         return;
+         return new DatabridgeResultsMessage(false, "No class name in message");
       }
 
       // Let's try to load the class.
@@ -225,7 +230,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       } catch (ClassNotFoundException e) {
          this.logger.log (Level.SEVERE, "Can't instantiate class " + className);
          e.printStackTrace();
-         return;
+         return new DatabridgeResultsMessage(false, "Can't instantiate class " + className);
       }
       this.logger.log (Level.INFO, "Loaded class: " + className);
 
@@ -240,21 +245,21 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't create instance");
          e.printStackTrace();
-         return;
+         return new DatabridgeResultsMessage(false, "Can't create instance");
       }
 
       // 2) the name space
       String nameSpace = stringHeaders.get(RelevanceEngineMessage.NAME_SPACE);    
       if (null == nameSpace) {
          this.logger.log (Level.SEVERE, "No name space in message");
-         return;
+         return new DatabridgeResultsMessage(false, "No name space in message");
       }
 
       // 3) the outputFile
       String outputFile = stringHeaders.get(RelevanceEngineMessage.OUTPUT_FILE);    
       if (null == outputFile) {
          this.logger.log (Level.SEVERE, "No output URI in message");
-         return;
+         return new DatabridgeResultsMessage(false, "No output URI in message");
       }
 
       // 4) the params aren't always needed
@@ -277,6 +282,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       } else {
          count = Long.parseLong(countString);
       }
+      this.logger.log (Level.INFO, "count: " + count);
 
       // Process the array of extra objects
       Object extraArray[] = (Object[]) extra;
@@ -285,25 +291,25 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       MetadataDAOFactory theFactory = (MetadataDAOFactory) extraArray[0];
       if (null == theFactory) {
          this.logger.log (Level.SEVERE, "MetadataDAOFactory is null");
-         return;
+         return new DatabridgeResultsMessage(false, "MetadataDAOFactory is null");
       }
 
       Properties theProps = (Properties) extraArray[1];
       if (null == theProps) {
          this.logger.log (Level.SEVERE, "Properties object is null");
-         return;
+         return new DatabridgeResultsMessage(false, "Properties object is null");
       }
 
       CollectionDAO theCollectionDAO = theFactory.getCollectionDAO();
       if (null == theCollectionDAO) {
          this.logger.log (Level.SEVERE, "CollectionDAO is null");
-         return;
+         return new DatabridgeResultsMessage(false, "CollectionDAO is null");
       } 
 
       SimilarityInstanceDAO theSimilarityInstanceDAO = theFactory.getSimilarityInstanceDAO();
       if (null == theSimilarityInstanceDAO) {
          this.logger.log (Level.SEVERE, "SimilarityInstanceDAO is null");
-         return;
+         return new DatabridgeResultsMessage(false, "SimilarityInstanceDAO is null");
       }
 
       FileDAO theFileDAO = null; 
@@ -313,12 +319,12 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          theFileDAO = theFactory.getFileDAO();
          if (null == theFileDAO) {
              this.logger.log (Level.SEVERE, "FileDAO is null");
-             return;
+             return new DatabridgeResultsMessage(false, "FileDAO is null");
           }
          theVariableDAO = theFactory.getVariableDAO();
          if (null == theVariableDAO) {
              this.logger.log (Level.SEVERE, "VariableDAO is null");
-             return;
+             return new DatabridgeResultsMessage(false, "VariableDAO is null");
           }
       }
 
@@ -332,13 +338,17 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       SimilarityAlgorithmDAO theSimilarityAlgorithmDAO = theFactory.getSimilarityAlgorithmDAO();
       if (null == theSimilarityAlgorithmDAO) {
          this.logger.log (Level.SEVERE, "SimilarityAlgorithmDAO is null");
-         return;
+         return new DatabridgeResultsMessage(false, "SimilarityAlgorithmDAO is null");
       }
 
       HashMap<String, String> searchMap = new HashMap<String, String>();
+      this.logger.log (Level.INFO, "adding className to searchMap: " + className);
       searchMap.put("className", className);
+
       HashMap<String, String> sortMap = new HashMap<String, String>();
-         sortMap.put("_id", SimilarityAlgorithmDAO.SORT_DESCENDING);
+      this.logger.log (Level.INFO, "adding className to searchMap: " + className);
+
+      sortMap.put("_id", SimilarityAlgorithmDAO.SORT_DESCENDING);
       Integer limit = new Integer(1);
 
       // Find the most recent version of the algorithm, so we can grab any engine params.
@@ -392,11 +402,12 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          boolean result = theSimilarityInstanceDAO.insertSimilarityInstance(theSimilarityInstance);
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Can't insert similarity instance");
-         return;
+         return new DatabridgeResultsMessage(false, "Can't insert similarity instance");
       }
       
       // Search for all of the collections in the nameSpace
       HashMap<String, String> collectionSearchMap = new HashMap<String, String>();
+      this.logger.log (Level.INFO, "adding nameSpace to collectionSearchMap: " + nameSpace);
       collectionSearchMap.put("nameSpace", nameSpace);
  
       // We need an array list of collectionIds
@@ -407,7 +418,8 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
       if (nCollections <= 0) {
          // Nothing to do, we can stop now
-         this.logger.log (Level.INFO, "nCollections <= 0, so nothing to do");
+         this.logger.log (Level.INFO, "The nameSpace \"" + nameSpace + "\" is empty: no analyses run");
+         return new DatabridgeResultsMessage(true, "The nameSpace \"" + nameSpace + "\" is empty: no analyses run");
       }
 
       // Here we have a small problem.  Our DB infrastructure supports "long"
@@ -418,7 +430,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       int nCollectionsInt;
       if (nCollections > (long) Integer.MAX_VALUE) {
          this.logger.log (Level.SEVERE, "nCollections > Integer.MAX_VALUE");
-         return;
+         return new DatabridgeResultsMessage(false, "nCollections > Integer.MAX_VALUE");
       } else {
          nCollectionsInt = (int) nCollections;
       }
@@ -429,7 +441,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
 
       // For each pair of collection objects, we call the user provided function.
       Iterator<CollectionTransferObject> iterator1 = 
-          theCollectionDAO.getCollections(searchMap);
+          theCollectionDAO.getCollections(collectionSearchMap);
       Iterator<CollectionTransferObject> iterator2 = null;
       
       // The following code is known to be ugly, but it's not easy to do better since
@@ -437,9 +449,12 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
       int counter = 1;
       int rowCounter = 0;
       double numCompared = 0;
+      this.logger.log (Level.INFO, "before while: count,numCompared " + count + "," + numCompared);
       while (iterator1.hasNext()) { 
+         this.logger.log (Level.INFO, "Inside iterator1 loop");
          if (count > 0 && numCompared >= count) {
             // we've reached the termination condition
+            this.logger.log (Level.INFO, "Terminating: count,numCompared of " + count + "," + numCompared);
             break;
          }
          CollectionTransferObject cto1 = iterator1.next();
@@ -451,7 +466,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          // This is the weird part. Since you can't copy iterators in java
          // we re-declare the inner iterator for each iteration of the outer loop, than
          // spin it forward so it is at the position of the outer iterator.
-         iterator2 = theCollectionDAO.getCollections(searchMap);
+         iterator2 = theCollectionDAO.getCollections(collectionSearchMap);
          for (int k = 0; k < counter; k++) {
              iterator2.next();
              colCounter ++;
@@ -495,7 +510,8 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
                }
             } catch (Exception e) {
                this.logger.log (Level.SEVERE, "Can't invoke method compareCollections" + e.getMessage(), e);
-               return;
+               return new 
+                 DatabridgeResultsMessage(false, "Can't invoke method compareCollections" + e.getMessage());
             }
          }
          counter ++;
@@ -531,7 +547,7 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          theSimFile.writeToDisk(outputFile);
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Caught Exception writing to disk: " + e.getMessage());
-         return;
+         return new DatabridgeResultsMessage(false, "Caught Exception writing to disk: " + e.getMessage());
       }
 
       // Assuming we get this far, we want to send out the next message
@@ -545,11 +561,13 @@ public class RelevanceEngineMessageHandler implements AMQPMessageHandler {
          this.logger.log (Level.INFO, "Sent ProcessedMetadataToNetworkFile message.");
       } catch (Exception e) {
          this.logger.log (Level.SEVERE, "Caught Exception sending action message: " + e.getMessage());
+         return new DatabridgeResultsMessage(false, "Caught Exception sending action message: " + e.getMessage());
       } finally {
          if (null != ac) {
              ac.shutdownConnection ();
          }
       }
+      return new DatabridgeResultsMessage(true, DatabridgeResultsMessage.STATUS_OK);
   }
  
   public void handleException (Exception exception) {

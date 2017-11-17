@@ -157,6 +157,7 @@ public class SimilarityFile {
       * @param input the ObjectInputStream from which to read.
       *                
       */
+     @SuppressWarnings("unchecked")
      private void readTheSimilarityFromInputObject(ObjectInputStream input) throws Exception {
 
          byte[] bytes = null;

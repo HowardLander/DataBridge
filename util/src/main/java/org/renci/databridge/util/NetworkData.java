@@ -176,7 +176,8 @@ public class NetworkData {
       *
       * @param input The Kryo Input object from which the data is read.
       *                
-      */
+      */        
+     @SuppressWarnings("unchecked")
      private void readTheNetworkFromInputObject(Input input) throws Exception {
 
          // Setup the kryo
@@ -351,7 +352,7 @@ public class NetworkData {
       *
       * @param properties the value to set.
       */
-     public void setProperties(HashMap properties)
+     public void setProperties(HashMap<java.lang.String,java.lang.String> properties)
      {
          this.properties = properties;
      }
@@ -391,7 +392,7 @@ public class NetworkData {
       *
       * @param datasets the value to set.
       */
-     public void setDatasets(ArrayList datasets)
+     public void setDatasets(ArrayList<org.renci.databridge.util.Dataset> datasets)
      {
          this.datasets = datasets;
      }
