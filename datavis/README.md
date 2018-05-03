@@ -7,7 +7,7 @@ Select network data
 
 in URL
 
-websiteURL?data=DbFNNetwork-7.3-louvain
+websiteURL?data=DbFNNetwork-v2
 
 or in the drop down selection form
 
