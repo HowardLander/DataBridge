@@ -1,6 +1,6 @@
 package org.renci.databridge.persistence.network;
 import  org.neo4j.graphdb.GraphDatabaseService;
-import  org.neo4j.graphdb.factory.GraphDatabaseFactory;
+//import  org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import  java.util.*;
 import  java.io.File;
 

@@ -1,7 +1,7 @@
 package org.renci.databridge.persistence.network;
 import  org.neo4j.graphdb.*;
 //import  org.neo4j.tooling.*;
-import  org.neo4j.graphdb.factory.*;
+//import  org.neo4j.graphdb.factory.*;
 //import  org.neo4j.cypher.javacompat.*;
 import  java.util.*;
 import  java.util.logging.Logger;
@@ -91,9 +91,9 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
        try {
           // First we need the 2 nodes.
           long node1Id = Long.valueOf(transferNode1.getDataStoreId()).longValue();
-          Node node1 = theDB.getNodeById(node1Id); 
+          Node node1 = tx.getNodeById(node1Id); 
           long node2Id = Long.valueOf(transferNode2.getDataStoreId()).longValue();
-          Node node2 = theDB.getNodeById(node2Id); 
+          Node node2 = tx.getNodeById(node2Id); 
 
           // Create the Relationship. Note that we don't care about directionality and neither
           // does Neo4j (much)
@@ -113,9 +113,9 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
           theTransfer.setNode1DataStoreId(transferNode1.getDataStoreId());
           theTransfer.setNode2DataStoreId(transferNode2.getDataStoreId());
           returnCode = true;
-          tx.success();
+          tx.close();
        } catch (Exception e) {
-          tx.failure();
+          tx.terminate();
           this.logger.log (Level.SEVERE, "exception in insertNetworkRelationship: " + e.getMessage(), e);
        } finally {
           tx.close();
@@ -141,12 +141,12 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
        Transaction tx = theDB.beginTx();
        try {
           long relId = Long.valueOf(theTransfer.getDataStoreId()).longValue();
-          Relationship theRelationship = theDB.getRelationshipById(relId);
+          Relationship theRelationship = tx.getRelationshipById(relId);
           theRelationship.setProperty(key, value);
           returnCode = true;
-          tx.success();
+          tx.close();
        } catch (Exception e) {
-          tx.failure();
+          tx.close();
           this.logger.log (Level.SEVERE, "exception in Neo4jNetworkRelationshipDAO: " + e.toString());
        } finally {
           tx.close();
@@ -170,12 +170,12 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
        Transaction tx = theDB.beginTx();
        try {
           long relId = Long.valueOf(theTransfer.getDataStoreId()).longValue();
-          Relationship theRelationship = theDB.getRelationshipById(relId);
+          Relationship theRelationship = tx.getRelationshipById(relId);
           theRelationship.removeProperty(key);
           returnCode = true;
-          tx.success();
+          tx.close();
        } catch (Exception e) {
-          tx.failure();
+          tx.terminate();
           this.logger.log (Level.SEVERE, "exception in deletePropertyFromNetworkRelationship: "+ e.toString());
        } finally {
           tx.close();
@@ -200,14 +200,14 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
        Transaction tx = theDB.beginTx();
        try {
           long relId = Long.valueOf(theTransfer.getDataStoreId()).longValue();
-          Relationship theRelationship = theDB.getRelationshipById(relId);
+          Relationship theRelationship = tx.getRelationshipById(relId);
           objectProperty = theRelationship.getProperty(key);
-          tx.success();
+          tx.close();
        } catch (org.neo4j.graphdb.NotFoundException e) {
           this.logger.log (Level.INFO, "property to delete not found: " + e.toString());
-          tx.success();
+          tx.close();
        } catch (Exception e) {
-          tx.failure();
+          tx.terminate();
           this.logger.log (Level.SEVERE, "exception in getPropertyFromNetworkRelationship: "+ e.toString());
        } finally {
           tx.close();
@@ -230,7 +230,7 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
         Transaction tx = theDB.beginTx();
         try {
             long nodeId = Long.valueOf(theTransferNode.getDataStoreId()).longValue();
-            Node theNode = theDB.getNodeById(nodeId);
+            Node theNode = tx.getNodeById(nodeId);
             Iterator<Relationship> neo4jRelationshipList =
                    theNode.getRelationships().iterator();
             theIterator = new Neo4jNetworkRelationshipDAOIterator();
@@ -263,7 +263,7 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
         Transaction tx = theDB.beginTx();
         try {
             long nodeId = Long.valueOf(theTransferNode.getDataStoreId()).longValue();
-            Node theNode = theDB.getNodeById(nodeId);
+            Node theNode = tx.getNodeById(nodeId);
             RelationshipType theType = RelationshipType.withName(key);
             Iterator<Relationship> neo4jRelationshipList =
                    theNode.getRelationships(theType).iterator();
@@ -293,16 +293,16 @@ public class Neo4jNetworkRelationshipDAO implements NetworkRelationshipDAO {
        Transaction tx = theDB.beginTx();
        try {
           long relId = Long.valueOf(theTransfer.getDataStoreId()).longValue();
-          Relationship theRelationship = theDB.getRelationshipById(relId);
+          Relationship theRelationship = tx.getRelationshipById(relId);
           theRelationship.delete();
           returnCode = true;
-          tx.success();
+          tx.close();
        } catch (org.neo4j.graphdb.NotFoundException e) {
           returnCode = true;
           this.logger.log (Level.INFO, "relationship to delete not found: " + e.toString());
-          tx.success();
+          tx.close();
        } catch (Exception e) {
-          tx.failure();
+          tx.terminate();
           this.logger.log (Level.SEVERE, "exception in Neo4jNetworkRelationshipDAO: " + e.toString());
        } finally {
           tx.close();

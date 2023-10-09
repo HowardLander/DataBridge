@@ -1,7 +1,7 @@
 package org.renci.databridge.persistence.network;
 import  org.neo4j.graphdb.*;
 //import  org.neo4j.tooling.*;
-import  org.neo4j.graphdb.factory.*;
+//import  org.neo4j.graphdb.factory.*;
 //import  org.neo4j.cypher.javacompat.*;
 import  java.util.*;
 import java.util.logging.Logger;

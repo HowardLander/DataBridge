@@ -1,7 +1,7 @@
 package org.renci.databridge.persistence.network;
 import  org.neo4j.graphdb.*;
 //import  org.neo4j.tooling.*;
-import  org.neo4j.graphdb.factory.*;
+//import  org.neo4j.graphdb.factory.*;
 //import  org.neo4j.cypher.javacompat.*;
 import  java.util.*;
 import  java.util.logging.Logger;
@@ -90,7 +90,8 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                       // Note that we are initially only checking for OUTGOING relationships.  Each rel
                       // must be either incoming or outgoing so this will allow us to traverse every 
                       // in the subgraph.
-                      relationshipIterator = theNode.getRelationships(newType,Direction.OUTGOING).iterator();
+                      //relationshipIterator = theNode.getRelationships(newType,Direction.OUTGOING).iterator();
+                      relationshipIterator = theNode.getRelationships(Direction.OUTGOING, newType).iterator();
                       if (relationshipIterator.hasNext()) {
                           Relationship theRel = relationshipIterator.next();
                           double simValue = (double)
@@ -114,7 +115,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                               // next node.
                               this.logger.log (Level.INFO, "no outgoing relationships for node: " + theTransfer.getI());
                               relationshipIterator = 
-                                  theNode.getRelationships(newType, Direction.INCOMING).iterator();
+                                  theNode.getRelationships(Direction.INCOMING, newType).iterator();
                               if (relationshipIterator.hasNext()) {
                                   // this node is connected, we want to skip it.
                                   stillLooking = true;
@@ -193,7 +194,8 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
             theIterator.returnSingletons = returnSingletons;
 
             //Iterator<Node> neo4jNodeList = graphOperations.getAllNodesWithLabel(newLabel).iterator();
-            Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel);
+            //Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel);
+            Iterator<Node> neo4jNodeList = tx.findNodes(newLabel);
             theIterator.nodeIterator = neo4jNodeList;
             if (neo4jNodeList.hasNext()) {
                 Node thisNode = neo4jNodeList.next();
@@ -201,7 +203,7 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
                 // Set the current node so that the next call starts in the proper place.
                 theIterator.currentNode = thisNode;
                 Iterator<Relationship>theRels = 
-                    thisNode.getRelationships(theIterator.newType, Direction.OUTGOING).iterator();
+                    thisNode.getRelationships(Direction.OUTGOING, theIterator.newType).iterator();
                 theIterator.relationshipIterator = theRels;
             }
         } catch (Exception e) {
@@ -234,17 +236,18 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
         try {
             // Translate the date from the Neo4j representation to the
             // representation presented to the users in the Transfer object.
-            Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel);
+            //Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel);
+            Iterator<Node> neo4jNodeList = tx.findNodes(newLabel);
             while (neo4jNodeList.hasNext()) {
                Node theNode = neo4jNodeList.next();
 
                // Check for outgoing relationships
-               relationshipIterator = theNode.getRelationships(newType,Direction.OUTGOING).iterator();
+               relationshipIterator = theNode.getRelationships(Direction.OUTGOING, newType).iterator();
                if (relationshipIterator.hasNext()) {
                    continue;
                }
                // Check for incoming relationships
-               relationshipIterator = theNode.getRelationships(newType,Direction.INCOMING).iterator();
+               relationshipIterator = theNode.getRelationships(Direction.INCOMING, newType).iterator();
                if (relationshipIterator.hasNext()) {
                    continue;
                }
@@ -285,15 +288,15 @@ public class Neo4jNetworkDyadDAO implements NetworkDyadDAO {
             newType = RelationshipType.withName(similarityId);
 
             //Iterator<Node> neo4jNodeList = graphOperations.getAllNodesWithLabel(newLabel).iterator();
-            Iterator<Node> neo4jNodeList = theDB.findNodes(newLabel);
+            Iterator<Node> neo4jNodeList = tx.findNodes(newLabel);
             nodeIterator = neo4jNodeList;
             while (neo4jNodeList.hasNext()) {
                 Node theNode = neo4jNodeList.next();
-                relationshipIterator = theNode.getRelationships(newType,Direction.OUTGOING).iterator();
+                relationshipIterator = theNode.getRelationships(Direction.OUTGOING, newType).iterator();
                 if (relationshipIterator.hasNext()) {
                     count ++;
                 } else {
-                    relationshipIterator = theNode.getRelationships(newType,Direction.INCOMING).iterator();
+                    relationshipIterator = theNode.getRelationships(Direction.INCOMING, newType).iterator();
                     if (relationshipIterator.hasNext()) {
                         count ++;
                     }

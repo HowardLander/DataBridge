@@ -65,6 +65,12 @@ public class MongoSimilarityAlgorithmDAO implements SimilarityAlgorithmDAO {
                    theSimilarityAlgorithm.setEngineParams(engineParams);
 
                    // Non user provided
+                   Object versionObject = theEntry.get("version");
+                   Integer versionInteger = (Integer) versionObject;
+                   int intVersion = versionInteger.intValue();
+                   theSimilarityAlgorithm.setVersion(intVersion);
+                   //theSimilarityAlgorithm.setVersion(theEntry.getInt("version"));
+                  /*  
                    String stringVersion = (theEntry.get("version") != null) ? (String) theEntry.get("version") : "";
                    if (stringVersion.compareTo("")  == 0) {
                       // There was no version in the db, set it to 0
@@ -72,6 +78,7 @@ public class MongoSimilarityAlgorithmDAO implements SimilarityAlgorithmDAO {
                    } else {
                       theSimilarityAlgorithm.setVersion((int)theEntry.get("version"));
                    }
+                   */
                    theSimilarityAlgorithm.setInsertTime(((ObjectId)theEntry.get(MongoIdFieldName)).getTimestamp());
                    theSimilarityAlgorithm.setDataStoreId(theEntry.get(MongoIdFieldName).toString());
                }

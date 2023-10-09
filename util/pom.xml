@@ -18,7 +18,7 @@
     <repository>
       <id>DataBridge.External</id>
       <name>DataBridge External Repository</name>
-      <url>file:///projects/databridge/www/mvn-repo</url>
+      <url>file:///Users/howard1/projects/DataBridge/www/mvn-repo</url>
       <layout>default</layout>
     </repository>
   </repositories>
@@ -27,7 +27,7 @@
     <repository>
         <id>DataBridge.External</id>
         <name>DataBridge External Repository</name>
-        <url>file:///projects/databridge/www/mvn-repo</url>
+        <url>file:///Users/howard1/projects/DataBridge/www/mvn-repo</url>
     </repository>
   </distributionManagement>
 
@@ -42,6 +42,12 @@
           <groupId>org.la4j</groupId>
           <artifactId>la4j</artifactId>
           <version>0.6.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
         </dependency>
     </dependencies>
 

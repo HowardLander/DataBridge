@@ -19,13 +19,13 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j</artifactId>
-            <version>3.0.4</version>
+            <version>5.12.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-kernel</artifactId>
-            <version>3.0.4</version>
+            <version>5.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.renci.databridge.util</groupId>
@@ -34,8 +34,8 @@
         </dependency>
         <dependency> 
             <groupId>org.mongodb</groupId> 
-            <artifactId>mongo-java-driver</artifactId> 
-            <version>3.4.1</version> 
+            <artifactId>mongodb-driver-legacy</artifactId> 
+            <version>4.10.2</version> 
         </dependency> 
     </dependencies>
 <!--

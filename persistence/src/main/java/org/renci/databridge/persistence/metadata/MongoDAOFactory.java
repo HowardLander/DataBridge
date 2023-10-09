@@ -10,6 +10,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.MongoException;
+import com.mongodb.ConnectionString;
 
 public class MongoDAOFactory extends MetadataDAOFactory {
  
@@ -34,9 +35,22 @@ public class MongoDAOFactory extends MetadataDAOFactory {
         ServerAddress theAddress = null;
         try {
             if (null == theClient) {
-                theCredential = MongoCredential.createCredential(user, db, password.toCharArray());
-                theAddress = new ServerAddress(host, port);
-                theClient = new MongoClient(theAddress, Arrays.asList(theCredential));
+                //theCredential = MongoCredential.createCredential(user, db, password.toCharArray());
+                //theAddress = new ServerAddress(host, port);
+                //theClient = new MongoClient(theAddress, Arrays.asList(theCredential));
+                StringBuilder builder = new StringBuilder();
+                builder.append("mongodb://");
+                builder.append(user);
+                builder.append(":");
+                builder.append(password);
+                builder.append("@");
+                builder.append(host);
+                builder.append(":");
+                builder.append(port);
+                builder.append("/");
+                builder.append(db);
+                ConnectionString theConnectionString = new ConnectionString(builder.toString());
+                theClient = new MongoClient(theConnectionString);
             }
             theDB = theClient.getDB(db);
         } catch (Exception e) {

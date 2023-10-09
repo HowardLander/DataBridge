@@ -15,17 +15,19 @@
     <module>engines</module>
   </modules>
 
+<!--
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
+-->
 
   <repositories>
     <repository>
       <id>DataBridge.External</id>
       <name>DataBridge External Repository</name>
-      <url>file:///projects/databridge/www/mvn-repo</url>
+      <url>file:///Users/howard1/projects/DataBridge/www/mvn-repo</url>
       <layout>default</layout>
     </repository>
   </repositories>
@@ -34,7 +36,7 @@
     <repository>
         <id>DataBridge.External</id>
         <name>DataBridge External Repository</name>
-        <url>file:///projects/databridge/www/mvn-repo</url>
+        <url>file:///Users/howard1/projects/DataBridge/www/mvn-repo</url>
     </repository>
   </distributionManagement>
 
@@ -77,7 +79,7 @@
     <dependency>
       <groupId>org.neo4j</groupId>
       <artifactId>neo4j</artifactId>
-      <version>3.0.4</version>
+      <version>5.12.0</version>
     </dependency>
     <dependency>
       <groupId>org.neo4j</groupId>
@@ -87,7 +89,12 @@
     <dependency>
       <groupId>org.neo4j</groupId>
       <artifactId>neo4j-kernel</artifactId>
-      <version>3.0.4</version>
+      <version>5.12.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.10.1</version>
     </dependency>
   </dependencies>
 
@@ -126,8 +133,8 @@
         <version>3.1</version>
         <configuration>
           <verbose>false</verbose>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>1.8</source>
+          <target>1.8</target>
           <compilerArgs>
              <arg>-Xlint:deprecation</arg>
              <arg>-Xlint:unchecked</arg>

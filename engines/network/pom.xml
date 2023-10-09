@@ -12,9 +12,9 @@
   <groupId>org.renci.databridge.engines.network</groupId>
   <artifactId>network</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-BETA</version>
   <name>DataBridge Network</name>
-  <url>http://maven.apache.org</url>
+  <version>1.0-BETA</version>
+
 
   <dependencies>
     <dependency>
@@ -36,7 +36,7 @@
     <dependency>
       <groupId>org.neo4j</groupId>
       <artifactId>neo4j</artifactId>
-      <version>3.0.4</version>
+      <version>5.12.0</version>
     </dependency>
     <dependency>
       <groupId>org.neo4j</groupId>
@@ -46,22 +46,24 @@
     <dependency>
       <groupId>org.neo4j</groupId>
       <artifactId>neo4j-kernel</artifactId>
-      <version>3.0.4</version>
+      <version>5.12.0</version>
     </dependency>
     <dependency>
         <groupId>org.renci.databridge.persistence</groupId>
         <artifactId>databridge-persistence</artifactId>
         <version>1.0-BETA</version>
     </dependency>
+	<!--
     <dependency>
         <groupId>org.renci.databridge.network</groupId>
         <artifactId>databridge-network</artifactId>
         <version>1.0-BETA</version>
     </dependency>
+	-->
     <dependency>
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
-        <version>2.3.1</version>
+        <version>2.10.1</version>
     </dependency>
   </dependencies>
 

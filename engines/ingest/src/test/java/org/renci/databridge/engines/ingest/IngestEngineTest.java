@@ -47,7 +47,7 @@ public class IngestEngineTest {
       File f = p.toFile ();
       String absPathToConfigFile = f.getAbsolutePath ();
 
-      IngestMetadataAMQPMessageHandler imamh = new IngestMetadataAMQPMessageHandler (MetadataDAOFactory.MONGODB, "test", "localhost", 27389, "DataBridgeTest", "ColumbusStockadeBlues", absPathToConfigFile);
+      IngestMetadataAMQPMessageHandler imamh = new IngestMetadataAMQPMessageHandler (MetadataDAOFactory.MONGODB, "test", "localhost", 27017, "DataBridgeTest", "ColumbusStockadeBlues", absPathToConfigFile);
 
       // @todo create an ingest message and send it in
 
