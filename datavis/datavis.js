@@ -14,10 +14,11 @@ var bDragOn = false;
 var lastSelNode = null, lastSelLink = null;
 var lastSelNodeId = -1, lastSelEdgeSource = -1, lastSelEdgeTarget = -1, selNodeId = -1, selEdgeSource=-1, selEdgeTarget=-1;
 var overlayRect, svg, zoom, force, link, node;
-var simVal = 0.6, oriData="", filterData, tooltip;
+var simVal = 0.6, oriData="", filterData, filterNodeData, filterLineData, RNodeVal="firstnode", existNodes = [], clusterLevel = 0, subClusterOn = true, tooltip;
 var lastSearchStr = "", lastSearchNodes = new Array();
 var bDynamicLayout = true;
 	
+// called in index.php <script>
 function init() {	
 	width = window.innerWidth || e.clientWidth || g.clientWidth;
 	height = window.innerHeight || e.clientHeight || g.clientHeight;
@@ -29,20 +30,25 @@ function init() {
 		height = defHeight; 
 	else
 		height -= 300; // account for height of upper and lower gui elements
+	// set width for #datainfo div
 	document.getElementById("datainfo").style.width=width+"px";		
 	
+	// create tooltip div in body element
 	tooltip = d3.select("body").append("div")   
 		.attr("class", "tooltip")               
 		.style("visibility", "hidden");
+	// change the default selected value for similarity filter value
 	document.getElementById('sim-value').value = simVal;    
 	document.getElementById("togglelayout").value = "Pause layout";
 	zoom = d3.behavior.zoom(); 	
+	// create svg for #chart div
 	svg = d3.select("#chart").append("svg")
 		.attr("width", width)
 		.attr("height", height)
 		.append("g")
 		.call(zoom.scaleExtent([1, 4]).on("zoom", zoom_redraw))
 		.append("g");
+	// create rect in svg.g.g
 	overlayRect = svg.append("rect")
 		.attr("class", "overlay")
 		.attr("width", width)
@@ -61,6 +67,7 @@ function init() {
 		.linkDistance(60)
 		.size([width, height]);
 	window.onresize = updateWindow;
+	// File shown on the screen
 	FileChange();
 	contextMenuShowing = false;
 	d3.select("body").on('contextmenu', function(d, i) {
@@ -87,6 +94,20 @@ function init() {
 					.attr("href",d.URL)
 					.attr("target", "_blank")
 					.text(d.title);
+				popup.append("p")
+					.append("a")
+					.attr("href",d.URL)
+					.attr("target", "_blank")
+					.text("Search by similarity");
+				// button for go back to the former level of clustering
+				popup.append("p")
+					.append("button")
+					.on("click", function(dd) {
+						GoBackCluster();
+						d3.select(".popup").remove();
+						contextMenuShowing = false;
+					})
+					.text("Go back to the former level of clustering.");
 				canvasSize = [
 					canvas.node().offsetWidth,
 					canvas.node().offsetHeight
@@ -110,7 +131,18 @@ function init() {
 		}
 	});
 }
-	
+
+function ResetView(){
+	document.getElementById("sim-value").value = 0.6;
+	simVal = 0.6;
+	document.getElementById("data-chooser").value = "DbFNNetwork-7.3-louvain";
+	document.getElementById("RNode-chooser").value = "firstnode";
+	document.getElementById("datainfo").html("");
+	FileChange();
+}
+
+// called in init()
+// set to window.onresize
 function updateWindow(){
     width = window.innerWidth || e.clientWidth || g.clientWidth;
     height = window.innerHeight|| e.clientHeight|| g.clientHeight;
@@ -128,22 +160,26 @@ function updateWindow(){
     force.size([width, height]);
 }
 		
+// called in init()
 function zoom_redraw() {
 	 svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     //svg.attr("transform", "scale(" + d3.event.scale + ")");
 } 
 
+// used in SetupData() and SimValueChange()
 var node_drag = d3.behavior.drag()
 	.on("dragstart", dragstart)
 	.on("drag", dragmove)
 	.on("dragend", dragend);	
 	
+// called in var node_drag
 function dragstart(d, i) {
 	d3.event.sourceEvent.stopPropagation(); // very important; otherwise, panning will interfare with node dragging
 	force.stop(); // stops the force auto positioning before you start dragging
 	bDragOn = true;
 }
 
+// called in var node_drag
 function dragmove(d, i) {
 	d.px += d3.event.dx;
 	d.py += d3.event.dy;
@@ -152,6 +188,7 @@ function dragmove(d, i) {
 	tick(); // this is the key to make it work together with updating both px,py,x,y on d !
 }
 
+// called in var node_drag
 function dragend(d, i) {
 	d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
 	tick();
@@ -161,10 +198,12 @@ function dragend(d, i) {
 	
 }
 
+// called in fadeRelativeToNode()
 function isConnected(a, b) {
 	return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
 }
 
+// called in SetupData(), dragmove(), and dragend()
 function tick(e) {
 	node
 		.attr("transform", function(d) { 
@@ -189,6 +228,7 @@ function tick(e) {
 };
 
 // Move d to be adjacent to the cluster node.
+// called in tick() and collide()
 function cluster(alpha) {	
 	return function(d) {
 		var node = clusterCenterNodes[d.clr], l, r, x, y;
@@ -209,10 +249,11 @@ function cluster(alpha) {
 }
 
 // Resolves collisions between d and all other circles.
+// called in tick()
 function collide(alpha) {
-    if(typeof oriData.nodes === "undefined")
+    if(typeof filterNodeData === "undefined")
         return true; 
-    var quadtree = d3.geom.quadtree(oriData.nodes);
+    var quadtree = d3.geom.quadtree(filterNodeData);
     if(typeof quadtree === "undefined")
         return true;
 	return function(d) {
@@ -242,6 +283,7 @@ function collide(alpha) {
 	};
 }
 
+// called in fadeRelativeToLink() and SetupLink()
 function linkOpacity(val) {
 	if(val<0.3)
 		return 0.2;
@@ -255,6 +297,7 @@ function linkOpacity(val) {
 		return 0.8;
 }
 
+// called in SetupData()
 function fadeRelativeToNode(opacity) {
 	return function(d) {		
 		if(opacity < 1) {
@@ -311,6 +354,8 @@ function fadeRelativeToNode(opacity) {
 		}
 	}
 }  
+
+// called in SetupLink()
 function fadeRelativeToLink(opacity) {
 	return function(d) {
 		if (typeof(node) != "undefined")
@@ -341,14 +386,59 @@ function fadeRelativeToLink(opacity) {
 		}
 	}
 }	
+
+// called in FileChange() and SimValueChange()
+// for #sim-value filter
 function FilterBySimVal(aryvalue, index, ar) {
-	if(aryvalue.value <= simVal)
+	
+	if (aryvalue.value <= simVal){
 		return false;
-	else
+	} else {
 		return true;
+	}
+	
+	
 }	
 
+// called in FileChange()
+// for Group Representative Point filter
+function FilterByGRepresent(aryvalue, index, ar) {
+	
+	if (RNodeVal == "firstnode") {
+		// gfirst
+		if (aryvalue.gfirst[clusterLevel] == 0) {
+			return false;
+		} else {
+			existNodes.push(aryvalue.index_o); 
+			return true;
+		}
+	} else if (RNodeVal == "valuemax") {
+		// valuemax
+		if (aryvalue.valuemax[clusterLevel] == 0) {
+			return false;
+		} else {
+			existNodes.push(aryvalue.index_o); 
+			return true;
+		}
+	} else if (RNodeVal == "connectionmax") {
+		// connectionmax
+		if (aryvalue.connectionmax[clusterLevel] == 0) {
+			return false;
+		} else {
+			existNodes.push(aryvalue.index_o); 
+			return true;
+		}
+	}
+	
+}	
+
+// called in SetupData() and SimValueChange()
+// create links
 function SetupLink() {
+	// append path for each link
+	// show in the DOM
+	// does not show on the page?
+	// filterData only have filtered link, no nodes data
 	link = svg.selectAll("path.link")
 		.data(filterData);
 	
@@ -396,12 +486,20 @@ function SetupLink() {
 	return link;
 }
 
+// called in FileChange()
+// create graph
 function SetupData() {
+	// remove g elements inside svg
 	svg.selectAll('g').remove();
+	// create link
 	link = SetupLink();
 	
+	// append g for each node
+	// show in the DOM
+	// does not show on the page?
+	// nodes data are in filterNodeData
 	node = svg.selectAll(".node")
-		.data(oriData.nodes);
+		.data(filterNodeData);
 	node.exit().remove();	
 	
 	var gnode = node.enter().append("g")
@@ -438,7 +536,7 @@ function SetupData() {
 					}
 					htmltext += "</h2>"+d.description;
 				}
-				d3.select("#datainfo").html( htmltext);
+				d3.select("#datainfo").html(htmltext);
 				lastSelNodeId = d.index; 	
 			}
 			else {// clear out the selection if the selected node is clicked again
@@ -464,6 +562,7 @@ function SetupData() {
 				lastSelEdgeSource = -1;
 				lastSelEdgeTarget = -1;
 			}
+			ShowNodesInCluster(d.clr);
 		})	
 		.call(force.drag)
 			.on("mouseover", fadeRelativeToNode(0.3))
@@ -473,6 +572,7 @@ function SetupData() {
 	bDynamicLayout = true;
 	document.getElementById("togglelayout").value = "Pause layout";
 	
+	// force?
 	force
 		.nodes(node.data())
 		.links(link.data())
@@ -497,6 +597,7 @@ function SetupData() {
 		} 		
 	});
 	
+	// radius of nodes depend on number of links they have
 	gnode.append("circle")	
 		.attr("class", "circle")   
 		.attr("r", function(d) {
@@ -535,6 +636,8 @@ function SetupData() {
 	link.data().forEach(function(d) {
 		linkedByIndex[d.source.index + "," + d.target.index] = 1;
 	});	
+	
+	// create legend
 	legend = svg.append("g")
 		.attr("class","legend")
 		.attr("transform","translate(50,30)")
@@ -542,6 +645,8 @@ function SetupData() {
 		.call(d3.legend);
 }
 	
+// called in FileChange()
+// check if duplicate edges
 function checkDuplicateEdge(e1, e2) {
 	if((e1.source==e2.source && e1.target==e2.target) || (e1.source==e2.target && e1.target==e2.source))
 		return true;
@@ -549,7 +654,11 @@ function checkDuplicateEdge(e1, e2) {
 		return false;
 }
 
+// called in init()
+// and respond to selection form
+// change to selected file, do some checks, save info, do filtering, and show?
 function FileChange() {
+	// get the filename selected
 	var get_id = document.getElementById('data-chooser');
 	var selval = get_id.options[get_id.selectedIndex].value;
 	var fname;
@@ -557,48 +666,396 @@ function FileChange() {
 		fname = "";
 	else
 		fname = "data/"+selval+".json";
+	// check if the selected file changes
 	if(curFileName==fname) return;
 	curFileName = fname;
 	if(fname=="") 
 		return;
 	$("#data-desc").html("This network shows the data-to-data relationship in Harris surveys extracted from <a href=\"http://arc.irss.unc.edu/dvn/\">Odum Institute Dataverse Network</a> at UNC-Chapel Hill. A categorical data similarity measurement algorithm was used to extract a similarity adjancey matrix that was then used to create this data-to-data relationship graph. Each node represents a Harris survey data record; each edge links the pair of nodes based on their similarity measurement --- the darker the edge, the more similar the linked nodes.");
+	// read corresponding json file
 	d3.json(fname, function(error, data) {
 		var i;
-		
 	    force.stop(); // stops the force auto positioning before changing data
 		bDragOn = true;
-		oriData = {};
+		oriData = [];
 		filterData = [];
-		for(i = data.links.length-1; i >= 0; i--){
-			for(var j=i-1; j>=0; j--) {
-				if(checkDuplicateEdge(data.links[i],data.links[j])) {
-					data.links.splice(i,1);
-					break;
-				}
-			}	
+		// description for each dataset.
+		if ("description" in data) {
+			var desctext = data.description;
+			$("#data-desc").append("<br>");
+			$("#data-desc").append("<b>" + selval + ":</b> ");
+			$("#data-desc").append(desctext);
 		}
+		// check if duplicate edges and delete them
+		// comment this out temporarily to speed up, there is no duplicate edges in sample connection file
+		// for(i = data.links.length-1; i >= 0; i--){
+			// for(var j=i-1; j>=0; j--) {
+				// if(checkDuplicateEdge(data.links[i],data.links[j])) {
+					// data.links.splice(i,1);
+					// break;
+				// }
+			// }	
+		// }
 		
+		// check group attribute to each node and save info in each node 
+		// node.index_o: origin index for each node
+		// node.value_sum: sum of link values related with the node
+		// node.connections: number of links related with the node
+		// node.clr: the first cluster number,  node.multicluster: how many clusters
+		// node.gfirst: if the node is the first node in the cluster, 1; otherwise, 0
+		// build group_represent object for all groups
+		clusterLevel = 0;
+		var connection_threshold = 0.5;
+		var group_already = [];
+		var group_represent = [];
+		var node_index = 0;
 		data.nodes.forEach(function (node) {
-				if(!node.group)
+				node.index_o = node_index;
+				node.value_sum = 0;
+				node.connections = 0;
+				
+				// find all the related links for this node
+				data.links.forEach(function(aryvalue){
+					if ((aryvalue.source == node.index_o) || (aryvalue.target == node.index_o)) {
+						node.value_sum += aryvalue.value;
+						if (aryvalue.value >= connection_threshold) {
+							node.connections += 1;
+						}
+					}
+				});
+				
+				if(!node.group) {
 					node.group = 0;
+				}
+				
 				var grpStrArys = String(node.group).split(","); 
 				node.clr = grpStrArys[0].trim();
 				node.multicluster = grpStrArys.length;
+				
+				// node.gfirst, valuemax, and connectionmax are lists to same info on different level
+				// for finding the first node in the group
+				node.gfirst = []
+				if (group_already.indexOf(node.clr) == -1) {
+					node.gfirst[clusterLevel] = 1;
+					group_already.push(node.clr); 
+				} else {
+					node.gfirst[clusterLevel] = 0;
+				}
+				
+				var clrInt = parseInt(node.clr);
+				if (!group_represent[clrInt]) {
+					group_represent[clrInt] = {valuemax: {index_o: node.index_o, sum: node.value_sum},
+											connectionmax: {index_o: node.index_o, sum: node.connections}
+											};
+				} else {
+					// for finding value max node
+					if (group_represent[clrInt]['valuemax']['sum'] < node.value_sum) {
+						group_represent[clrInt]['valuemax'] = {index_o: node.index_o, sum: node.value_sum};
+					}
+					
+					//for finding connection max node
+					if (group_represent[clrInt]['connectionmax']['sum'] < node.connections) {
+						group_represent[clrInt]['connectionmax'] = {index_o: node.index_o, sum: node.connections};
+					}
+				}
+				node_index += 1;
+		});
+		// build array for valuemax nodes and connectionmax nodes
+		var group_valuemax = [];
+		var group_connectionmax = [];
+		gLen = group_represent.length;
+		for (i = 0; i < gLen; i++) {
+			if (group_represent[i]) {
+				group_valuemax[i] = group_represent[i]['valuemax']['index_o'];
+				group_connectionmax[i] = group_represent[i]['connectionmax']['index_o'];
+			}
+
+		}
+		
+		// node.valuemax: if the node is the value max node in the cluster, 1; otherwise, 0
+		// node.connectionmax: if the node has the max connection in the cluster, 1; otherwise, 0	
+		data.nodes.forEach(function (node) {
+				node.valuemax = []
+				node.connectionmax = []
+				
+				if (group_valuemax.indexOf(node.index_o) != -1) {
+					node.valuemax[clusterLevel] = 1; 
+				} else {
+					node.valuemax[clusterLevel] = 0;
+				}
+				if (group_connectionmax.indexOf(node.index_o) != -1) {
+					node.connectionmax[clusterLevel] = 1; 
+				} else {
+					node.connectionmax[clusterLevel] = 0;
+				}
+				
+				
+				
 		});
 	
-		oriData = data;
-		filterData = data.links.filter(FilterBySimVal);
+		// oriData is a list to save original data for each level
+		oriData[clusterLevel] = {};
+		oriData[clusterLevel]["nodes"] = JSON.parse(JSON.stringify(data.nodes));
+		oriData[clusterLevel]["links"] = JSON.parse(JSON.stringify(data.links));
+		// filter data
+		// filter node data to get the representative node in the cluster
+		var get_id = document.getElementById('RNode-chooser');
+		RNodeVal = get_id.options[get_id.selectedIndex].value;
+		existNodes = [];
+		filterNodeData = data.nodes.filter(FilterByGRepresent);
+
+		// filter link data to get links for representative nodes
+		filterLineData = data.links.filter(function (aryvalue) {
+			if ((existNodes.indexOf(aryvalue.source) != -1) && (existNodes.indexOf(aryvalue.target) != -1)) {
+				aryvalue.source_o = aryvalue.source;
+				aryvalue.source = existNodes.indexOf(aryvalue.source);
+				aryvalue.target_o = aryvalue.target;
+				aryvalue.target = existNodes.indexOf(aryvalue.target);
+				return true;
+			} else {
+				return false;
+			}
+		});
+				
+		// filter link data based on selected similarity value
+		filterData = filterLineData.filter(FilterBySimVal);
+				
 		SetupData();
         force.resume();
 		bDragOn = false;
 	});
 }
 
+// called from the onclick
+// #RNode-chooser
+// change for representative node selection
+function RNodeChange() {
+		// filter data
+		// filter node data to get the representative node in the cluster
+		var get_id = document.getElementById('RNode-chooser');
+		RNodeVal = get_id.options[get_id.selectedIndex].value;
+		
+		existNodes = [];
+		filterNodeData = oriData[clusterLevel].nodes.filter(FilterByGRepresent);
+				
+		// filter link data to get links for representative nodes
+		filterLineData = oriData[clusterLevel].links.filter(function (aryvalue) {
+			if ("source_o" in aryvalue) {
+				aryvalue.source = aryvalue.source_o;
+				aryvalue.target = aryvalue.target_o;
+			}
+			if ((existNodes.indexOf(aryvalue.source) != -1) && (existNodes.indexOf(aryvalue.target) != -1)) {
+				aryvalue.source_o = aryvalue.source;
+				aryvalue.source = existNodes.indexOf(aryvalue.source);
+				aryvalue.target_o = aryvalue.target;
+				aryvalue.target = existNodes.indexOf(aryvalue.target);
+				return true;
+			} else {
+				return false;
+			}
+		});
+				
+		// filter link data based on selected similarity value
+		filterData = filterLineData.filter(FilterBySimVal);
+				
+		SetupData();
+        force.resume();
+		bDragOn = false;
+}
+
+// called from onclick nodes
+// function to show nodes in subclusters
+function ShowNodesInCluster(ClusterNum) {
+	if (subClusterOn) {
+	subClusterOn = false;
+	existNodes = [];
+	// filter node data to get nodes in the selected cluster
+	filterNodeData = oriData[clusterLevel].nodes.filter(function (aryvalue) {
+		if (aryvalue.clr == ClusterNum) {
+			existNodes.push(aryvalue.index_o); 
+			if (aryvalue.subgroup.length >= clusterLevel+1) {
+				subClusterOn = true;
+			}
+			return true;
+		} else {
+			return false;
+		}
+	});
+	
+	// filter link data to get links for nodes in the selected cluster
+	filterLineData = oriData[clusterLevel].links.filter(function (aryvalue) {
+		if ("source_o" in aryvalue) {
+			aryvalue.source = aryvalue.source_o;
+			aryvalue.target = aryvalue.target_o;
+		}
+		if ((existNodes.indexOf(aryvalue.source) != -1) && (existNodes.indexOf(aryvalue.target) != -1)) {
+			aryvalue.source_o = aryvalue.source;
+			aryvalue.source = existNodes.indexOf(aryvalue.source);
+			aryvalue.target_o = aryvalue.target;
+			aryvalue.target = existNodes.indexOf(aryvalue.target);
+			return true;
+		} else {
+			return false;
+		}
+	});
+	
+	clusterLevel += 1;
+	
+	if (subClusterOn) {
+		
+		oriData[clusterLevel] = {}
+		oriData[clusterLevel]["nodes"] = JSON.parse(JSON.stringify(filterNodeData));
+		oriData[clusterLevel]["links"] = JSON.parse(JSON.stringify(filterLineData));
+		
+		
+		oriData[clusterLevel].links.forEach(function(aryvalue){
+			if ("source_o" in aryvalue) {
+				delete aryvalue.source_o;
+				delete aryvalue.target_o;
+			}
+		});
+	
+		var connection_threshold = 0.5;
+		var group_already = [];
+		var group_represent = [];
+		var node_index = 0;
+		oriData[clusterLevel].nodes.forEach(function (node) {
+				node.index_o = node_index;
+				
+				node.clr = node.subgroup[clusterLevel-1];
+				// for finding the first node in the group
+				if (group_already.indexOf(node.clr) == -1) {
+					node.gfirst[clusterLevel] = 1;
+					group_already.push(node.clr); 
+				} else {
+					node.gfirst[clusterLevel] = 0;
+				}
+				
+				var clrInt = parseInt(node.clr);
+				if (!group_represent[node.clr]) {
+					group_represent[node.clr] = {valuemax: {index_o: node.index_o, sum: node.value_sum},
+											connectionmax: {index_o: node.index_o, sum: node.connections}
+											};
+				} else {
+					// for finding value max node
+					if (group_represent[node.clr]['valuemax']['sum'] < node.value_sum) {
+						group_represent[node.clr]['valuemax'] = {index_o: node.index_o, sum: node.value_sum};
+					}
+					
+					//for finding connection max node
+					if (group_represent[node.clr]['connectionmax']['sum'] < node.connections) {
+						group_represent[node.clr]['connectionmax'] = {index_o: node.index_o, sum: node.connections};
+					}
+				}
+				node_index += 1;
+		});
+		// build array for valuemax nodes and connectionmax nodes
+		var group_valuemax = [];
+		var group_connectionmax = [];
+		gLen = group_represent.length;
+		for (i = 0; i < gLen; i++) {
+			if (group_represent[i]) {
+				group_valuemax[i] = group_represent[i]['valuemax']['index_o'];
+				group_connectionmax[i] = group_represent[i]['connectionmax']['index_o'];
+			}
+
+		}
+		
+		// node.valuemax: if the node is the value max node in the cluster, 1; otherwise, 0
+		// node.connectionmax: if the node has the max connection in the cluster, 1; otherwise, 0	
+		oriData[clusterLevel].nodes.forEach(function (node) {
+				
+				if (group_valuemax.indexOf(node.index_o) != -1) {
+					node.valuemax[clusterLevel] = 1; 
+				} else {
+					node.valuemax[clusterLevel] = 0;
+				}
+				if (group_connectionmax.indexOf(node.index_o) != -1) {
+					node.connectionmax[clusterLevel] = 1; 
+				} else {
+					node.connectionmax[clusterLevel] = 0;
+				}
+								
+		});
+	
+		// filter data
+		// filter node data to get the representative node in the cluster
+		existNodes = [];
+		filterNodeData = oriData[clusterLevel].nodes.filter(FilterByGRepresent);
+
+		// filter link data to get links for representative nodes
+		filterLineData = oriData[clusterLevel].links.filter(function (aryvalue) {
+			if ((existNodes.indexOf(aryvalue.source) != -1) && (existNodes.indexOf(aryvalue.target) != -1)) {
+				aryvalue.source_o = aryvalue.source;
+				aryvalue.source = existNodes.indexOf(aryvalue.source);
+				aryvalue.target_o = aryvalue.target;
+				aryvalue.target = existNodes.indexOf(aryvalue.target);
+				return true;
+			} else {
+				return false;
+			}
+		});
+					
+	}
+				
+	// filter link data based on selected similarity value
+	filterData = filterLineData.filter(FilterBySimVal);
+				
+	SetupData();
+    force.resume();
+	bDragOn = false;
+	} else {
+		alert("No more subclustering.")
+	}
+	
+}
+
+// called from contextmenu, click button
+// function to go back the former level of clustering
+function GoBackCluster() {
+		
+	if (clusterLevel > 0) {
+		clusterLevel -= 1;
+		existNodes = [];
+		filterNodeData = oriData[clusterLevel].nodes.filter(FilterByGRepresent);
+
+		// filter link data to get links for representative nodes
+		filterLineData = oriData[clusterLevel].links.filter(function (aryvalue) {
+			if ("source_o" in aryvalue) {
+				aryvalue.source = aryvalue.source_o;
+				aryvalue.target = aryvalue.target_o;
+			}
+			if ((existNodes.indexOf(aryvalue.source) != -1) && (existNodes.indexOf(aryvalue.target) != -1)) {
+				aryvalue.source_o = aryvalue.source;
+				aryvalue.source = existNodes.indexOf(aryvalue.source);
+				aryvalue.target_o = aryvalue.target;
+				aryvalue.target = existNodes.indexOf(aryvalue.target);
+				return true;
+			} else {
+				return false;
+			}
+		});
+				
+		// filter link data based on selected similarity value
+		filterData = filterLineData.filter(FilterBySimVal);
+				
+		SetupData();
+        force.resume();
+		bDragOn = false;
+		
+		subClusterOn = true;
+	} else {
+		alert("We are at the top level.")
+	}
+		
+}
+
 // ** Update data section (Called from the onclick)
+// #sim-value
 function SimValueChange() {
 	var get_id = document.getElementById('sim-value');
 	simVal = get_id.options[get_id.selectedIndex].value;
-	filterData = oriData.links.filter(FilterBySimVal);
+	filterData = filterLineData.filter(FilterBySimVal);
 	link = SetupLink();
 	
 	node.call(force.drag)
@@ -615,6 +1072,8 @@ function SimValueChange() {
 	});		
 }
 
+// called from the onclick
+// #button
 function ResetView() {
 	zoom.scale(1);
 	zoom.translate([0, 0]);
@@ -622,6 +1081,8 @@ function ResetView() {
 	svg.attr("transform", "translate(" + zoom.translate() + ")scale(" + zoom.scale() + ")");
 }
 
+// called from the onclick
+// #togglelayout
 function ToggleLayout(ref) {
 	if(bDynamicLayout) {
 		ref.value="Resume layout";
@@ -635,6 +1096,7 @@ function ToggleLayout(ref) {
 	}
 }
 
+// called in updateSearch()
 function RestoreNode(id) {
 	var selectorstr = "g.node[id='"+id+"']"; 
 	d3.select(selectorstr).select("text").transition()
@@ -645,6 +1107,7 @@ function RestoreNode(id) {
 		.style("stroke", node_stroke_clr);	
 }
 
+// called in updateSearch()
 function HgtNode(id) {
 	var selectorstr = "g.node[id='"+id+"']";
 	d3.select(selectorstr).select("text").transition()
@@ -655,6 +1118,8 @@ function HgtNode(id) {
 		.style("stroke", d3.rgb(255, 0, 0));	
 }
 
+// called from the onkeyup
+// #search
 function updateSearch(querystr) {
 	var k;
 	if(querystr == "") {
@@ -685,7 +1150,7 @@ function updateSearch(querystr) {
 		lastSearchStr = querystr;
 		if(compoundstr == "") return;	
 		var reqry = new RegExp(compoundstr, "i"); // do a case-insensitive and boolean or search match
-	    oriData.nodes.forEach(function(d, i) {
+	    filterNodeData.forEach(function(d, i) {
 			if((d.title).match(reqry)) {
 				var idstr = "N" + i;
 				lastSearchNodes.push(idstr);

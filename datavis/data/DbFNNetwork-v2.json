@@ -1,0 +1,97 @@
+{
+	"description": "an example for DbFNNetwork-v2.",
+  "nodes": [
+    {
+      "name": "59652094841de9423533f7cf",
+      "title": "MCICShare",
+      "group": "1",
+      "URL": "MCICShare",
+      "description": "MCICShare"
+    },
+    {
+      "name": "59652096841de9423533f800",
+      "title": "fBIRNPhaseII__0010",
+      "group": "0",
+      "URL": "fBIRNPhaseII__0010",
+      "description": "fBIRNPhaseII__0010"
+    },
+    {
+      "name": "59652096841de9423533f7fa",
+      "title": "COBRE",
+      "group": "0",
+      "URL": "COBRE",
+      "description": "COBRE"
+    },
+    {
+      "name": "59652095841de9423533f7ec",
+      "title": "NMorphCH",
+      "group": "0",
+      "URL": "NMorphCH",
+      "description": "NMorphCH"
+    },
+    {
+      "name": "59652095841de9423533f7d9",
+      "title": "NUSDAST",
+      "group": "0",
+      "URL": "NUSDAST",
+      "description": "NUSDAST"
+    }
+  ],
+  "links": [
+    {
+      "source": 0,
+      "target": 1,
+      "value": 0.7586206896551724
+    },
+    {
+      "source": 0,
+      "target": 2,
+      "value": 0.7241379310344828
+    },
+    {
+      "source": 0,
+      "target": 3,
+      "value": 0.7586206896551724
+    },
+    {
+      "source": 0,
+      "target": 4,
+      "value": 0.6206896551724138
+    },
+    {
+      "source": 4,
+      "target": 1,
+      "value": 0.5172413793103448
+    },
+    {
+      "source": 4,
+      "target": 2,
+      "value": 0.48275862068965514
+    },
+    {
+      "source": 4,
+      "target": 3,
+      "value": 0.8620689655172413
+    },
+    {
+      "source": 3,
+      "target": 1,
+      "value": 0.6551724137931034
+    },
+    {
+      "source": 3,
+      "target": 2,
+      "value": 0.6206896551724138
+    },
+    {
+      "source": 2,
+      "target": 1,
+      "value": 0.8275862068965517
+    },
+    {
+      "source": 1,
+      "target": 1,
+      "value": 0.0
+    }
+  ]
+}
